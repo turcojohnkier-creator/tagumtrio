@@ -1,0 +1,15 @@
+export const DEPARTMENTS = [
+  'Rotary',
+  'Sorting',
+  'Hotpress',
+  'Assembly',
+  'Sundry',
+  'Repair',
+  'Packing',
+  'Spreader',
+  'Veneering',
+  'Core Builder',
+  'Classifying',
+  'Putty',
+  'Sizer',
+]

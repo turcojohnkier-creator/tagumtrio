@@ -1,0 +1,12 @@
+node_modules/
+.venv/
+.env
+*.dump
+*.sql
+dist/
+.DS_Store
+tagumtrio-front/build/
+tagumtrio-front/dist/
+tagumtrio-back/__pycache__/
+*.pyc
+db_data/

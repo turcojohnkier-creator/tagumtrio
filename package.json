@@ -1,0 +1,11 @@
+{
+  "name": "tagumtrio-monorepo",
+  "private": true,
+  "workspaces": [
+    "tagumtrio-front"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace tagumtrio-front",
+    "dev": "npm run dev --workspace tagumtrio-front"
+  }
+}

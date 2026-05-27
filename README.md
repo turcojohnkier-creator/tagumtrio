@@ -73,15 +73,17 @@ gunicorn -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:$PORT
 4. Confirm the health check at `/api/health`.
 
 ### Frontend deploy on Vercel
-1. Set `VITE_API_URL` to your live backend URL, for example:
+1. Deploy from the repo root, not from `tagumtrio-front`.
+2. Vercel will use the root `package.json` and `vercel.json`.
+3. Set `VITE_API_URL` to your live backend URL, for example:
 
 ```
 VITE_API_URL=https://your-backend-domain.com/api
 ```
 
-2. Build command: `npm run build`
-3. Output directory: `dist`
-4. The included `vercel.json` handles React Router refreshes.
+4. Build command: `npm run build`
+5. Output directory: `tagumtrio-front/dist`
+6. The included root `vercel.json` handles React Router refreshes.
 
 ### After deploy
 1. Open the frontend URL.

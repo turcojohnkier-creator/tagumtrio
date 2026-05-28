@@ -10,6 +10,7 @@ const links = [
   { to: '/app/leadman/transfers', label: 'Transfer Requests', icon: ClipboardList },
   { to: '/app/leadman/workers', label: 'Deployed Workers', icon: Users },
   { to: '/app/leadman/report', label: 'Daily Report', icon: FileText },
+  { to: '/app/leadman/history', label: 'History', icon: FileText },
 ]
 
 export default function LeadmanSidebar({ user, onLogout, onNavigate, mobileOpen = false }) {

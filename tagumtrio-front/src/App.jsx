@@ -7,6 +7,7 @@ import LeadmanLayout from './components/layout/LeadmanLayout'
 import LeadmanTransfers from './pages/leadman/LeadmanTransfers'
 import LeadmanWorkers from './pages/leadman/LeadmanWorkers'
 import LeadmanDailyReport from './pages/leadman/LeadmanDailyReport'
+import LeadmanHistory from './pages/leadman/LeadmanHistory'
 import MainLayout from './components/layout/MainLayout'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -65,6 +66,7 @@ export default function App() {
             <Route path="transfers" element={<LeadmanTransfers />} />
             <Route path="workers" element={<LeadmanWorkers />} />
             <Route path="report" element={<LeadmanDailyReport />} />
+            <Route path="history" element={<LeadmanHistory />} />
             <Route path="*" element={<Navigate to="/app/leadman" replace />} />
           </Route>
 

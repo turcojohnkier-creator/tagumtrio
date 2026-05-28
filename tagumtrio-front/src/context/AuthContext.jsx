@@ -101,6 +101,40 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
+  // On first load, silently try to restore session from existing token
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (user) return
+    const token = window.localStorage.getItem('triops-auth-token') || ''
+    if (!token) return
+
+    let mounted = true
+    ;(async () => {
+      try {
+        const res = await fetch('/api/auth/me', {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        if (!mounted) return
+        if (!res.ok) {
+          clearAuthToken()
+          setUser(null)
+          return
+        }
+        const result = await res.json()
+        setAuthToken(token)
+        setUser(buildSessionUser(result))
+      } catch (e) {
+        clearAuthToken()
+        setUser(null)
+      }
+    })()
+
+    return () => { mounted = false }
+  }, [])
+
   const login = (role) => {
     if (!role) {
       setUser(null)

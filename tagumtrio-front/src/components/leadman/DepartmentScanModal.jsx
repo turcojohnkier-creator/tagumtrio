@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { X } from 'lucide-react'
+import { X, QrCode } from 'lucide-react'
 import Portal from '../ui/Portal'
 import { buildDepartmentQrSummary, getDepartmentQrScanSpec } from '../../constants/qr-scan-fields'
 
@@ -112,7 +112,8 @@ export default function DepartmentScanModal({
       .filter((employee) => employee.normalizedEmployeeId && (employee.employeeName || employee.name || employee.fullName))
   }, [employeeOptions])
 
-  const [entryMode, setEntryMode] = useState(validEmployeeOptions.length > 0 ? 'scan' : 'manual')
+  // Default to manual entry as primary UX; QR scan is the alternate
+  const [entryMode, setEntryMode] = useState('manual')
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState(() => {
     const defaultId = normalizeEmployeeId({ employeeId: initialEmployeeId }) || validEmployeeOptions[0]?.normalizedEmployeeId
     return defaultId ? [defaultId] : []
@@ -126,7 +127,8 @@ export default function DepartmentScanModal({
   useEffect(() => {
     if (!open) return
     const defaultId = normalizeEmployeeId({ employeeId: initialEmployeeId }) || validEmployeeOptions[0]?.normalizedEmployeeId
-    setEntryMode(validEmployeeOptions.length > 0 ? 'scan' : 'manual')
+    // Keep manual as the default when modal opens; allow switching to scan manually
+    setEntryMode('manual')
     setSelectedEmployeeIds((current) => (Array.isArray(current) && current.length > 0 ? current : defaultId ? [defaultId] : []))
     setShowEmployeeTable(false)
     setSubmissionError('')
@@ -246,11 +248,11 @@ export default function DepartmentScanModal({
           <div className="mt-5 space-y-4">
             {allowManualEntry ? (
               <div className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950 p-1">
-                <button type="button" onClick={() => setEntryMode('scan')} className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${entryMode === 'scan' ? 'bg-emerald-500 text-black' : 'text-slate-300 hover:bg-slate-900'}`}>
-                  QR scan mode
-                </button>
                 <button type="button" onClick={() => setEntryMode('manual')} className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${entryMode === 'manual' ? 'bg-emerald-500 text-black' : 'text-slate-300 hover:bg-slate-900'}`}>
                   Manual entry
+                </button>
+                <button type="button" onClick={() => setEntryMode('scan')} className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${entryMode === 'scan' ? 'bg-emerald-500 text-black' : 'text-slate-300 hover:bg-slate-900'}`}>
+                  QR scan mode
                 </button>
               </div>
             ) : null}
@@ -261,13 +263,20 @@ export default function DepartmentScanModal({
 
             {entryMode === 'scan' ? (
               <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950 px-4 py-3">
-                <div>
-                  <label className="text-sm text-slate-300">Employees Included</label>
-                  <p className="text-xs text-slate-500">Click the count to open the employee picker in a separate window.</p>
+                <div className="flex items-center gap-3">
+                  <div className="h-28 w-28 rounded-lg border-2 border-dashed border-slate-700 bg-slate-900 flex items-center justify-center">
+                    <QrCode className="h-10 w-10 text-slate-400" />
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-300">QR Scanner</label>
+                    <p className="text-xs text-slate-500">Use camera to scan a physical QR. Open the employee picker if needed.</p>
+                  </div>
                 </div>
-                <button type="button" onClick={() => setShowEmployeeTable((current) => !current)} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
-                  View {selectedEmployeeIds.length} employee{selectedEmployeeIds.length === 1 ? '' : 's'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => setShowEmployeeTable((current) => !current)} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
+                    View {selectedEmployeeIds.length} employee{selectedEmployeeIds.length === 1 ? '' : 's'}
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-950 p-4">

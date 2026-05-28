@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AuthContext } from './auth-context'
-import { clearAuthToken, loginApi, meApi, registerApi, setAuthToken } from '../lib/api'
+import { clearAuthToken, loginApi, registerApi, setAuthToken } from '../lib/api'
 import { DEPARTMENTS } from '../constants/departments'
 
 const AUTH_SESSION_KEY = 'triops-auth-session'
@@ -84,26 +84,6 @@ export function AuthProvider({ children }) {
     const token = window.localStorage.getItem('triops-auth-token') || ''
     window.localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({ user, token }))
   }, [user])
-
-  useEffect(() => {
-    let cancelled = false
-    async function restoreSession() {
-      try {
-        const current = await meApi()
-        if (!cancelled) setUser(buildSessionUser(current))
-      } catch {
-        // Keep the locally restored session if the identity check is temporarily unavailable.
-      }
-    }
-
-    if (typeof window !== 'undefined' && window.localStorage.getItem('triops-auth-token')) {
-      restoreSession()
-    }
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   useEffect(() => {
     function handleUnauthorized() {

@@ -14,8 +14,10 @@ import Register from './pages/Register'
 import Landing from './pages/Landing'
 import RoleDashboard from './pages/RoleDashboard'
 import ProductionDashboard from './pages/production/ProductionDashboard'
+import ProductionConsolidatedReports from './pages/production/ProductionConsolidatedReports'
 import Commissions from './pages/finance/Commissions'
 import FinanceReports from './pages/finance/FinanceReports'
+import FinanceConsolidatedReports from './pages/finance/FinanceConsolidatedReports'
 import EmployeePayroll from './pages/finance/EmployeePayroll'
 import PayrollPeriodView from './pages/finance/PayrollPeriodView'
 import FinanceArchive from './pages/finance/FinanceArchive'
@@ -50,8 +52,10 @@ export default function App() {
             <Route index element={<RoleDashboard />} />
             
             <Route path="production" element={<ProductionDashboard />} />
+            <Route path="production/consolidated" element={<ProductionConsolidatedReports />} />
             <Route path="payroll" element={<Commissions />} />
             <Route path="payroll/reports" element={<FinanceReports />} />
+            <Route path="payroll/consolidated" element={<FinanceConsolidatedReports />} />
             <Route path="payroll/commissions" element={<Commissions />} />
             <Route path="payroll/archive" element={<FinanceArchive />} />
             <Route path="payroll/employee/:employeeId" element={<EmployeePayroll />} />

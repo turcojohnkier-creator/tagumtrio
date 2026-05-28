@@ -1,6 +1,15 @@
 import React from 'react'
 
-export default function DailyReportTable({ entries = [] }) {
+function resolveEntryDepartment(entry, fallbackDepartment) {
+  return entry?.department
+    || entry?.raw?.department
+    || entry?.raw?.qrFields?.department
+    || entry?.qrFields?.department
+    || fallbackDepartment
+    || '-'
+}
+
+export default function DailyReportTable({ entries = [], fallbackDepartment = '' }) {
   const safeEntries = Array.isArray(entries) ? entries : []
 
   if (safeEntries.length === 0) {
@@ -27,7 +36,7 @@ export default function DailyReportTable({ entries = [] }) {
                 <div className="font-medium text-white">{entry.employeeName}</div>
                 <div className="text-xs text-slate-500">{entry.employeeId ?? '-'}</div>
               </td>
-              <td className="px-4 py-4 text-slate-300">{entry.department || '-'}</td>
+              <td className="px-4 py-4 text-slate-300">{resolveEntryDepartment(entry, fallbackDepartment)}</td>
               <td className="px-4 py-4 text-slate-300">{(entry.raw?.qrFields?.thickness) || (entry.qrFields?.thickness) || '-'}</td>
               <td className="px-4 py-4 text-slate-300">{(entry.raw?.qrFields?.cratePieces) || (entry.qrFields?.cratePieces) || (entry.raw?.qrFields?.crates) || (entry.qrFields?.crates) || '-'}</td>
               <td className="px-4 py-4 text-slate-300">{(entry.raw?.qrFields?.date) || (entry.qrFields?.date) || (entry.raw?.qrFields?.dateIn) || (entry.qrFields?.dateIn) || '-'}</td>

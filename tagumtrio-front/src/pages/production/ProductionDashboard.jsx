@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Filter, Search, X } from 'lucide-react'
+import { ClipboardList, Filter, Search, X } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { fetchDailyReportsApi } from '../../lib/api'
 
 function formatReportDate(value) {
@@ -24,6 +25,15 @@ function toDateKey(value) {
 
 function getFieldValue(entry, key) {
   return entry?.raw?.qrFields?.[key] ?? entry?.qrFields?.[key] ?? entry?.[key] ?? ''
+}
+
+function resolveEntryDepartment(entry, fallbackDepartment) {
+  return entry?.department
+    || entry?.raw?.department
+    || entry?.raw?.qrFields?.department
+    || entry?.qrFields?.department
+    || fallbackDepartment
+    || '-'
 }
 
 function buildReportCards(reports = []) {
@@ -115,7 +125,7 @@ function ReportDetailModal({ report, onClose }) {
                       <div className="font-medium text-white">{entry.employeeName}</div>
                       <div className="text-xs text-slate-500">{entry.employeeId ?? '-'}</div>
                     </td>
-                    <td className="px-4 py-4 text-slate-300">{entry.department || report.department || '-'}</td>
+                    <td className="px-4 py-4 text-slate-300">{resolveEntryDepartment(entry, report.department)}</td>
                     <td className="px-4 py-4 text-slate-300">{getFieldValue(entry, 'thickness') || report.thickness || '-'}</td>
                     <td className="px-4 py-4 text-slate-300">{getFieldValue(entry, 'cratePieces') || getFieldValue(entry, 'crates') || report.cratesPieces || '-'}</td>
                     <td className="px-4 py-4 text-slate-300">{getFieldValue(entry, 'date') || getFieldValue(entry, 'dateIn') || formatReportDate(entry.scannedAt || report.scannedAt)}</td>
@@ -319,33 +329,15 @@ export default function ProductionDashboard() {
         ) : null}
       </div>
 
-      <div className="rounded-2xl border border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 p-5 shadow-xl shadow-black/10">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-black/10">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Consolidated report</p>
-            <h3 className="mt-2 text-lg font-semibold text-white">Daily production summary</h3>
-            <p className="mt-1 text-sm text-slate-400">This section groups the current report totals into one summary for quick incharge review.</p>
+            <h3 className="text-lg font-semibold text-white">Need consolidated totals?</h3>
+            <p className="text-sm text-slate-400">Open the consolidated reports page for daily production summary and salary totals.</p>
           </div>
-          <div className="text-sm text-slate-400">Visible reports: <span className="font-semibold text-white">{filteredReports.length}</span></div>
-        </div>
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Reports</p>
-            <p className="mt-2 text-2xl font-bold text-white">{totals.reports}</p>
-          </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Employees</p>
-            <p className="mt-2 text-2xl font-bold text-white">{totals.employees}</p>
-          </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Departments</p>
-            <p className="mt-2 text-2xl font-bold text-white">{departments.filter((department) => department !== 'All Departments').length}</p>
-          </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Salary total</p>
-            <p className="mt-2 text-2xl font-bold text-emerald-400">₱{filteredReports.reduce((sum, report) => sum + Number(report.totalAmount || 0), 0).toLocaleString()}</p>
-          </div>
+          <Link to="/app/production/consolidated" className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-black hover:bg-emerald-400">
+            <ClipboardList className="h-4 w-4" /> Open consolidated page
+          </Link>
         </div>
       </div>
 

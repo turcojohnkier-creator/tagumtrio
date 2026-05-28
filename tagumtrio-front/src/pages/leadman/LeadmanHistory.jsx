@@ -155,7 +155,7 @@ export default function LeadmanHistory() {
                   <p className="mt-2 text-2xl font-bold text-emerald-400">₱{aggregateReport([selected]).totalAmount.toLocaleString()}</p>
                 </div>
               </div>
-              <DailyReportTable entries={selected.entries || []} />
+              <DailyReportTable entries={selected.entries || []} fallbackDepartment={selected.department || currentDepartment} />
             </div>
           </div>
         </div>

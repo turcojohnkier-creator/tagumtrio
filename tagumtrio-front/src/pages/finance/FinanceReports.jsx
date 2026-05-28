@@ -147,6 +147,36 @@ export default function FinanceReports() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="font-medium text-white">{report.department}</div>
+
+                  <div className="rounded-2xl border border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 p-5 shadow-xl shadow-black/10">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Consolidated report</p>
+                        <h3 className="mt-2 text-lg font-semibold text-white">Finance summary</h3>
+                        <p className="mt-1 text-sm text-slate-400">Review the total salary and entry counts across the selected submitted reports.</p>
+                      </div>
+                      <div className="text-sm text-slate-400">Visible reports: <span className="font-semibold text-white">{filteredReports.length}</span></div>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Reports</p>
+                        <p className="mt-2 text-2xl font-bold text-white">{totals.reports}</p>
+                      </div>
+                      <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Entries</p>
+                        <p className="mt-2 text-2xl font-bold text-white">{totals.entries}</p>
+                      </div>
+                      <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Departments</p>
+                        <p className="mt-2 text-2xl font-bold text-white">{departments.length}</p>
+                      </div>
+                      <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Salary total</p>
+                        <p className="mt-2 text-2xl font-bold text-emerald-400">₱{totals.salary.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
                       <div className="text-xs text-slate-500">{report.reportDate} • {report.submittedByName || report.submittedBy || 'Unknown'}</div>
                     </div>
                     <div className="text-right text-xs text-slate-400">

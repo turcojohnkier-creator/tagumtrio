@@ -319,6 +319,36 @@ export default function ProductionDashboard() {
         ) : null}
       </div>
 
+      <div className="rounded-2xl border border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 p-5 shadow-xl shadow-black/10">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Consolidated report</p>
+            <h3 className="mt-2 text-lg font-semibold text-white">Daily production summary</h3>
+            <p className="mt-1 text-sm text-slate-400">This section groups the current report totals into one summary for quick incharge review.</p>
+          </div>
+          <div className="text-sm text-slate-400">Visible reports: <span className="font-semibold text-white">{filteredReports.length}</span></div>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Reports</p>
+            <p className="mt-2 text-2xl font-bold text-white">{totals.reports}</p>
+          </div>
+          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Employees</p>
+            <p className="mt-2 text-2xl font-bold text-white">{totals.employees}</p>
+          </div>
+          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Departments</p>
+            <p className="mt-2 text-2xl font-bold text-white">{departments.filter((department) => department !== 'All Departments').length}</p>
+          </div>
+          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Salary total</p>
+            <p className="mt-2 text-2xl font-bold text-emerald-400">₱{filteredReports.reduce((sum, report) => sum + Number(report.totalAmount || 0), 0).toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+
       <ReportDetailModal report={selectedReport} onClose={() => setSelectedReportId('')} />
     </div>
   )

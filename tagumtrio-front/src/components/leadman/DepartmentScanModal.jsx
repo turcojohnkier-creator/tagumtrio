@@ -228,21 +228,25 @@ export default function DepartmentScanModal({
               employeeId,
               employeeName,
               department: employeeDepartment,
-              loggedHours: Number(initialHours || 0),
-              qrFields: values,
-              qrSummary: autoSummary,
-              scanCapturedAt: batchCapturedAt,
-              batchId,
+          const validEmployeeOptions = useMemo(() => {
+            return employeeOptions
+              .map((employee) => ({
+                ...employee,
+                normalizedEmployeeId: normalizeEmployeeId(employee),
+              }))
+              .filter((employee) => employee.normalizedEmployeeId && (employee.employeeName || employee.name || employee.fullName))
+          }, [employeeOptions])
               batchCapturedAt,
-              batchEmployeeCount: submissionEmployees.length,
-              raw: {
-                department: employeeDepartment,
-                employeeId,
-                employeeName,
-                loggedHours: Number(initialHours || 0),
-                qrFields: values,
-                qrSummary: autoSummary,
-                batchId,
+          const [entryMode, setEntryMode] = useState(validEmployeeOptions.length > 0 ? 'scan' : 'manual')
+          const [selectedEmployeeIds, setSelectedEmployeeIds] = useState(() => {
+            const defaultId = normalizeEmployeeId({ employeeId: initialEmployeeId }) || validEmployeeOptions[0]?.normalizedEmployeeId
+            return defaultId ? [defaultId] : []
+          })
+          const [showEmployeeTable, setShowEmployeeTable] = useState(false)
+          const [isSubmitting, setIsSubmitting] = useState(false)
+          const [submissionError, setSubmissionError] = useState('')
+          const [values, setValues] = useState(() => buildInitialValues(spec, department))
+          const [manualEmployees, setManualEmployees] = useState(() => [{ employeeId: '', employeeName: '', department: department || '' }])
                 batchCapturedAt,
                 batchEmployeeCount: submissionEmployees.length,
               },

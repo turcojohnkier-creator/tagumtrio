@@ -86,7 +86,7 @@ export default function LeadmanHistory() {
         </div>
 
         <div className="flex gap-3 flex-wrap">
-          <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3 min-w-[220px]">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3 min-w-[220px] select-none pointer-events-none">
             <p className="text-xs text-slate-500">Department</p>
             <p className="mt-2 text-white">{currentDepartment || 'Assigned department'}</p>
           </div>

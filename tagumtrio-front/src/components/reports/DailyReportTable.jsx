@@ -18,7 +18,6 @@ export default function DailyReportTable({ entries = [] }) {
             <th className="px-4 py-3 font-medium">Crates / Pieces</th>
             <th className="px-4 py-3 font-medium">Date</th>
             <th className="px-4 py-3 font-medium">Amount</th>
-            <th className="px-4 py-3 font-medium">Notes</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-800/70 bg-slate-900/50">
@@ -33,7 +32,6 @@ export default function DailyReportTable({ entries = [] }) {
               <td className="px-4 py-4 text-slate-300">{(entry.raw?.qrFields?.cratePieces) || (entry.qrFields?.cratePieces) || (entry.raw?.qrFields?.crates) || (entry.qrFields?.crates) || '-'}</td>
               <td className="px-4 py-4 text-slate-300">{(entry.raw?.qrFields?.date) || (entry.qrFields?.date) || (entry.raw?.qrFields?.dateIn) || (entry.qrFields?.dateIn) || '-'}</td>
               <td className="px-4 py-4 font-semibold text-emerald-400">₱{Number(entry.amount || 0).toLocaleString()}</td>
-              <td className="px-4 py-4 text-slate-300">{entry.notes || '-'}</td>
             </tr>
           ))}
         </tbody>

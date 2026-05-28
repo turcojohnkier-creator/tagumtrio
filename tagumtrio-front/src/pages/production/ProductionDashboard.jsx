@@ -106,7 +106,6 @@ function ReportDetailModal({ report, onClose }) {
                   <th className="px-4 py-3 font-medium">Crates / Pieces</th>
                   <th className="px-4 py-3 font-medium">Date</th>
                   <th className="px-4 py-3 font-medium">Amount</th>
-                  <th className="px-4 py-3 font-medium">Notes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/70 bg-slate-900/50">
@@ -121,7 +120,6 @@ function ReportDetailModal({ report, onClose }) {
                     <td className="px-4 py-4 text-slate-300">{getFieldValue(entry, 'cratePieces') || getFieldValue(entry, 'crates') || report.cratesPieces || '-'}</td>
                     <td className="px-4 py-4 text-slate-300">{getFieldValue(entry, 'date') || getFieldValue(entry, 'dateIn') || formatReportDate(entry.scannedAt || report.scannedAt)}</td>
                     <td className="px-4 py-4 font-semibold text-white">₱{Number(entry.amount || 0).toLocaleString()}</td>
-                    <td className="px-4 py-4 text-slate-300">{entry.notes || report.summary || '-'}</td>
                   </tr>
                 ))}
               </tbody>

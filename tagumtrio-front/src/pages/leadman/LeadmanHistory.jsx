@@ -3,7 +3,7 @@ import { Search } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import DailyReportTable from '../../components/reports/DailyReportTable'
-import { fetchDailyReportsApi } from '../../lib/api'
+import { fetchDailyReportsApi, submitDailyReportApi } from '../../lib/api'
 import { useDialog } from '../../context/dialog-context'
 
 function asText(v) { return String(v || '').toLowerCase() }
@@ -13,24 +13,22 @@ export default function LeadmanHistory() {
   const { formatDateTime, selectedLeadmanDepartment } = useQr()
   const dialog = useDialog()
 
-  const [selectedDepartment, setSelectedDepartment] = useState(selectedLeadmanDepartment || (user?.departments?.[0] || user?.department || ''))
+  const currentDepartment = selectedLeadmanDepartment || (user?.departments?.[0] || user?.department || '')
   const [date, setDate] = useState(new Date().toISOString().slice(0,10))
   const [reports, setReports] = useState([])
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => { setSelectedDepartment(selectedLeadmanDepartment || (user?.departments?.[0] || user?.department || '')) }, [selectedLeadmanDepartment, user?.department, user?.departments])
-
   useEffect(() => {
     let mounted = true
     setLoading(true)
-    fetchDailyReportsApi({ department: selectedDepartment || undefined, reportDate: date || undefined })
+    fetchDailyReportsApi({ department: currentDepartment || undefined, reportDate: date || undefined })
       .then((r) => { if (mounted) setReports(Array.isArray(r) ? r : []) })
       .catch(() => { if (mounted) setReports([]) })
       .finally(() => { if (mounted) setLoading(false) })
     return () => { mounted = false }
-  }, [selectedDepartment, date])
+  }, [currentDepartment, date])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -52,39 +50,26 @@ export default function LeadmanHistory() {
   }
 
   async function sendConsolidated() {
-    if (!selectedDepartment) return dialog.error({ title: 'No department', message: 'Select a department first.' })
-    const should = await dialog.confirm({ title: 'Send consolidated report?', message: `Send consolidated report for ${selectedDepartment} on ${date}?`, confirmText: 'Send', cancelText: 'Cancel' })
+    if (!currentDepartment) return dialog.error({ title: 'No department', message: 'No active leadman department is available.' })
+    const should = await dialog.confirm({ title: 'Send consolidated report?', message: `Send consolidated report for ${currentDepartment} on ${date}?`, confirmText: 'Send', cancelText: 'Cancel' })
     if (!should) return
 
     const agg = aggregateReport(filtered)
     const summary = `Consolidated report • ${agg.entryCount} rows • ${agg.employeeCount} employees • ${agg.totalPieces} pieces • ₱${agg.totalAmount.toLocaleString()}`
 
-    const entries = [{ id: `CONSOLIDATED-${date}`, employeeName: 'Consolidated', employeeId: null, department: selectedDepartment, loggedHours: 0, amount: agg.totalAmount, notes: summary, raw: { consolidated: true, totalPieces: agg.totalPieces } }]
-
     try {
-      // call the provider submit (uses API under the hood)
-      // eslint-disable-next-line no-undef
-      const qr = (await import('../../context/qr-context')).useQr
-      // fallback: call API directly
-    } catch (e) {
-      // best-effort: call API directly
-    }
-
-    try {
-      // Post via API directly to avoid circular context imports
-      const payload = {
-        department: selectedDepartment,
+      await submitDailyReportApi({
+        department: currentDepartment,
         reportDate: date,
         submittedBy: user?.id || null,
         submittedByName: user?.name || null,
         status: 'submitted',
         summary,
-        entries,
-      }
-      await fetch('/api/v1/daily-reports', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        entries: [{ id: `CONSOLIDATED-${date}`, employeeName: 'Consolidated', employeeId: null, department: currentDepartment, loggedHours: 0, amount: agg.totalAmount, raw: { consolidated: true, totalPieces: agg.totalPieces } }],
+      })
       dialog.success({ title: 'Sent', message: 'Consolidated report sent successfully.' })
       // refresh
-      const refreshed = await fetchDailyReportsApi({ department: selectedDepartment || undefined, reportDate: date || undefined })
+      const refreshed = await fetchDailyReportsApi({ department: currentDepartment || undefined, reportDate: date || undefined })
       setReports(Array.isArray(refreshed) ? refreshed : [])
     } catch (err) {
       dialog.error({ title: 'Failed', message: err?.message || 'Failed to send consolidated report.' })
@@ -100,10 +85,10 @@ export default function LeadmanHistory() {
           <p className="mt-1 text-sm text-slate-400">View recent submitted reports and send a consolidated daily report.</p>
         </div>
 
-        <div className="flex gap-3">
-          <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
+        <div className="flex gap-3 flex-wrap">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3 min-w-[220px]">
             <p className="text-xs text-slate-500">Department</p>
-            <input value={selectedDepartment} onChange={(e) => setSelectedDepartment(e.target.value)} className="mt-2 bg-transparent text-white outline-none" />
+            <p className="mt-2 text-white">{currentDepartment || 'Assigned department'}</p>
           </div>
           <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
             <p className="text-xs text-slate-500">Date</p>

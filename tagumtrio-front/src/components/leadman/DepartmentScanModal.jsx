@@ -128,6 +128,139 @@ export default function DepartmentScanModal({
   })
   const [showEmployeeTable, setShowEmployeeTable] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+        const spec = useMemo(() => getDepartmentQrScanSpec(department), [department])
+
+        const validEmployeeOptions = useMemo(() => {
+          return employeeOptions
+            .map((employee) => ({
+              ...employee,
+              normalizedEmployeeId: normalizeEmployeeId(employee),
+            }))
+            .filter((employee) => employee.normalizedEmployeeId && (employee.employeeName || employee.name || employee.fullName))
+        }, [employeeOptions])
+
+        const [entryMode, setEntryMode] = useState(validEmployeeOptions.length > 0 ? 'scan' : 'manual')
+        const [selectedEmployeeIds, setSelectedEmployeeIds] = useState(() => {
+          const defaultId = normalizeEmployeeId({ employeeId: initialEmployeeId }) || validEmployeeOptions[0]?.normalizedEmployeeId
+          return defaultId ? [defaultId] : []
+        })
+        const [showEmployeeTable, setShowEmployeeTable] = useState(false)
+        const [isSubmitting, setIsSubmitting] = useState(false)
+        const [submissionError, setSubmissionError] = useState('')
+        const [values, setValues] = useState(() => buildInitialValues(spec, department))
+        const [manualEmployees, setManualEmployees] = useState(() => [{ employeeId: '', employeeName: '', department: department || '' }])
+
+        useEffect(() => {
+          if (!open) return
+          const defaultId = normalizeEmployeeId({ employeeId: initialEmployeeId }) || validEmployeeOptions[0]?.normalizedEmployeeId
+          setEntryMode(validEmployeeOptions.length > 0 ? 'scan' : 'manual')
+          setSelectedEmployeeIds((current) => {
+            if (Array.isArray(current) && current.length > 0) return current
+            return defaultId ? [defaultId] : []
+          })
+          setShowEmployeeTable(false)
+          setSubmissionError('')
+          setIsSubmitting(false)
+          setValues(buildInitialValues(spec, department))
+          setManualEmployees([{ employeeId: '', employeeName: '', department: department || '' }])
+        }, [department, initialEmployeeId, open, spec, validEmployeeOptions])
+
+        const selectedEmployees = validEmployeeOptions.filter((employee) => selectedEmployeeIds.includes(employee.normalizedEmployeeId))
+        const manualSubmissionEmployees = useMemo(() => {
+          return manualEmployees
+            .map((employee) => ({
+              employeeId: String(employee.employeeId || '').trim(),
+              employeeName: String(employee.employeeName || '').trim(),
+              department: String(employee.department || department || '').trim(),
+            }))
+            .filter((employee) => employee.employeeId || employee.employeeName || employee.department)
+        }, [department, manualEmployees])
+
+        const submissionEmployees = entryMode === 'manual'
+          ? manualSubmissionEmployees
+          : selectedEmployees.map((employee) => ({
+              employeeId: String(employee.employeeId || employee.id || employee.identifier || '').trim(),
+              employeeName: String(employee.employeeName || employee.name || employee.fullName || '').trim(),
+              department: String(employee.department || department || employee.dept || '').trim(),
+            }))
+
+        const autoSummary = buildDepartmentQrSummary(department, values)
+
+        function toggleEmployee(employeeId) {
+          setSelectedEmployeeIds((current) => {
+            if (current.includes(employeeId)) return current.filter((id) => id !== employeeId)
+            return [...current, employeeId]
+          })
+        }
+
+        function handleChange(key, value) {
+          setValues((current) => ({ ...current, [key]: value }))
+        }
+
+        function updateManualEmployee(rowIndex, key, value) {
+          setManualEmployees((current) => current.map((employee, index) => (index === rowIndex ? { ...employee, [key]: value } : employee)))
+        }
+
+        function addManualEmployee() {
+          setManualEmployees((current) => [...current, { employeeId: '', employeeName: '', department: department || '' }])
+        }
+
+        function removeManualEmployee(rowIndex) {
+          setManualEmployees((current) => {
+            const next = current.filter((_, index) => index !== rowIndex)
+            return next.length > 0 ? next : [{ employeeId: '', employeeName: '', department: department || '' }]
+          })
+        }
+
+        function handleSubmit(event) {
+          event.preventDefault()
+          if (submissionEmployees.length === 0 || isSubmitting) return
+
+          const batchId = `DRB-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+          const batchCapturedAt = new Date().toISOString()
+
+          const payloads = submissionEmployees.map((selectedEmployee) => {
+            const employeeId = String(selectedEmployee.employeeId || '').trim()
+            const employeeName = String(selectedEmployee.employeeName || '').trim()
+            const employeeDepartment = String(selectedEmployee.department || department || '').trim()
+
+            return {
+              employeeId,
+              employeeName,
+              department: employeeDepartment,
+              loggedHours: Number(initialHours || 0),
+              qrFields: values,
+              qrSummary: autoSummary,
+              scanCapturedAt: batchCapturedAt,
+              batchId,
+              batchCapturedAt,
+              batchEmployeeCount: submissionEmployees.length,
+              raw: {
+                department: employeeDepartment,
+                employeeId,
+                employeeName,
+                loggedHours: Number(initialHours || 0),
+                qrFields: values,
+                qrSummary: autoSummary,
+                batchId,
+                batchCapturedAt,
+                batchEmployeeCount: submissionEmployees.length,
+              },
+              notes: autoSummary,
+            }
+          })
+
+          const invalid = payloads.some((payload) => !payload.employeeId || !payload.employeeName || !payload.department)
+          if (invalid) {
+            setSubmissionError('Selected employee data is incomplete. Please choose a valid employee and try again.')
+            return
+          }
+
+          setIsSubmitting(true)
+          setSubmissionError('')
+          onSubmit(payloads)
+        }
+
   const [submissionError, setSubmissionError] = useState('')
   const [values, setValues] = useState(() => buildInitialValues(spec))
 

@@ -3,6 +3,7 @@ import { BadgeCheck, Search, X } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import { DEPARTMENTS } from '../../constants/departments'
+import { useDialog } from '../../context/dialog-context'
 
 function asText(value) {
   return String(value || '').toLowerCase()
@@ -15,6 +16,7 @@ function sameDepartment(left, right) {
 export default function LeadmanTransfers() {
   const { user } = useAuth()
   const { departmentRequests, approveDepartmentRequest, redirectDepartmentRequest, formatDateTime, selectedLeadmanDepartment, setSelectedLeadmanDepartment } = useQr()
+  const dialog = useDialog()
 
   const assignedDepartments = useMemo(() => {
     if (Array.isArray(user?.departments) && user.departments.length > 0) return user.departments
@@ -42,7 +44,25 @@ export default function LeadmanTransfers() {
 
   function handleTransferAction(request, action) {
     if (action === 'approve') {
-      void approveDepartmentRequest(request.id, user?.id || 'LD-001').catch(() => {})
+      void (async () => {
+        const confirmed = await dialog.confirm({
+          title: 'Approve transfer request?',
+          message: `Approve the transfer request for ${request.employeeName}?`,
+          confirmText: 'Yes, approve',
+          cancelText: 'Cancel',
+        })
+        if (!confirmed) return
+        await approveDepartmentRequest(request.id, user?.id || 'LD-001')
+        dialog.success({
+          title: 'Transfer approved',
+          message: `Transfer request for ${request.employeeName} was approved successfully.`,
+        })
+      })().catch((error) => {
+        dialog.error({
+          title: 'Approval failed',
+          message: error?.message || 'Unable to approve the request right now.',
+        })
+      })
       return
     }
 
@@ -64,8 +84,15 @@ export default function LeadmanTransfers() {
       setRedirectOpen(false)
       setRedirectRequest(null)
       setRedirectReason('')
+      dialog.success({
+        title: 'Request redirected',
+        message: `Transfer request was redirected to ${redirectDepartment} successfully.`,
+      })
     } catch {
-      // keep modal open so the leadman can retry
+      dialog.error({
+        title: 'Redirect failed',
+        message: 'Unable to redirect the request right now. Please try again.',
+      })
     } finally {
       setRedirectSubmitting(false)
     }

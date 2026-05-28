@@ -7,7 +7,7 @@ function cn(...inputs) {
 
 const links = [
   { to: '/app/portal', label: 'Overview', icon: LayoutDashboard },
-  { to: '/app/portal/leaves', label: 'Logs', icon: CalendarClock },
+  { to: '/app/portal/leaves', label: 'Leaves', icon: CalendarClock },
   { to: '/app/portal/payslips', label: 'Payslips', icon: FileText },
 ]
 

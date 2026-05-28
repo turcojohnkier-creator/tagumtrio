@@ -3,6 +3,7 @@ import { MessageSquareWarning, Send, Trash2, X } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import DailyReportTable from '../../components/reports/DailyReportTable'
+import { useDialog } from '../../context/dialog-context'
 
 function formatReportDate(value) {
   if (!value) return '-'
@@ -133,6 +134,7 @@ function ReportDetailModal({ batch, onClose, onSubmit, onDelete, isSubmitting })
 export default function LeadmanDailyReport() {
   const { user } = useAuth()
   const { submitDailyReport, selectedLeadmanDepartment, setSelectedLeadmanDepartment, getDailyReportDraft, removeDailyReportBatch } = useQr()
+  const dialog = useDialog()
 
   const assignedDepartments = useMemo(() => {
     if (Array.isArray(user?.departments) && user.departments.length > 0) return user.departments
@@ -160,7 +162,12 @@ export default function LeadmanDailyReport() {
   }, [assignedDepartments, selectedDepartment, setSelectedLeadmanDepartment])
 
   async function submitReport() {
-    const shouldSubmit = window.confirm(`Submit daily report for ${selectedDepartment}? This will send today's scanned entries to Production In-Charge and Finance.`)
+    const shouldSubmit = await dialog.confirm({
+      title: 'Submit daily report?',
+      message: `Submit daily report for ${selectedDepartment}? This will send today's scanned entries to Production In-Charge and Finance.`,
+      confirmText: 'Yes, submit',
+      cancelText: 'Cancel',
+    })
     if (!shouldSubmit) return
 
     setSubmitMessage('')
@@ -172,8 +179,16 @@ export default function LeadmanDailyReport() {
       const submittedByName = user?.name || null
       await submitDailyReport(selectedDepartment, reportDate, submittedBy, submittedByName, '', reportEntries)
       setSubmitMessage('Daily report submitted successfully.')
+      dialog.success({
+        title: 'Report submitted',
+        message: `Daily report for ${selectedDepartment} was submitted successfully.`,
+      })
     } catch (error) {
       setSubmitError(error?.message || 'Failed to submit daily report. Please try again.')
+      dialog.error({
+        title: 'Submission failed',
+        message: error?.message || 'Failed to submit daily report. Please try again.',
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -192,19 +207,37 @@ export default function LeadmanDailyReport() {
       await submitDailyReport(selectedDepartment, reportDate, submittedBy, submittedByName, '', batch.entries)
       setSubmitMessage('Report submitted successfully.')
       setSelectedBatchId('')
+      dialog.success({
+        title: 'Report submitted',
+        message: 'The selected report was submitted successfully.',
+      })
     } catch (error) {
       setSubmitError(error?.message || 'Failed to submit report. Please try again.')
+      dialog.error({
+        title: 'Submission failed',
+        message: error?.message || 'Failed to submit report. Please try again.',
+      })
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  function deleteBatch(batch) {
+  async function deleteBatch(batch) {
     if (!batch) return
-    const shouldDelete = window.confirm('Delete this report? This will remove it from the current draft.')
+    const shouldDelete = await dialog.confirm({
+      title: 'Delete report?',
+      message: 'Delete this report? This will remove it from the current draft.',
+      confirmText: 'Yes, delete',
+      cancelText: 'Cancel',
+      kicker: 'Confirm delete',
+    })
     if (!shouldDelete) return
     removeDailyReportBatch(selectedDepartment, reportDate, batch.batchId)
     if (selectedBatchId === batch.id) setSelectedBatchId('')
+    dialog.success({
+      title: 'Report deleted',
+      message: 'The report was removed from the current draft successfully.',
+    })
   }
 
   return (

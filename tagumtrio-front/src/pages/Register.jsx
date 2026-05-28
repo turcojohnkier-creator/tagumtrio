@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { AlertCircle, Eye, EyeOff, Lock, UserCircle2 } from 'lucide-react'
 import { useAuth } from '../context/auth-context'
 import { DEPARTMENTS } from '../constants/departments'
+import { useDialog } from '../context/dialog-context'
 
 const ROLE_OPTIONS = [
   { key: 'employee', label: 'Employee' },
@@ -15,6 +16,7 @@ const ROLE_OPTIONS = [
 export default function Register() {
   const { registerUser } = useAuth()
   const navigate = useNavigate()
+  const dialog = useDialog()
 
   const [name, setName] = useState('')
   const [identifier, setIdentifier] = useState('')
@@ -75,9 +77,18 @@ export default function Register() {
         return
       }
 
-      navigate('/login')
+      dialog.success({
+        title: 'Account created',
+        message: 'Your account was created successfully. You can now sign in.',
+      })
+
+      window.setTimeout(() => navigate('/login'), 1200)
     }).catch((error) => {
       setFormError(error.message || 'Unable to register account.')
+      dialog.error({
+        title: 'Registration failed',
+        message: error.message || 'Unable to register account.',
+      })
       setSubmitting(false)
     })
   }

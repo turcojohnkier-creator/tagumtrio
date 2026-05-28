@@ -1,18 +1,21 @@
-import { ArrowLeft, BadgeCheck, FileText } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { ArrowLeft, BadgeCheck, CheckCircle2, FileText, Hourglass, LayoutGrid } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 
 export default function MyAttendance() {
   const { user } = useAuth()
-  const { getEmployeeDepartmentRequests, getEmployeeTotals, formatDateTime } = useQr()
+  const { getEmployeeDepartmentRequests, getEmployeeLeaveRequests, getEmployeeTotals, formatDateTime } = useQr()
   const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState('approved-leaves')
 
   const departmentRequests = getEmployeeDepartmentRequests(user?.id)
+  const leaveRequests = getEmployeeLeaveRequests(user?.id)
   const totals = getEmployeeTotals(user?.id)
 
-  const pendingRequests = departmentRequests.filter((request) => request.status === 'pending')
-  const approvedRequests = departmentRequests.filter((request) => request.status === 'approved')
+  const approvedLeaves = useMemo(() => leaveRequests.filter((request) => String(request.status || '').toLowerCase() === 'approved'), [leaveRequests])
+  const pendingLeaves = useMemo(() => leaveRequests.filter((request) => String(request.status || '').toLowerCase() === 'pending'), [leaveRequests])
 
   return (
     <div className="space-y-6">
@@ -22,7 +25,8 @@ export default function MyAttendance() {
             <button onClick={() => navigate('/app/portal')} className="mb-3 inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white">
               <ArrowLeft className="w-4 h-4" /> Back to overview
             </button>
-            <h2 className="text-2xl font-bold text-white">Requests</h2>
+            <h2 className="text-2xl font-bold text-white">Leaves & Requests</h2>
+            <p className="mt-1 text-sm text-slate-400">Track your leave requests, approved leaves, and department changes in one place.</p>
           </div>
         </div>
 
@@ -32,54 +36,111 @@ export default function MyAttendance() {
             <p className="mt-2 text-lg font-semibold text-white">{totals.currentDepartment || 'Unassigned'}</p>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-500">Requests</p>
-            <p className="mt-2 text-lg font-semibold text-white">{departmentRequests.length}</p>
-            <p className="text-xs text-slate-500">{pendingRequests.length} pending</p>
+            <p className="text-xs uppercase tracking-wider text-slate-500">Leave requests</p>
+            <p className="mt-2 text-lg font-semibold text-white">{leaveRequests.length}</p>
+            <p className="text-xs text-slate-500">{approvedLeaves.length} approved</p>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden">
-          <div className="border-b border-slate-800 px-6 py-4">
-            <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><BadgeCheck className="w-5 h-5 text-emerald-400" /> Request History</h3>
+      <div className="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden">
+        <div className="border-b border-slate-800 px-4 py-4 sm:px-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab('approved-leaves')}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'approved-leaves' ? 'bg-emerald-500 text-black' : 'border border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700'}`}
+            >
+              <CheckCircle2 className="h-4 w-4" /> Approved Leaves
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('pending-leaves')}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'pending-leaves' ? 'bg-emerald-500 text-black' : 'border border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700'}`}
+            >
+              <Hourglass className="h-4 w-4" /> Pending Leaves
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('requests')}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'requests' ? 'bg-emerald-500 text-black' : 'border border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700'}`}
+            >
+              <LayoutGrid className="h-4 w-4" /> Requests
+            </button>
           </div>
-          {departmentRequests.length === 0 ? (
-            <div className="p-6 text-sm text-slate-400">No requests submitted yet.</div>
-          ) : (
-            <div className="divide-y divide-slate-800">
-              {departmentRequests.map((request) => (
-                <div key={request.id} className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-white">{request.requestedDepartment}</p>
-                    <p className="mt-1 text-xs text-slate-500">{formatDateTime(request.requestedAt)}</p>
+        </div>
+
+        {activeTab === 'approved-leaves' ? (
+          <div className="p-6">
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><CheckCircle2 className="w-5 h-5 text-emerald-400" /> Approved Leaves</h3>
+            <p className="mt-1 text-sm text-slate-400">These leave requests have been approved by your approver.</p>
+            {approvedLeaves.length === 0 ? (
+              <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950 p-6 text-sm text-slate-400">No approved leaves yet.</div>
+            ) : (
+              <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {approvedLeaves.map((request) => (
+                  <div key={request.id} className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium text-white">{request.leaveType || 'Leave'}</p>
+                        <p className="mt-1 text-xs text-slate-400">{formatDateTime(request.requestedAt || request.createdAt || Date.now())}</p>
+                      </div>
+                      <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-300">Approved</span>
+                    </div>
+                    <div className="mt-4 space-y-2 text-sm text-slate-300">
+                      <p><span className="text-slate-500">Date range:</span> {request.startDate || request.start_date || '—'} to {request.endDate || request.end_date || '—'}</p>
+                      <p><span className="text-slate-500">Reason:</span> {request.reason || 'No reason provided'}</p>
+                      <p><span className="text-slate-500">Approved by:</span> {request.approvedBy || request.approverId || 'System'}</p>
+                    </div>
                   </div>
-                  <span className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-medium ${request.status === 'approved' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-amber-500/10 text-amber-300'}`}>
-                    {request.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white"><FileText className="w-5 h-5 text-amber-400" /> Status Snapshot</h3>
-            <div className="space-y-3 text-sm text-slate-400">
-              <p>Approved requests: <span className="text-white">{approvedRequests.length}</span></p>
-              <p>Pending requests: <span className="text-white">{pendingRequests.length}</span></p>
-              <p>Latest update: <span className="text-white">{departmentRequests[0] ? formatDateTime(departmentRequests[0].requestedAt) : 'No recent update'}</span></p>
-            </div>
+                ))}
+              </div>
+            )}
           </div>
+        ) : null}
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">What stays here</h3>
-            <div className="space-y-3 text-sm text-slate-400">
-              <p>Use this page for your requests and approval status.</p>
-            </div>
+        {activeTab === 'pending-leaves' ? (
+          <div className="p-6">
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><Hourglass className="w-5 h-5 text-amber-400" /> Pending Leaves</h3>
+            <p className="mt-1 text-sm text-slate-400">These requests are waiting for approval.</p>
+            {pendingLeaves.length === 0 ? (
+              <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950 p-6 text-sm text-slate-400">No pending leaves right now.</div>
+            ) : (
+              <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {pendingLeaves.map((request) => (
+                  <div key={request.id} className="rounded-2xl border border-slate-800 bg-slate-950 p-5">
+                    <p className="text-sm font-medium text-white">{request.leaveType || 'Leave'}</p>
+                    <p className="mt-1 text-xs text-slate-500">Requested {formatDateTime(request.requestedAt || request.createdAt || Date.now())}</p>
+                    <p className="mt-4 text-sm text-slate-300">{request.startDate || request.start_date || '—'} to {request.endDate || request.end_date || '—'}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+        ) : null}
+
+        {activeTab === 'requests' ? (
+          <div className="p-6">
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><BadgeCheck className="w-5 h-5 text-emerald-400" /> Request History</h3>
+            {departmentRequests.length === 0 ? (
+              <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950 p-6 text-sm text-slate-400">No department requests submitted yet.</div>
+            ) : (
+              <div className="mt-4 divide-y divide-slate-800 rounded-xl border border-slate-800 bg-slate-950">
+                {departmentRequests.map((request) => (
+                  <div key={request.id} className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-white">{request.requestedDepartment}</p>
+                      <p className="mt-1 text-xs text-slate-500">{formatDateTime(request.requestedAt)}</p>
+                    </div>
+                    <span className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-medium ${request.status === 'approved' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-amber-500/10 text-amber-300'}`}>
+                      {request.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
       </div>
     </div>
   )

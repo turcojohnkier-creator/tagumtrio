@@ -3,6 +3,7 @@ import { BadgeCheck, ClipboardList, ScanLine, Search } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import DepartmentScanModal from '../../components/leadman/DepartmentScanModal'
+import { useDialog } from '../../context/dialog-context'
 
 function asText(value) {
   return String(value || '').toLowerCase()
@@ -11,6 +12,7 @@ function asText(value) {
 export default function LeadmanDashboard() {
   const { user } = useAuth()
   const { departmentRequests, employees, getLeadmanAttendance, recordAttendanceScan, formatDateTime, selectedLeadmanDepartment, setSelectedLeadmanDepartment } = useQr()
+  const dialog = useDialog()
 
   const assignedDepartments = useMemo(() => {
     if (Array.isArray(user?.departments) && user.departments.length > 0) return user.departments
@@ -188,6 +190,10 @@ export default function LeadmanDashboard() {
           setSelectedEmployeeId(list[0].employeeId)
           list.forEach((payload) => recordAttendanceScan(payload))
           setScanModalOpen(false)
+          dialog.success({
+            title: 'Scan recorded',
+            message: 'The worker scan was submitted successfully.',
+          })
         }}
       />
     </div>

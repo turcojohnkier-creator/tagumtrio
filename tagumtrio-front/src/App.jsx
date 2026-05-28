@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { DialogProvider } from './context/dialog-context'
 import QRProvider from './context/qr-provider'
 import LeadmanDashboard from './pages/leadman/LeadmanDashboard'
 import LeadmanLayout from './components/layout/LeadmanLayout'
@@ -28,9 +29,10 @@ import Requests from './pages/converted/Requests'
 export default function App() {
   return (
     <AuthProvider>
-      <QRProvider>
-        <BrowserRouter>
-        <Routes>
+      <DialogProvider>
+        <QRProvider>
+          <BrowserRouter>
+          <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<Landing />} />
@@ -78,9 +80,10 @@ export default function App() {
           
 
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        </BrowserRouter>
-      </QRProvider>
+          </Routes>
+          </BrowserRouter>
+        </QRProvider>
+      </DialogProvider>
     </AuthProvider>
   )
 }

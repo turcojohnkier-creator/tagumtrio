@@ -4,8 +4,10 @@ import { Briefcase, Calendar as CalendarIcon, FileText, Megaphone, BadgeCheck, T
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import { DEPARTMENTS } from '../../constants/departments'
+import { useDialog } from '../../context/dialog-context'
 
 function FileLeaveButton({ user, onSubmit }) {
+  const dialog = useDialog()
   const [open, setOpen] = useState(false)
   const [type, setType] = useState('Sick')
   const [startDate, setStartDate] = useState('')
@@ -18,19 +20,28 @@ function FileLeaveButton({ user, onSubmit }) {
     if (!user) return
     setSubmitting(true)
     try {
-      onSubmit({
+      await Promise.resolve(onSubmit({
         employeeId: user.id,
         employeeName: user.name,
         leaveType: type,
         startDate,
         endDate,
         reason,
-      })
+      }))
       setOpen(false)
       setType('Sick')
       setStartDate('')
       setEndDate('')
       setReason('')
+      dialog.success({
+        title: 'Leave request submitted',
+        message: 'Your leave request was sent successfully and is waiting for approval.',
+      })
+    } catch (error) {
+      dialog.error({
+        title: 'Leave request failed',
+        message: error?.message || 'Unable to submit leave request right now.',
+      })
     } finally {
       setSubmitting(false)
     }
@@ -96,6 +107,7 @@ export default function EmployeeDashboard() {
     getEmployeeAttendance,
     submitLeaveRequest,
   } = useQr()
+  const dialog = useDialog()
 
   const [requestedDepartment, setRequestedDepartment] = useState(DEPARTMENTS[0])
   const [confirmRequestOpen, setConfirmRequestOpen] = useState(false)
@@ -125,8 +137,16 @@ export default function EmployeeDashboard() {
       })
       setRequestMessage(`Request sent for ${requestedDepartment}.`)
       setConfirmRequestOpen(false)
+      dialog.success({
+        title: 'Request sent',
+        message: `Department transfer request for ${requestedDepartment} was submitted successfully.`,
+      })
     } catch (error) {
       setRequestError(error?.message || 'Unable to send request right now.')
+      dialog.error({
+        title: 'Request failed',
+        message: error?.message || 'Unable to send request right now.',
+      })
     } finally {
       setRequestSubmitting(false)
     }

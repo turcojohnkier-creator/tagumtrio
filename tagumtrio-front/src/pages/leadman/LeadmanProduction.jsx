@@ -4,6 +4,7 @@ import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import { DEPARTMENTS } from '../../constants/departments'
 import DepartmentScanModal from '../../components/leadman/DepartmentScanModal'
+import { useDialog } from '../../context/dialog-context'
 
 function asText(value) {
   return String(value || '').toLowerCase()
@@ -13,6 +14,7 @@ const REPORT_STORAGE_KEY = 'triops-leadman-report-draft'
 
 export default function LeadmanProduction() {
   const { user } = useAuth()
+  const dialog = useDialog()
   const {
     departmentRequests,
     approveDepartmentRequest,
@@ -327,6 +329,10 @@ export default function LeadmanProduction() {
           list.forEach((payload) => recordAttendanceScan(payload))
           setScanModalOpen(false)
           setSelectedEmployee(null)
+          dialog.success({
+            title: 'Scan recorded',
+            message: 'The worker scan was submitted successfully.',
+          })
         }}
       />
     </div>

@@ -1,29 +1,60 @@
 import { FileText, CheckCircle, XCircle, Clock, ArrowRightLeft } from 'lucide-react'
 import { useQr } from '../../context/qr-context'
 import { useAuth } from '../../context/auth-context'
+import { useDialog } from '../../context/dialog-context'
 
 export default function Requests() {
   const { leaveRequests = [], approveLeaveRequest, rejectLeaveRequest, formatDateTime } = useQr()
   const { user } = useAuth()
+  const dialog = useDialog()
 
   const canApprove = user && ['leadman', 'production_incharge', 'hr', 'admin'].includes(user.role)
 
   async function handleApprove(req) {
+    const confirmed = await dialog.confirm({
+      title: 'Approve leave request?',
+      message: `Approve leave request for ${req.employeeName || req.employee_name}?`,
+      confirmText: 'Yes, approve',
+      cancelText: 'No',
+    })
+    if (!confirmed) return
+
     try {
       await approveLeaveRequest(req.id, user?.id)
+      dialog.success({
+        title: 'Request approved',
+        message: `Leave request for ${req.employeeName || req.employee_name} was approved successfully.`,
+      })
     } catch (e) {
       console.error(e)
-      alert('Failed to approve request')
+      dialog.error({
+        title: 'Approval failed',
+        message: 'Failed to approve request. Please try again.',
+      })
     }
   }
 
   async function handleReject(req) {
-    if (!confirm(`Reject leave request from ${req.employeeName || req.employee_name}?`)) return
+    const confirmed = await dialog.confirm({
+      title: 'Reject leave request?',
+      message: `Reject leave request from ${req.employeeName || req.employee_name}?`,
+      confirmText: 'Yes, reject',
+      cancelText: 'No',
+    })
+    if (!confirmed) return
+
     try {
       await rejectLeaveRequest(req.id, user?.id, 'Rejected by approver')
+      dialog.success({
+        title: 'Request rejected',
+        message: `Leave request from ${req.employeeName || req.employee_name} was rejected successfully.`,
+      })
     } catch (e) {
       console.error(e)
-      alert('Failed to reject request')
+      dialog.error({
+        title: 'Rejection failed',
+        message: 'Failed to reject request. Please try again.',
+      })
     }
   }
 

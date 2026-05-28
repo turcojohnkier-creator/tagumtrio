@@ -25,10 +25,14 @@ function buildSessionUser(record) {
   }
 
   if (record.role === 'leadman') {
-    const leadmanDepartments = DEPARTMENTS
+    const leadmanDepartments = Array.isArray(record.departments) && record.departments.length > 0
+      ? record.departments.filter((department) => DEPARTMENTS.includes(department))
+      : record.department && DEPARTMENTS.includes(record.department)
+        ? [record.department]
+        : []
     return {
       ...base,
-      department: record.department && DEPARTMENTS.includes(record.department) ? record.department : leadmanDepartments[0],
+      department: leadmanDepartments[0] || (record.department && DEPARTMENTS.includes(record.department) ? record.department : DEPARTMENTS[0]),
       departments: leadmanDepartments,
     }
   }
@@ -48,11 +52,16 @@ function loadSession() {
     const parsed = JSON.parse(raw)
     if (!parsed?.user?.id) return null
     setAuthToken(parsed.token || parsed.accessToken || '')
-    // Normalize legacy leadman saved sessions that only contained ['Sundry']
+    // Normalize legacy leadman saved sessions while preserving the assigned department list.
     if (parsed.user.role === 'leadman') {
-      parsed.user.departments = DEPARTMENTS
-      if (!DEPARTMENTS.includes(parsed.user.department)) {
-        parsed.user.department = DEPARTMENTS[0]
+      if (Array.isArray(parsed.user.departments)) {
+        parsed.user.departments = parsed.user.departments.filter((department) => DEPARTMENTS.includes(department))
+      }
+      if (!parsed.user.departments || parsed.user.departments.length === 0) {
+        parsed.user.departments = parsed.user.department && DEPARTMENTS.includes(parsed.user.department) ? [parsed.user.department] : []
+      }
+      if (!parsed.user.department && parsed.user.departments.length > 0) {
+        parsed.user.department = parsed.user.departments[0]
       }
     }
     return buildSessionUser(parsed.user)
@@ -125,7 +134,7 @@ export function AuthProvider({ children }) {
       name: normalizedRole.replace('_', ' ').replace(/\b\w/g, (s) => s.toUpperCase()),
       role: normalizedRole,
       department: normalizedRole === 'leadman' ? DEPARTMENTS[0] : undefined,
-      departments: normalizedRole === 'leadman' ? DEPARTMENTS : undefined,
+      departments: normalizedRole === 'leadman' ? [DEPARTMENTS[0]] : undefined,
       status: 'active',
       is_active: true,
     }

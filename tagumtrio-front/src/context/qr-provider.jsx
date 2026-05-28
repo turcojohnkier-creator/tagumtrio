@@ -121,9 +121,11 @@ function formatDateTime(dateValue) {
 }
 
 function getAssignedLeadmanDepartments(user) {
-  if (Array.isArray(user?.departments) && user.departments.length > 0) return user.departments
-  if (user?.department) return [user.department]
-  return [DEPARTMENTS[0]]
+  if (Array.isArray(user?.departments) && user.departments.length > 0) {
+    return user.departments.filter((department) => DEPARTMENTS.includes(department))
+  }
+  if (user?.department && DEPARTMENTS.includes(user.department)) return [user.department]
+  return []
 }
 
 export function QRProvider({ children }) {
@@ -221,6 +223,10 @@ export function QRProvider({ children }) {
     }
 
     const allowedDepartments = getAssignedLeadmanDepartments(user)
+    if (allowedDepartments.length === 0) {
+      setSelectedLeadmanDepartment('')
+      return
+    }
     const storageKey = `${LEADMAN_DEPARTMENT_KEY_PREFIX}${user.id}`
     const savedDepartment = typeof window !== 'undefined' ? window.localStorage.getItem(storageKey) : ''
     const nextDepartment = allowedDepartments.includes(savedDepartment) ? savedDepartment : allowedDepartments[0]

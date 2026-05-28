@@ -19,6 +19,7 @@ export default function LeadmanProduction() {
     departmentRequests,
     approveDepartmentRequest,
     employees,
+    getLeadmanDeployedEmployees,
     getLeadmanDepartmentRequests,
     getLeadmanAttendance,
     getEmployeeAttendance,
@@ -71,8 +72,7 @@ export default function LeadmanProduction() {
   }, [departmentRequests, selectedDepartment])
 
   const deployedEmployees = useMemo(() => {
-    return departmentRequests
-      .filter((request) => request.status === 'approved' && request.requestedDepartment === selectedDepartment)
+    return getLeadmanDeployedEmployees(selectedDepartment)
       .map((request) => ({
         employeeId: request.employeeId,
         employeeName: request.employeeName,
@@ -81,7 +81,7 @@ export default function LeadmanProduction() {
       }))
       .filter((employee) => employee.employeeId && employee.employeeName)
       .filter((employee) => asText(employee.employeeName).includes(asText(query)) || asText(employee.employeeId).includes(asText(query)))
-  }, [departmentRequests, query, selectedDepartment])
+  }, [getLeadmanDeployedEmployees, query, selectedDepartment])
 
   const rosterEmployees = useMemo(() => {
     return (Array.isArray(employees) ? employees : [])

@@ -61,9 +61,37 @@ function toEmployeeRecord(employee) {
   }
 }
 
+function normalizeKeyValue(value) {
+  return String(value ?? '').trim().toLowerCase()
+}
+
+function dedupeBy(items = [], keyFn, sortFn = null) {
+  const list = Array.isArray(items) ? items.slice() : []
+  if (typeof sortFn === 'function') {
+    list.sort(sortFn)
+  }
+
+  const seen = new Set()
+  const result = []
+
+  for (const item of list) {
+    const key = keyFn(item)
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    result.push(item)
+  }
+
+  return result
+}
+
 function mergeEmployees(remoteEmployees = []) {
   if (Array.isArray(remoteEmployees) && remoteEmployees.length > 0) {
-    return remoteEmployees.map(toEmployeeRecord).filter((employee) => employee.employeeId)
+    const normalized = remoteEmployees.map(toEmployeeRecord).filter((employee) => employee.employeeId)
+    return dedupeBy(
+      normalized,
+      (employee) => normalizeKeyValue(employee.employeeId),
+      (left, right) => Number(right.employeeId || 0) - Number(left.employeeId || 0)
+    )
   }
 
   // No demo fallback: return an empty list when server data is unavailable.
@@ -556,11 +584,19 @@ export function QRProvider({ children }) {
   }
 
   function getEmployeeDepartmentRequests(employeeId) {
-    return departmentRequests.filter((request) => request.employeeId === employeeId)
+    return dedupeBy(
+      departmentRequests.filter((request) => String(request.employeeId) === String(employeeId)),
+      (request) => String(request.id || `${request.employeeId}-${request.requestedDepartment}-${request.status}-${request.requestedAt}`),
+      (left, right) => new Date(right.requestedAt || right.createdAt || 0) - new Date(left.requestedAt || left.createdAt || 0)
+    )
   }
 
   function getEmployeeLeaveRequests(employeeId) {
-    return leaveRequests.filter((r) => r.employeeId === employeeId)
+    return dedupeBy(
+      leaveRequests.filter((request) => String(request.employeeId) === String(employeeId)),
+      (request) => String(request.id || `${request.employeeId}-${request.leaveType}-${request.requestedAt}`),
+      (left, right) => new Date(right.requestedAt || right.createdAt || 0) - new Date(left.requestedAt || left.createdAt || 0)
+    )
   }
 
   async function approveLeaveRequest(id, approverId, note) {
@@ -620,7 +656,31 @@ export function QRProvider({ children }) {
   }
 
   function getLeadmanDepartmentRequests(department) {
-    return departmentRequests.filter((request) => request.status === 'pending' && request.requestedDepartment === department)
+    return dedupeBy(
+      departmentRequests.filter((request) => request.status === 'pending' && request.requestedDepartment === department),
+      (request) => String(request.id || `${request.employeeId}-${request.requestedDepartment}-${request.status}`),
+      (left, right) => new Date(right.requestedAt || right.createdAt || 0) - new Date(left.requestedAt || left.createdAt || 0)
+    )
+  }
+  
+  function getLeadmanDeployedEmployees(department) {
+    const approvedRequests = departmentRequests.filter((request) => request.status === 'approved' && request.requestedDepartment === department)
+    const latestByEmployee = new Map()
+
+    approvedRequests.forEach((request) => {
+      const key = String(request.employeeId || request.employeeName || request.id || '')
+      if (!key) return
+
+      const current = latestByEmployee.get(key)
+      const currentDate = new Date(current?.leadmanAt || current?.requestedAt || 0).getTime()
+      const nextDate = new Date(request.leadmanAt || request.requestedAt || 0).getTime()
+
+      if (!current || nextDate >= currentDate) {
+        latestByEmployee.set(key, request)
+      }
+    })
+
+    return Array.from(latestByEmployee.values()).sort((left, right) => new Date(right.leadmanAt || right.requestedAt || 0) - new Date(left.leadmanAt || left.requestedAt || 0))
   }
 
   function resolveEmployeeRecord(employeeId, employeeName) {
@@ -668,19 +728,35 @@ export function QRProvider({ children }) {
   }
 
   function getEmployeeAttendance(employeeId) {
-    return attendanceRecords.filter((record) => record.employeeId === employeeId)
+    return dedupeBy(
+      attendanceRecords.filter((record) => String(record.employeeId) === String(employeeId)),
+      (record) => String(record.id || `${record.employeeId}-${record.department}-${record.scannedAt}-${record.status}`),
+      (left, right) => new Date(right.scannedAt || right.leadmanVerifiedAt || right.headVerifiedAt || 0) - new Date(left.scannedAt || left.leadmanVerifiedAt || left.headVerifiedAt || 0)
+    )
   }
 
   function getLeadmanAttendance(department) {
-    return attendanceRecords.filter((record) => record.department === department && record.status !== 'head_verified')
+    return dedupeBy(
+      attendanceRecords.filter((record) => record.department === department && record.status !== 'head_verified'),
+      (record) => String(record.id || `${record.employeeId}-${record.department}-${record.scannedAt}-${record.status}`),
+      (left, right) => new Date(right.scannedAt || right.leadmanVerifiedAt || right.headVerifiedAt || 0) - new Date(left.scannedAt || left.leadmanVerifiedAt || left.headVerifiedAt || 0)
+    )
   }
 
   function getHeadPendingAttendance() {
-    return attendanceRecords.filter((record) => record.status === 'leadman_verified')
+    return dedupeBy(
+      attendanceRecords.filter((record) => record.status === 'leadman_verified'),
+      (record) => String(record.id || `${record.employeeId}-${record.department}-${record.scannedAt}-${record.status}`),
+      (left, right) => new Date(right.scannedAt || right.leadmanVerifiedAt || 0) - new Date(left.scannedAt || left.leadmanVerifiedAt || 0)
+    )
   }
 
   function getFinanceAttendance() {
-    return flattenDailyReportEntries()
+    return dedupeBy(
+      flattenDailyReportEntries(),
+      (record) => String(record.id || `${record.reportId || ''}-${record.employeeId || ''}-${record.department || ''}-${record.scannedAt || ''}`),
+      (left, right) => new Date(right.scannedAt || right.reportDate || 0) - new Date(left.scannedAt || left.reportDate || 0)
+    )
   }
 
   function getFinanceRecords() {
@@ -964,6 +1040,7 @@ export function QRProvider({ children }) {
         getEmployeeLeaveRequests,
         getLeadmanDepartmentRequests,
         getEmployeeAttendance,
+          getLeadmanDeployedEmployees,
         getLeadmanAttendance,
         getHeadPendingAttendance,
         getFinanceAttendance,

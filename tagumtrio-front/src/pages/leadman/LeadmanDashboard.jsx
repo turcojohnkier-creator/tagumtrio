@@ -11,7 +11,7 @@ function asText(value) {
 
 export default function LeadmanDashboard() {
   const { user } = useAuth()
-  const { departmentRequests, employees, getLeadmanAttendance, recordAttendanceScan, formatDateTime, selectedLeadmanDepartment, setSelectedLeadmanDepartment } = useQr()
+  const { departmentRequests, employees, getLeadmanDeployedEmployees, getLeadmanAttendance, recordAttendanceScan, formatDateTime, selectedLeadmanDepartment, setSelectedLeadmanDepartment } = useQr()
   const dialog = useDialog()
 
   const assignedDepartments = useMemo(() => {
@@ -27,8 +27,7 @@ export default function LeadmanDashboard() {
   const selectedDepartment = selectedLeadmanDepartment || assignedDepartments[0] || ''
 
   const deployedEmployees = useMemo(() => {
-    return departmentRequests
-      .filter((request) => request.status === 'approved' && request.requestedDepartment === selectedDepartment)
+    return getLeadmanDeployedEmployees(selectedDepartment)
       .map((request) => ({
         employeeId: request.employeeId,
         employeeName: request.employeeName,
@@ -37,7 +36,7 @@ export default function LeadmanDashboard() {
       }))
       .filter((employee) => employee.employeeId && employee.employeeName)
       .filter((employee) => asText(employee.employeeName).includes(asText(query)) || asText(employee.employeeId).includes(asText(query)))
-  }, [departmentRequests, query, selectedDepartment])
+  }, [getLeadmanDeployedEmployees, query, selectedDepartment])
 
   const fallbackDepartmentEmployees = useMemo(() => {
     return (Array.isArray(employees) ? employees : [])

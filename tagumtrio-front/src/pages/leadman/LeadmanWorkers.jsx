@@ -5,7 +5,7 @@ import { useQr } from '../../context/qr-context'
 
 export default function LeadmanWorkers() {
   const { user } = useAuth()
-  const { departmentRequests, getEmployeeAttendance, formatDateTime, selectedLeadmanDepartment, setSelectedLeadmanDepartment } = useQr()
+  const { getLeadmanDeployedEmployees, getEmployeeAttendance, formatDateTime, selectedLeadmanDepartment, setSelectedLeadmanDepartment } = useQr()
 
   const assignedDepartments = useMemo(() => {
     if (Array.isArray(user?.departments) && user.departments.length > 0) return user.departments
@@ -17,8 +17,7 @@ export default function LeadmanWorkers() {
   const [query, setQuery] = useState('')
 
   const deployedEmployees = useMemo(() => {
-    return departmentRequests
-      .filter((request) => request.status === 'approved' && request.requestedDepartment === selectedDepartment)
+    return getLeadmanDeployedEmployees(selectedDepartment)
       .map((request) => ({
         employeeId: request.employeeId,
         employeeName: request.employeeName,
@@ -26,7 +25,7 @@ export default function LeadmanWorkers() {
         approvedAt: request.leadmanAt,
       }))
       .filter((employee) => employee.employeeName.toLowerCase().includes(query.toLowerCase()) || employee.employeeId.toLowerCase().includes(query.toLowerCase()))
-  }, [departmentRequests, query, selectedDepartment])
+  }, [getLeadmanDeployedEmployees, query, selectedDepartment])
 
   return (
     <div className="space-y-6">

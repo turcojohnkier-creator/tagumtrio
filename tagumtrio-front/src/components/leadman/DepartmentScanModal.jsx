@@ -310,15 +310,30 @@ export default function DepartmentScanModal({
                   <label className="text-sm text-slate-300">{field.label}</label>
                   <input
                     value={values[field.key] || ''}
-                    onChange={(e) => handleChange(field.key, e.target.value)}
-                    type={field.type}
-                    placeholder={field.placeholder || field.label}
-                    className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none"
-                  />
-                </div>
-              ))}
-          </div>
-
+                      {/* Manual-only form: removed scan toggle per UX request */}
+                      <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-950 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <label className="text-sm text-slate-300">Manual employee entries</label>
+                            <p className="text-xs text-slate-500">Type the employee details directly for departments without QR scanning.</p>
+                          </div>
+                          <button type="button" onClick={addManualEmployee} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
+                            Add employee
+                          </button>
+                        </div>
+                        <div className="space-y-3">
+                          {manualEmployees.map((employee, rowIndex) => (
+                            <div key={`${rowIndex}-${employee.employeeId || 'manual'}`} className="grid gap-3 md:grid-cols-[1fr_1.2fr_1fr_auto]">
+                              <input value={employee.employeeId} onChange={(e) => updateManualEmployee(rowIndex, 'employeeId', e.target.value)} placeholder="Employee No." className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
+                              <input value={employee.employeeName} onChange={(e) => updateManualEmployee(rowIndex, 'employeeName', e.target.value)} placeholder="Employee Name" className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
+                              <input value={employee.department} onChange={(e) => updateManualEmployee(rowIndex, 'department', e.target.value)} placeholder="Department" className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
+                              <button type="button" onClick={() => removeManualEmployee(rowIndex)} className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-slate-300 transition-colors hover:bg-slate-800">
+                                Remove
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
           <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Preview</p>
             <p className="mt-2 text-slate-300">
@@ -338,16 +353,7 @@ export default function DepartmentScanModal({
           </div>
         </form>
 
-        {entryMode === 'scan' ? (
-          <EmployeePickerModal
-            open={showEmployeeTable}
-            department={department}
-            employeeOptions={employeeOptions}
-            selectedEmployeeIds={selectedEmployeeIds}
-            onToggleEmployee={toggleEmployee}
-            onClose={() => setShowEmployeeTable(false)}
-          />
-        ) : null}
+        {/* Employee picker removed for manual-only UX */}
       </div>
     </Portal>
   )

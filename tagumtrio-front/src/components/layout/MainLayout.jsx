@@ -1,6 +1,6 @@
 import { Outlet, NavLink, Navigate, useNavigate } from 'react-router-dom'
 import PageTransition from '../ui/PageTransition'
-import { Bell, LogOut, QrCode, X, Users, Factory, Banknote, FileSpreadsheet, LayoutDashboard } from 'lucide-react'
+import { Bell, LogOut, QrCode, X, Users, Factory, FileSpreadsheet, LayoutDashboard, CalendarDays } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import { useMemo, useState } from 'react'
@@ -12,7 +12,9 @@ function cn(...inputs) {
 
 const allNavItems = [
   { name: 'Production', href: '/app/production', icon: Factory, roles: ['hr', 'production_incharge', 'leadman'] },
-  { name: 'Payroll', href: '/app/payroll', icon: Banknote, roles: ['hr', 'finance', 'production_incharge'] },
+  { name: 'Finance Home', href: '/app/payroll', icon: LayoutDashboard, roles: ['finance'] },
+  { name: 'Daily Production', href: '/app/payroll/production', icon: CalendarDays, roles: ['finance'] },
+  { name: 'Department Employees', href: '/app/payroll/employees', icon: Users, roles: ['finance'] },
   { name: 'Employees', href: '/app/employees', icon: Users, roles: ['hr', 'production_incharge'] },
   { name: 'Requests', href: '/app/requests', icon: FileSpreadsheet, roles: ['hr', 'production_incharge'] },
 ]

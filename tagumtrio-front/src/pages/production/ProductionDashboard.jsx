@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ClipboardList, Filter, Search, X } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { fetchDailyReportsApi } from '../../lib/api'
 import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from '../../components/reports/report-entry-utils'
 
@@ -248,18 +247,6 @@ export default function ProductionDashboard() {
           <p className="mt-1 text-slate-400">Read and review submitted reports from leadman and the employee workflow.</p>
         </div>
         <div className="text-sm text-slate-400">Production In-Charge can view all submitted reports, inspect the employee table, and confirm report details.</div>
-      </div>
-
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-black/10">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-white">Need consolidated totals?</h3>
-            <p className="text-sm text-slate-400">Open the consolidated reports page for daily production summary and salary totals.</p>
-          </div>
-          <Link to="/app/production/consolidated" className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-black hover:bg-emerald-400">
-            <ClipboardList className="h-4 w-4" /> Open consolidated page
-          </Link>
-        </div>
       </div>
 
       <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4">

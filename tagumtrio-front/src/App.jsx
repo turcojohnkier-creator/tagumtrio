@@ -25,7 +25,7 @@ const FinanceDepartmentEmployees = lazy(() => import('./pages/finance/FinanceDep
 const EmployeeDirectory = lazy(() => import('./pages/HR/EmployeeDirectory'))
 const HRDashboard = lazy(() => import('./pages/HR/HRDashboard'))
 const EmployeeManagement = lazy(() => import('./pages/HR/EmployeeManagement'))
-const HRAnnouncements = lazy(() => import('./pages/hr/Announcements'))
+const HRAnnouncements = lazy(() => import('./pages/HR/Announcements'))
 const GMDashboard = lazy(() => import('./pages/gm/GMDashboard'))
 const EmployeeDashboard = lazy(() => import('./pages/employee/EmployeeDashboard'))
 const EmployeeAnnouncements = lazy(() => import('./pages/employee/Announcements'))

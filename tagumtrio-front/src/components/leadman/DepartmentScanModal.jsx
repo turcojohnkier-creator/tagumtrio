@@ -273,11 +273,6 @@ export default function DepartmentScanModal({
                   />
                 </div>
               ))}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
           <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Preview</p>
             <p className="mt-2 text-slate-300">

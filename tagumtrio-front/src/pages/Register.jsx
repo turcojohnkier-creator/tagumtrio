@@ -9,6 +9,7 @@ const ROLE_OPTIONS = [
   { key: 'employee', label: 'Employee' },
   { key: 'leadman', label: 'Leadman' },
   { key: 'production_incharge', label: 'Production In-Charge' },
+  { key: 'gm', label: 'GM / General Manager' },
   { key: 'finance', label: 'Finance' },
   { key: 'hr', label: 'HR / Admin' },
 ]

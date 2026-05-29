@@ -5,6 +5,7 @@ import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import { DEPARTMENTS } from '../../constants/departments'
 import { useDialog } from '../../context/dialog-context'
+import AnnouncementPost from '../../components/ui/AnnouncementPost'
 
 function FileLeaveButton({ user, onSubmit }) {
   const dialog = useDialog()
@@ -95,6 +96,12 @@ function FileLeaveButton({ user, onSubmit }) {
   )
 }
 
+function toDateKey(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toISOString().slice(0, 10)
+}
+
 export default function EmployeeDashboard() {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -103,9 +110,12 @@ export default function EmployeeDashboard() {
     getEmployeeDepartment,
     getEmployeeDepartmentRequests,
     getEmployeeTotals,
+    getFinanceRecords,
     formatDateTime,
     getEmployeeAttendance,
     submitLeaveRequest,
+    announcements = [],
+    activeReminders = [],
   } = useQr()
   const dialog = useDialog()
 
@@ -118,6 +128,15 @@ export default function EmployeeDashboard() {
   const departmentRequests = getEmployeeDepartmentRequests(user?.id)
   const totals = getEmployeeTotals(user?.id)
   const attendance = getEmployeeAttendance(user?.id)
+  const todayKey = new Date().toISOString().slice(0, 10)
+  const allWorkRecords = typeof getFinanceRecords === 'function' ? getFinanceRecords() : []
+  const employeeWorkRecords = allWorkRecords.filter((record) => String(record.employeeId) === String(user?.id))
+  const departmentWorkRecords = employeeWorkRecords.filter((record) => String(record.department || '').trim().toLowerCase() === String(currentDepartment || '').trim().toLowerCase())
+  const todaysWorkRecords = departmentWorkRecords.filter((record) => toDateKey(record.scannedAt || record.reportDate || record.createdAt) === todayKey)
+  const assignedSection = currentDepartment || departmentWorkRecords[0]?.department || employeeWorkRecords[0]?.department || user?.department || 'Unassigned'
+  const workSummaryRecord = todaysWorkRecords[0] || departmentWorkRecords[0] || employeeWorkRecords[0] || null
+  const todaysHours = todaysWorkRecords.reduce((sum, record) => sum + Number(record.loggedHours || 0), 0)
+  const todaysAmount = todaysWorkRecords.reduce((sum, record) => sum + Number(record.amount || 0), 0)
   const latestRecord = totals.latestRecord
   const approvedRequests = departmentRequests.filter((request) => request.status === 'approved')
   const pendingRequests = departmentRequests.filter((request) => request.status === 'pending')
@@ -154,6 +173,15 @@ export default function EmployeeDashboard() {
 
   return (
     <div className="space-y-6">
+      {Array.isArray(activeReminders) && activeReminders.length > 0 ? (
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/8 p-4">
+          {activeReminders.map((r, idx) => (
+            <div key={idx} className="text-sm text-amber-200">
+              {r.type === 'announcement' ? `Announcement: ${r.announcement.title}` : r.type === 'shift' ? `Upcoming shift: ${r.schedule.department} ${r.schedule.employeeId ? `• ${r.schedule.employeeId}` : ''} at ${r.schedule.startAt}` : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-transparent to-cyan-500/10 pointer-events-none"></div>
         <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
@@ -171,6 +199,52 @@ export default function EmployeeDashboard() {
           <div className="flex flex-col items-start gap-3 text-sm text-slate-300 max-w-md">
             
           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2"><Briefcase className="w-5 h-5 text-emerald-400" /> Assigned Section</h3>
+          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 space-y-2">
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Department Today</p>
+            <p className="text-2xl font-bold text-white">{assignedSection}</p>
+            <p className="text-sm text-slate-400">This is the section tied to your current department for today’s work flow.</p>
+          </div>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2"><FileText className="w-5 h-5 text-blue-400" /> Daily Work Details</h3>
+          {workSummaryRecord ? (
+            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 space-y-3">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <span>{formatDateTime(workSummaryRecord.scannedAt || workSummaryRecord.reportDate || workSummaryRecord.createdAt || new Date().toISOString())}</span>
+                <span>•</span>
+                <span>{workSummaryRecord.department || assignedSection}</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-lg border border-slate-800 bg-slate-900 p-3">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Entries Today</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{todaysWorkRecords.length}</p>
+                </div>
+                <div className="rounded-lg border border-slate-800 bg-slate-900 p-3">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Hours</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{todaysHours.toLocaleString()}</p>
+                </div>
+                <div className="rounded-lg border border-slate-800 bg-slate-900 p-3">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Amount</p>
+                  <p className="mt-1 text-lg font-semibold text-white">₱{todaysAmount.toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="text-sm text-slate-300">
+                <p className="font-medium text-slate-200">{workSummaryRecord.summary || workSummaryRecord.qrSummary || workSummaryRecord.notes || 'No work summary recorded yet.'}</p>
+                <p className="mt-2 text-slate-400">{workSummaryRecord.product || workSummaryRecord.productName || workSummaryRecord.section || workSummaryRecord.department || assignedSection}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
+              No daily work details are available yet for your department.
+            </div>
+          )}
         </div>
       </div>
 
@@ -207,6 +281,15 @@ export default function EmployeeDashboard() {
           </form>
           {requestMessage ? <p className="mt-3 text-sm text-emerald-400">{requestMessage}</p> : null}
           {requestError ? <p className="mt-3 text-sm text-rose-400">{requestError}</p> : null}
+
+          {Array.isArray(announcements) && announcements.length > 0 ? (
+            <div className="mt-4 space-y-3">
+              <h4 className="text-sm font-semibold text-white">Broadcasts</h4>
+              {announcements.slice(0, 2).map((announcement) => (
+                <AnnouncementPost key={announcement.id} announcement={announcement} compact />
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div className="space-y-6">

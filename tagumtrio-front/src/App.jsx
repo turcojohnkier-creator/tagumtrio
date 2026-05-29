@@ -18,11 +18,18 @@ const LeadmanDailyReport = lazy(() => import('./pages/leadman/LeadmanDailyReport
 const LeadmanHistory = lazy(() => import('./pages/leadman/LeadmanHistory'))
 const ProductionDashboard = lazy(() => import('./pages/production/ProductionDashboard'))
 const ProductionConsolidatedReports = lazy(() => import('./pages/production/ProductionConsolidatedReports'))
+const ProductionOversight = lazy(() => import('./pages/production/ProductionOversight'))
 const FinanceHome = lazy(() => import('./pages/finance/FinanceHome'))
 const FinanceProductionReports = lazy(() => import('./pages/finance/FinanceProductionReports'))
 const FinanceDepartmentEmployees = lazy(() => import('./pages/finance/FinanceDepartmentEmployees'))
 const EmployeeDirectory = lazy(() => import('./pages/HR/EmployeeDirectory'))
+const HRDashboard = lazy(() => import('./pages/HR/HRDashboard'))
+const EmployeeManagement = lazy(() => import('./pages/HR/EmployeeManagement'))
+const HRAnnouncements = lazy(() => import('./pages/hr/Announcements'))
+const GMDashboard = lazy(() => import('./pages/gm/GMDashboard'))
 const EmployeeDashboard = lazy(() => import('./pages/employee/EmployeeDashboard'))
+const EmployeeAnnouncements = lazy(() => import('./pages/employee/Announcements'))
+const EmployeeWorkDetails = lazy(() => import('./pages/employee/Schedules'))
 const MyAttendance = lazy(() => import('./pages/employee/MyAttendance'))
 const MyPayslips = lazy(() => import('./pages/employee/MyPayslips'))
 const ViewPayslip = lazy(() => import('./pages/employee/ViewPayslip'))
@@ -46,6 +53,8 @@ export default function App() {
 
                 <Route path="/app/portal/*" element={<EmployeeLayout />}>
                   <Route index element={<EmployeeDashboard />} />
+                  <Route path="announcements" element={<EmployeeAnnouncements />} />
+                  <Route path="work" element={<EmployeeWorkDetails />} />
                   <Route path="leaves" element={<MyAttendance />} />
                   <Route path="payslips" element={<MyPayslips />} />
                   <Route path="payslips/:id" element={<ViewPayslip />} />
@@ -54,8 +63,10 @@ export default function App() {
 
                 <Route path="/app/*" element={<MainLayout />}>
                   <Route index element={<RoleDashboard />} />
+                  <Route path="dashboard" element={<RoleDashboard />} />
 
                   <Route path="production" element={<ProductionDashboard />} />
+                  <Route path="production/oversight" element={<ProductionOversight />} />
                   <Route path="production/consolidated" element={<ProductionConsolidatedReports />} />
 
                   <Route path="payroll" element={<FinanceHome />} />
@@ -63,6 +74,10 @@ export default function App() {
                   <Route path="payroll/employees" element={<FinanceDepartmentEmployees />} />
 
                   <Route path="employees" element={<EmployeeDirectory />} />
+                  <Route path="hr" element={<HRDashboard />} />
+                  <Route path="hr/employees" element={<EmployeeManagement />} />
+                  <Route path="hr/announcements" element={<HRAnnouncements />} />
+                  <Route path="gm" element={<GMDashboard />} />
                   <Route path="requests" element={<Requests />} />
                   <Route path="*" element={<Navigate to="" replace />} />
                 </Route>

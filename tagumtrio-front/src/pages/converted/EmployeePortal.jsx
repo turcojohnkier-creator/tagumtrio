@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import Portal from '../../components/ui/Portal'
+import AnnouncementPost from '../../components/ui/AnnouncementPost'
 
 export default function EmployeePortal() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { submitScan } = useQr()
+  const { submitScan, announcements = [] } = useQr()
 
   const [showScanner, setShowScanner] = useState(false)
   const [product, setProduct] = useState('')
@@ -79,11 +80,16 @@ export default function EmployeePortal() {
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2"><Megaphone className="w-5 h-5 text-blue-400"/> Official Announcements</h3>
             <div className="space-y-4">
-              <div className="border-l-2 border-blue-500 pl-4 py-1">
-                <p className="text-xs text-slate-500 mb-1">May 28, 2026 • Management</p>
-                <h4 className="text-slate-200 font-medium">New Safety Protocol in Drying Section</h4>
-                <p className="text-sm text-slate-400 mt-1">Please review the updated safety guidelines posted near the main dryers.</p>
-              </div>
+              {Array.isArray(announcements) && announcements.length > 0 ? (
+                announcements.map((a) => (
+                  <AnnouncementPost key={a.id} announcement={a} />
+                ))
+              ) : (
+                <div className="rounded-2xl border border-slate-800 bg-slate-950 p-6">
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">No announcements</p>
+                  <h4 className="mt-2 text-slate-200 font-medium">No current announcements</h4>
+                </div>
+              )}
             </div>
           </div>
 

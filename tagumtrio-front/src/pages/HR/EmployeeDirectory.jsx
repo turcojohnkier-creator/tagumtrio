@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { fetchEmployeesApi } from '../../lib/api'
 import { DEPARTMENTS } from '../../constants/departments'
+import EmployeeDetailModal from '../../components/employee/EmployeeDetailModal'
 
 export default function EmployeeDirectory() {
 	const [employees, setEmployees] = useState([])
@@ -58,6 +59,8 @@ export default function EmployeeDirectory() {
 		return ['All Departments', ...DEPARTMENTS]
 	}, [employees])
 
+	const [selectedEmployee, setSelectedEmployee] = useState(null)
+
 	return (
 		<div className="space-y-6">
 			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -102,7 +105,7 @@ export default function EmployeeDirectory() {
 					const dept = emp.department || emp.dept || emp.departmentName || '—'
 					const status = emp.status || (emp.is_active === false ? 'Inactive' : 'Active')
 					return (
-						<div key={id || name} className="bg-slate-900 border border-slate-800 rounded-xl p-4 xl:p-5 hover:border-slate-700 transition-colors group cursor-pointer">
+						<div key={id || name} onClick={() => setSelectedEmployee(emp)} className="bg-slate-900 border border-slate-800 rounded-xl p-4 xl:p-5 hover:border-slate-700 transition-colors group cursor-pointer">
 							<div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
 								<div className="flex items-center gap-4 min-w-0 xl:flex-1">
 									<div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-lg font-bold text-slate-300 border border-slate-700 group-hover:border-emerald-500/50 transition-colors shrink-0">
@@ -132,6 +135,10 @@ export default function EmployeeDirectory() {
 				<div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-6 text-sm text-slate-400">
 					No employees matched your filters.
 				</div>
+			)}
+
+			{selectedEmployee && (
+				<EmployeeDetailModal employee={selectedEmployee} onClose={() => setSelectedEmployee(null)} />
 			)}
 		</div>
 	)

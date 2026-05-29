@@ -21,6 +21,13 @@ import {
   headVerifyAttendanceApi,
   leadmanVerifyAttendanceApi,
   submitDailyReportApi,
+  fetchAnnouncementsApi,
+  createAnnouncementApi,
+  deleteAnnouncementApi,
+  fetchSchedulesApi,
+  createScheduleApi,
+  updateScheduleApi,
+  deleteScheduleApi,
   releasePayrollApi,
   hasAuthToken,
 } from '../lib/api'
@@ -104,6 +111,8 @@ const DEFAULT_STATE = {
   attendanceRecords: [],
   payments: [],
   leaveRequests: [],
+  announcements: [],
+  schedules: [],
 }
 
 function loadState() {
@@ -116,6 +125,9 @@ function loadState() {
       departmentRequests: Array.isArray(parsed.departmentRequests) ? parsed.departmentRequests : DEFAULT_STATE.departmentRequests,
       attendanceRecords: Array.isArray(parsed.attendanceRecords) ? parsed.attendanceRecords : DEFAULT_STATE.attendanceRecords,
       payments: Array.isArray(parsed.payments) ? parsed.payments : DEFAULT_STATE.payments,
+      leaveRequests: Array.isArray(parsed.leaveRequests) ? parsed.leaveRequests : DEFAULT_STATE.leaveRequests,
+      announcements: Array.isArray(parsed.announcements) ? parsed.announcements : DEFAULT_STATE.announcements,
+      schedules: Array.isArray(parsed.schedules) ? parsed.schedules : DEFAULT_STATE.schedules,
     }
   } catch {
     return DEFAULT_STATE
@@ -163,6 +175,8 @@ export function QRProvider({ children }) {
   const [attendanceRecords, setAttendanceRecords] = useState(initialState.attendanceRecords)
   const [dailyReportDrafts, setDailyReportDrafts] = useState({})
   const [payments, setPayments] = useState(initialState.payments || [])
+  const [announcements, setAnnouncements] = useState(initialState.announcements || [])
+  const [schedules, setSchedules] = useState(initialState.schedules || [])
   const [leaveRequests, setLeaveRequests] = useState(initialState.leaveRequests || [])
   const [syncPending, setSyncPending] = useState(0)
   const [employees, setEmployees] = useState([])
@@ -234,6 +248,12 @@ export function QRProvider({ children }) {
         setLeaveRequests(remoteLeaveRequests.value)
       }
 
+      try {
+        const [remoteAnnouncements2, remoteSchedules2] = await Promise.allSettled([fetchAnnouncementsApi(), fetchSchedulesApi()])
+        if (remoteAnnouncements2.status === 'fulfilled' && Array.isArray(remoteAnnouncements2.value)) setAnnouncements(remoteAnnouncements2.value)
+        if (remoteSchedules2.status === 'fulfilled' && Array.isArray(remoteSchedules2.value)) setSchedules(remoteSchedules2.value)
+      } catch (e) { /* ignore */ }
+
       // Keep the existing state when a fetch fails so live request data does not disappear
       // behind the demo defaults during a partial backend outage or auth hiccup.
     }
@@ -241,6 +261,31 @@ export function QRProvider({ children }) {
     loadRemoteData()
     return () => {
       cancelled = true
+    }
+  }, [user?.id])
+
+  // Poll announcements and schedules for updates every 10s
+  useEffect(() => {
+    if (!user) return
+    if (!hasAuthToken()) return
+    let cancelled = false
+    let interval
+
+    async function refreshAnnouncementsAndSchedules() {
+      try {
+        const [annResp, schResp] = await Promise.allSettled([fetchAnnouncementsApi(), fetchSchedulesApi()])
+        if (!cancelled) {
+          if (annResp.status === 'fulfilled' && Array.isArray(annResp.value)) setAnnouncements(annResp.value)
+          if (schResp.status === 'fulfilled' && Array.isArray(schResp.value)) setSchedules(schResp.value)
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    refreshAnnouncementsAndSchedules()
+    interval = setInterval(refreshAnnouncementsAndSchedules, 10000)
+    return () => {
+      cancelled = true
+      if (interval) clearInterval(interval)
     }
   }, [user?.id])
 
@@ -358,7 +403,7 @@ export function QRProvider({ children }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ departmentRequests, attendanceRecords, payments, leaveRequests }))
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ departmentRequests, attendanceRecords, payments, leaveRequests, announcements, schedules }))
   }, [departmentRequests, attendanceRecords, payments, leaveRequests])
 
   async function submitDepartmentRequest(record) {
@@ -654,6 +699,96 @@ export function QRProvider({ children }) {
       throw error
     }
   }
+
+  // Announcements management
+  async function createAnnouncement(record) {
+    const tempId = `ANN-${Date.now()}`
+    const payload = { id: tempId, ...record, audience: record.audience || 'All employees', visibility: record.visibility || 'all_employees', createdAt: new Date().toISOString() }
+    setAnnouncements((cur) => [payload, ...cur])
+    try {
+      const created = await createAnnouncementApi({ title: record.title, body: record.body, pinned: record.pinned, audience: payload.audience, visibility: payload.visibility })
+      setAnnouncements((cur) => cur.map((a) => (a.id === tempId ? created : a)))
+      return created
+    } catch (e) {
+      setAnnouncements((cur) => cur.filter((a) => a.id !== tempId))
+      throw e
+    }
+  }
+
+  async function removeAnnouncement(id) {
+    const prev = announcements.slice()
+    setAnnouncements((cur) => cur.filter((a) => a.id !== id))
+    try {
+      await deleteAnnouncementApi(id)
+    } catch (e) {
+      setAnnouncements(prev)
+      throw e
+    }
+  }
+
+  // Schedules management
+  async function createSchedule(record) {
+    const tempId = `SCH-${Date.now()}`
+    const payload = { id: tempId, ...record }
+    setSchedules((cur) => [payload, ...cur])
+    try {
+      const created = await createScheduleApi(record)
+      setSchedules((cur) => cur.map((s) => (s.id === tempId ? created : s)))
+      return created
+    } catch (e) {
+      setSchedules((cur) => cur.filter((s) => s.id !== tempId))
+      throw e
+    }
+  }
+
+  async function updateSchedule(id, updates) {
+    try {
+      const updated = await updateScheduleApi(id, updates)
+      setSchedules((cur) => cur.map((s) => (s.id === id ? { ...s, ...updated } : s)))
+      return updated
+    } catch (e) {
+      throw e
+    }
+  }
+
+  async function removeSchedule(id) {
+    const prev = schedules.slice()
+    setSchedules((cur) => cur.filter((s) => s.id !== id))
+    try {
+      await deleteScheduleApi(id)
+    } catch (e) {
+      setSchedules(prev)
+      throw e
+    }
+  }
+
+  function getEmployeeSchedules(employeeId) {
+    return (schedules || []).filter((s) => String(s.employeeId) === String(employeeId) || s.department === getEmployeeDepartment(employeeId))
+  }
+
+  // Active reminders (client-side)
+  const [activeReminders, setActiveReminders] = useState([])
+  useEffect(() => {
+    if (!user) return
+    let interval
+    function checkReminders() {
+      const now = Date.now()
+      const nextReminders = []
+      for (const s of schedules || []) {
+        const start = s.startAt ? new Date(s.startAt).getTime() : null
+        if (start && start - now <= 1000 * 60 * 30 && start - now >= -1000 * 60 * 5) {
+          nextReminders.push({ type: 'shift', schedule: s })
+        }
+      }
+      for (const a of announcements || []) {
+        if (a.pinned) nextReminders.push({ type: 'announcement', announcement: a })
+      }
+      setActiveReminders(nextReminders)
+    }
+    checkReminders()
+    interval = setInterval(checkReminders, 60 * 1000)
+    return () => clearInterval(interval)
+  }, [user?.id, announcements, schedules])
 
   function getLeadmanDepartmentRequests(department) {
     return dedupeBy(
@@ -1069,6 +1204,15 @@ export function QRProvider({ children }) {
         DEPARTMENTS,
         DEPARTMENT_RATES,
         buildDepartmentQrSummary,
+        announcements,
+        createAnnouncement,
+        removeAnnouncement,
+        schedules,
+        createSchedule,
+        updateSchedule,
+        removeSchedule,
+        getEmployeeSchedules,
+        activeReminders,
         employees,
         productionRecords,
         dailyReportDrafts,

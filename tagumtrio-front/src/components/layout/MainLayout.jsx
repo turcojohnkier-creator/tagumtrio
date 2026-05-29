@@ -1,6 +1,6 @@
 import { Outlet, NavLink, Navigate, useNavigate } from 'react-router-dom'
 import PageTransition from '../ui/PageTransition'
-import { Bell, LogOut, QrCode, X, Users, Factory, FileSpreadsheet, LayoutDashboard, CalendarDays } from 'lucide-react'
+import { Bell, LogOut, QrCode, X, Users, Factory, FileSpreadsheet, LayoutDashboard, CalendarDays, Megaphone } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import { useMemo, useState } from 'react'
@@ -11,12 +11,16 @@ function cn(...inputs) {
 }
 
 const allNavItems = [
-  { name: 'Production', href: '/app/production', icon: Factory, roles: ['hr', 'production_incharge', 'leadman'] },
+  { name: 'Dashboard', href: '/app/hr', icon: LayoutDashboard, roles: ['hr'] },
+  { name: 'Production', href: '/app/production', icon: Factory, roles: ['hr', 'production_incharge', 'leadman', 'gm'] },
+  { name: 'Production Oversight', href: '/app/production/oversight', icon: Factory, roles: ['production_incharge'] },
+  { name: 'GM Dashboard', href: '/app/gm', icon: LayoutDashboard, roles: ['gm'] },
+  { name: 'Announcements', href: '/app/hr/announcements', icon: Megaphone, roles: ['hr'] },
   { name: 'Finance Home', href: '/app/payroll', icon: LayoutDashboard, roles: ['finance'] },
   { name: 'Daily Production', href: '/app/payroll/production', icon: CalendarDays, roles: ['finance'] },
   { name: 'Department Employees', href: '/app/payroll/employees', icon: Users, roles: ['finance'] },
-  { name: 'Employees', href: '/app/employees', icon: Users, roles: ['hr', 'production_incharge'] },
-  { name: 'Requests', href: '/app/requests', icon: FileSpreadsheet, roles: ['hr', 'production_incharge'] },
+  { name: 'Employees', href: '/app/employees', icon: Users, roles: ['hr'] },
+  { name: 'Requests', href: '/app/requests', icon: FileSpreadsheet, roles: ['hr', 'production_incharge', 'gm'] },
 ]
 
 export default function MainLayout() {
@@ -204,7 +208,18 @@ export default function MainLayout() {
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 mt-2 px-3">Navigation Menu</div>
           {filteredNav.map(item => (
-            <NavLink key={item.name} to={item.href} title={item.name} className={({ isActive }) => cn('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors', isActive ? 'bg-emerald-500/10 text-emerald-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200')}>
+            <NavLink
+              key={item.name}
+              to={item.href}
+              title={item.name}
+              end={item.href === '/app/production' || item.href === '/app/hr'}
+              className={({ isActive }) => cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-emerald-500/10 text-emerald-400'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+              )}
+            >
               <item.icon className="w-5 h-5" />
               <span className="truncate">{item.name}</span>
             </NavLink>

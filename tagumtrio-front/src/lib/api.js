@@ -261,3 +261,46 @@ export async function updateEmployeeApi(employeeId, payload) {
     body: JSON.stringify(payload),
   })
 }
+
+// Announcements API
+export async function fetchAnnouncementsApi() {
+  return apiRequest('/v1/announcements')
+}
+
+export async function createAnnouncementApi(payload) {
+  return apiRequest('/v1/announcements', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function deleteAnnouncementApi(id) {
+  return apiRequest(`/v1/announcements/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  })
+}
+
+// Schedules API
+export async function fetchSchedulesApi() {
+  return apiRequest('/v1/schedules')
+}
+
+export async function createScheduleApi(payload) {
+  return apiRequest('/v1/schedules', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function updateScheduleApi(id, payload) {
+  return apiRequest(`/v1/schedules/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function deleteScheduleApi(id) {
+  return apiRequest(`/v1/schedules/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  })
+}

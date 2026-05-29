@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { CalendarClock, FileText, LayoutDashboard, LogOut, QrCode } from 'lucide-react'
+import { CalendarClock, FileText, LayoutDashboard, Megaphone, LogOut, QrCode, ClipboardList } from 'lucide-react'
 
 function cn(...inputs) {
   return inputs.filter(Boolean).join(' ')
@@ -7,6 +7,8 @@ function cn(...inputs) {
 
 const links = [
   { to: '/app/portal', label: 'Overview', icon: LayoutDashboard },
+  { to: '/app/portal/announcements', label: 'Announcements', icon: Megaphone },
+  { to: '/app/portal/work', label: 'Work Details', icon: ClipboardList },
   { to: '/app/portal/leaves', label: 'Leaves', icon: CalendarClock },
   { to: '/app/portal/payslips', label: 'Payslips', icon: FileText },
 ]

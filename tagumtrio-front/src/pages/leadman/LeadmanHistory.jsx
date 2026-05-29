@@ -3,15 +3,13 @@ import { Search } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import DailyReportTable from '../../components/reports/DailyReportTable'
-import { fetchDailyReportsApi, submitDailyReportApi } from '../../lib/api'
-import { useDialog } from '../../context/dialog-context'
+import { fetchDailyReportsApi } from '../../lib/api'
 
 function asText(v) { return String(v || '').toLowerCase() }
 
 export default function LeadmanHistory() {
   const { user } = useAuth()
   const { formatDateTime, selectedLeadmanDepartment } = useQr()
-  const dialog = useDialog()
 
   const currentDepartment = selectedLeadmanDepartment || (user?.departments?.[0] || user?.department || '')
   const [date, setDate] = useState(new Date().toISOString().slice(0,10))
@@ -24,7 +22,12 @@ export default function LeadmanHistory() {
     let mounted = true
     setLoading(true)
     fetchDailyReportsApi({ department: currentDepartment || undefined, reportDate: date || undefined })
-      .then((r) => { if (mounted) setReports(Array.isArray(r) ? r : []) })
+      .then((r) => {
+        if (!mounted) return
+        if (!Array.isArray(r)) return setReports([])
+        const filteredByDept = r.filter((rep) => String(rep.department || '').toLowerCase() === String(currentDepartment || '').toLowerCase())
+        setReports(filteredByDept)
+      })
       .catch(() => { if (mounted) setReports([]) })
       .finally(() => { if (mounted) setLoading(false) })
     return () => { mounted = false }
@@ -37,44 +40,6 @@ export default function LeadmanHistory() {
       return [r.department, r.reportDate, r.submittedByName, r.summary].filter(Boolean).some((f) => asText(f).includes(q))
     })
   }, [reports, query])
-
-  function aggregateReport(reportList) {
-    const entries = (reportList || []).flatMap((r) => Array.isArray(r.entries) ? r.entries : [])
-    const totalAmount = entries.reduce((s, e) => s + Number(e.amount || 0), 0)
-    const totalPieces = entries.reduce((s, e) => {
-      const pieces = Number(e.raw?.qrFields?.cratePieces || e.qrFields?.cratePieces || e.raw?.qrFields?.crates || e.qrFields?.crates || e.crates || e.cratePieces || 0)
-      return s + (Number.isFinite(pieces) ? pieces : 0)
-    }, 0)
-    const employeeCount = new Set(entries.map((e) => String(e.employeeId || e.employeeName || ''))).size
-    return { totalAmount, totalPieces, employeeCount, entryCount: entries.length }
-  }
-
-  async function sendConsolidated() {
-    if (!currentDepartment) return dialog.error({ title: 'No department', message: 'No active leadman department is available.' })
-    const should = await dialog.confirm({ title: 'Send consolidated report?', message: `Send consolidated report for ${currentDepartment} on ${date}?`, confirmText: 'Send', cancelText: 'Cancel' })
-    if (!should) return
-
-    const agg = aggregateReport(filtered)
-    const summary = `Consolidated report • ${agg.entryCount} rows • ${agg.employeeCount} employees • ${agg.totalPieces} pieces • ₱${agg.totalAmount.toLocaleString()}`
-
-    try {
-      await submitDailyReportApi({
-        department: currentDepartment,
-        reportDate: date,
-        submittedBy: user?.id || null,
-        submittedByName: user?.name || null,
-        status: 'submitted',
-        summary,
-        entries: [{ id: `CONSOLIDATED-${date}`, employeeName: 'Consolidated', employeeId: null, department: currentDepartment, loggedHours: 0, amount: agg.totalAmount, raw: { consolidated: true, totalPieces: agg.totalPieces } }],
-      })
-      dialog.success({ title: 'Sent', message: 'Consolidated report sent successfully.' })
-      // refresh
-      const refreshed = await fetchDailyReportsApi({ department: currentDepartment || undefined, reportDate: date || undefined })
-      setReports(Array.isArray(refreshed) ? refreshed : [])
-    } catch (err) {
-      dialog.error({ title: 'Failed', message: err?.message || 'Failed to send consolidated report.' })
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -107,16 +72,16 @@ export default function LeadmanHistory() {
       <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
         {loading ? <div className="text-slate-400">Loading...</div> : null}
         {!loading && filtered.length === 0 ? <div className="text-slate-400">No reports found for selected filters.</div> : null}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {filtered.map((report) => (
-            <div key={report.id} className="rounded-xl border border-slate-800 bg-slate-950 p-4 flex items-center justify-between">
+            <div key={report.id} className="rounded-xl border border-slate-800 bg-slate-950 py-2 px-3 flex items-center justify-between">
               <div>
                 <div className="font-medium text-white">{report.department} • {report.reportDate}</div>
-                <div className="text-xs text-slate-400">Submitted by {report.submittedByName || report.submittedBy || 'Unknown'} • {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</div>
-                <div className="text-sm text-slate-300 mt-2">Entries: {Array.isArray(report.entries) ? report.entries.length : 0}</div>
+                <div className="text-xs text-slate-400 mt-1">Submitted by {report.submittedByName || report.submittedBy || 'Unknown'} • {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</div>
+                <div className="text-sm text-slate-300 mt-1">Entries: {Array.isArray(report.entries) ? report.entries.length : 0}</div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setSelected(report)} className="rounded-xl bg-slate-800 px-4 py-2 text-slate-200">Open</button>
+                <button onClick={() => setSelected(report)} className="rounded-xl bg-slate-800 px-3 py-1.5 text-slate-200">Open</button>
               </div>
             </div>
           ))}
@@ -161,9 +126,6 @@ export default function LeadmanHistory() {
         </div>
       ) : null}
 
-      <div className="flex justify-end">
-        <button onClick={sendConsolidated} className="rounded-xl bg-emerald-500 px-4 py-2 font-medium text-black">Send Consolidated Report</button>
-      </div>
     </div>
   )
 }

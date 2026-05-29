@@ -4,6 +4,7 @@ import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import DailyReportTable from '../../components/reports/DailyReportTable'
 import { useDialog } from '../../context/dialog-context'
+import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from '../../components/reports/report-entry-utils'
 
 function formatReportDate(value) {
   if (!value) return '-'
@@ -25,7 +26,7 @@ function getFieldValue(entry, key) {
 function groupReportEntries(entries = []) {
   const groups = new Map()
 
-  entries.forEach((entry, index) => {
+  entries.filter(hasMeaningfulEntry).forEach((entry, index) => {
     const batchKey = String(entry.batchId || entry.raw?.batchId || entry.id || `${entry.department || 'report'}-${index}`)
     const scannedAt = entry.batchCapturedAt || entry.scannedAt || entry.raw?.batchCapturedAt || entry.raw?.capturedAt || entry.createdAt || entry.reportDate
     const department = String(entry.department || entry.raw?.department || '')
@@ -55,7 +56,7 @@ function groupReportEntries(entries = []) {
   return Array.from(groups.values())
     .map((group) => ({
       ...group,
-      employeeCount: new Set(group.entries.map((entry) => String(entry.employeeId || entry.employeeName || entry.id || ''))).size,
+      employeeCount: new Set(group.entries.map((entry) => String(getEntryIdentifier(entry) || getEntryLabel(entry) || entry.id || ''))).size,
       totalHours: group.entries.reduce((sum, entry) => sum + Number(entry.loggedHours || 0), 0),
       totalAmount: group.entries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0),
     }))
@@ -162,10 +163,16 @@ export default function LeadmanDailyReport() {
   }, [assignedDepartments, selectedDepartment, setSelectedLeadmanDepartment])
 
   async function submitReport() {
+    const consolidatedEntries = reportBatches.flatMap((batch) => Array.isArray(batch.entries) ? batch.entries : []).filter(hasMeaningfulEntry)
+    if (consolidatedEntries.length === 0) {
+      setSubmitError('No valid scanned entries found to consolidate.')
+      return
+    }
+
     const shouldSubmit = await dialog.confirm({
       title: 'Submit daily report?',
-      message: `Submit daily report for ${selectedDepartment}? This will send today's scanned entries to Production In-Charge and Finance.`,
-      confirmText: 'Yes, submit',
+      message: `Submit consolidated report for ${selectedDepartment}? This will merge all scanned cards into one daily table and send it to Production In-Charge and Finance.`,
+      confirmText: 'Submit consolidated',
       cancelText: 'Cancel',
     })
     if (!shouldSubmit) return
@@ -177,11 +184,17 @@ export default function LeadmanDailyReport() {
     try {
       const submittedBy = user?.id || null
       const submittedByName = user?.name || null
-      await submitDailyReport(selectedDepartment, reportDate, submittedBy, submittedByName, '', reportEntries)
-      setSubmitMessage('Daily report submitted successfully.')
+      const totalPieces = consolidatedEntries.reduce((sum, entry) => {
+        const pieces = Number(entry.pieces || entry.raw?.qrFields?.cratePieces || entry.qrFields?.cratePieces || entry.raw?.qrFields?.crates || entry.qrFields?.crates || 0)
+        return sum + (Number.isFinite(pieces) ? pieces : 0)
+      }, 0)
+      const totalAmount = consolidatedEntries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0)
+      const summary = `Consolidated report • ${consolidatedEntries.length} rows • ${totalPieces} crates/pieces • ₱${totalAmount.toLocaleString()}`
+      await submitDailyReport(selectedDepartment, reportDate, submittedBy, submittedByName, summary, consolidatedEntries)
+      setSubmitMessage('Consolidated report submitted successfully.')
       dialog.success({
-        title: 'Report submitted',
-        message: `Daily report for ${selectedDepartment} was submitted successfully.`,
+        title: 'Consolidated report submitted',
+        message: `Consolidated report for ${selectedDepartment} was submitted successfully.`,
       })
     } catch (error) {
       setSubmitError(error?.message || 'Failed to submit daily report. Please try again.')
@@ -204,7 +217,14 @@ export default function LeadmanDailyReport() {
     try {
       const submittedBy = user?.id || null
       const submittedByName = user?.name || null
-      await submitDailyReport(selectedDepartment, reportDate, submittedBy, submittedByName, '', batch.entries)
+      const validEntries = (Array.isArray(batch.entries) ? batch.entries : []).filter(hasMeaningfulEntry)
+      const totalPieces = validEntries.reduce((sum, entry) => {
+        const pieces = Number(entry.pieces || entry.raw?.qrFields?.cratePieces || entry.qrFields?.cratePieces || entry.raw?.qrFields?.crates || entry.qrFields?.crates || 0)
+        return sum + (Number.isFinite(pieces) ? pieces : 0)
+      }, 0)
+      const totalAmount = validEntries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0)
+      const summary = `Consolidated report • ${validEntries.length} rows • ${totalPieces} crates/pieces • ₱${totalAmount.toLocaleString()}`
+      await submitDailyReport(selectedDepartment, reportDate, submittedBy, submittedByName, summary, validEntries)
       setSubmitMessage('Report submitted successfully.')
       setSelectedBatchId('')
       dialog.success({
@@ -331,7 +351,7 @@ export default function LeadmanDailyReport() {
         <div className="flex flex-col gap-3 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between">
           <p>{reportBatches.length > 0 ? `${reportBatches.length} scanned report${reportBatches.length === 1 ? '' : 's'} loaded.` : 'No scanned entries yet.'}</p>
           <button disabled={isSubmitting || reportEntries.length === 0} onClick={submitReport} className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 font-medium text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-70">
-            <Send className="h-4 w-4" /> {isSubmitting ? 'Submitting...' : 'Submit All Reports'}
+            <Send className="h-4 w-4" /> {isSubmitting ? 'Submitting...' : 'Submit Consolidated Report'}
           </button>
         </div>
         {submitMessage ? <p className="text-sm text-emerald-400">{submitMessage}</p> : null}

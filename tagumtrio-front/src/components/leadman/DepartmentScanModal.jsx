@@ -124,16 +124,17 @@ export default function DepartmentScanModal({
   const [manualEmployees, setManualEmployees] = useState(() => [{ productId: '', productName: '', thickness: '', pieces: '', department: department || '' }])
 
   useEffect(() => {
+    // Initialize modal state only when it is opened. Do not overwrite user selection while open.
     if (!open) return
     const defaultId = normalizeEmployeeId({ employeeId: initialEmployeeId }) || validEmployeeOptions[0]?.normalizedEmployeeId
-    setEntryMode('scan')
+    setEntryMode(validEmployeeOptions.length > 0 ? 'scan' : 'manual')
     setSelectedEmployeeIds((current) => (Array.isArray(current) && current.length > 0 ? current : defaultId ? [defaultId] : []))
     setShowEmployeeTable(false)
     setSubmissionError('')
     setIsSubmitting(false)
     setValues(buildInitialValues(spec, department))
-    setManualEmployees([{ employeeId: '', employeeName: '', department: department || '' }])
-  }, [department, initialEmployeeId, open, spec, validEmployeeOptions])
+    setManualEmployees([{ productId: '', productName: '', thickness: '', pieces: '', department: department || '' }])
+  }, [open])
 
   const selectedEmployees = validEmployeeOptions.filter((employee) => selectedEmployeeIds.includes(employee.normalizedEmployeeId))
   const manualSubmissionEmployees = useMemo(() => {
@@ -148,13 +149,15 @@ export default function DepartmentScanModal({
       .filter((item) => item.productId || item.productName || item.department)
   }, [department, manualEmployees])
 
-  const submissionEmployees = entryMode === 'manual'
-    ? manualSubmissionEmployees
-    : selectedEmployees.map((employee) => ({
-        productId: String(employee.productId || employee.id || employee.identifier || employee.employeeId || '').trim(),
-        productName: String(employee.productName || employee.employeeName || employee.name || employee.fullName || '').trim(),
-        department: String(employee.department || department || employee.dept || '').trim(),
-      }))
+  const submissionEmployees = selectedEmployees.map((employee) => ({
+    employeeId: String(employee.employeeId || employee.id || employee.identifier || '').trim(),
+    employeeName: String(employee.employeeName || employee.name || employee.fullName || '').trim(),
+    productId: String(employee.productId || '').trim(),
+    productName: String(employee.productName || '').trim(),
+    thickness: employee.thickness || '',
+    pieces: Number(employee.pieces || 0),
+    department: String(employee.department || department || employee.dept || '').trim(),
+  }))
 
   const autoSummary = buildDepartmentQrSummary(department, values)
 
@@ -191,39 +194,44 @@ export default function DepartmentScanModal({
     const batchId = `DRB-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
     const batchCapturedAt = new Date().toISOString()
 
-    const payloads = submissionEmployees.map((selectedEmployee) => {
-      const employeeId = String(selectedEmployee.employeeId || '').trim()
-      const employeeName = String(selectedEmployee.employeeName || '').trim()
-      const employeeDepartment = String(selectedEmployee.department || department || '').trim()
+    const payloads = submissionEmployees.map((item) => {
+      const productId = String(item.productId || item.productId || '').trim()
+      const productName = String(item.productName || item.productName || '').trim()
+      const thickness = item.thickness || ''
+      const pieces = Number(item.pieces || 0)
+      const itemDepartment = String(item.department || department || '').trim()
 
       return {
-        employeeId,
-        employeeName,
-        department: employeeDepartment,
-        loggedHours: Number(initialHours || 0),
+        productId,
+        productName,
+        thickness,
+        pieces,
+        department: itemDepartment,
         qrFields: values,
         qrSummary: autoSummary,
         scanCapturedAt: batchCapturedAt,
         batchId,
         batchCapturedAt,
-        batchEmployeeCount: submissionEmployees.length,
+        batchItemCount: submissionEmployees.length,
         raw: {
-          department: employeeDepartment,
-          employeeId,
-          employeeName,
-          loggedHours: Number(initialHours || 0),
+          department: itemDepartment,
+          productId,
+          productName,
+          thickness,
+          pieces,
           qrFields: values,
           qrSummary: autoSummary,
           batchId,
           batchCapturedAt,
-          batchEmployeeCount: submissionEmployees.length,
+          batchItemCount: submissionEmployees.length,
         },
         notes: autoSummary,
       }
     })
 
-    if (payloads.some((payload) => !payload.department || (!payload.productId && !payload.productName))) {
-      setSubmissionError('Selected item data is incomplete. Please provide a product ID or name and a department.')
+    // Require only the department (product ID is not necessary)
+    if (payloads.some((payload) => !payload.department)) {
+      setSubmissionError('Selected item data is incomplete. Please provide a department.')
       return
     }
 
@@ -261,73 +269,46 @@ export default function DepartmentScanModal({
             ) : null}
 
             {entryMode === 'scan' ? (
-              <div className="rounded-xl border border-slate-800 bg-slate-950 p-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center justify-center border-2 border-dashed border-slate-700 rounded-lg bg-slate-900 h-64">
+              <div className="rounded-xl border border-slate-800 bg-slate-950 p-6 flex justify-center">
+                <div className="relative w-full max-w-[960px]">
+                  <div className="aspect-square rounded-lg border-2 border-dashed border-slate-700 bg-slate-900 flex items-center justify-center">
                     <div className="text-center text-slate-400">Scanner placeholder (camera view)</div>
                   </div>
-                  <div className="flex flex-col justify-between">
-                    <div>
-                      <label className="text-sm text-slate-300">Items Included</label>
-                      <p className="text-xs text-slate-500">Click the count to open the item picker in a separate window.</p>
-                    </div>
-                    <div className="flex items-center justify-end">
-                      <button type="button" onClick={() => setShowEmployeeTable((current) => !current)} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
-                        View {selectedEmployeeIds.length} item{selectedEmployeeIds.length === 1 ? '' : 's'}
-                      </button>
-                    </div>
-                  </div>
+                
                 </div>
               </div>
             ) : (
-              <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-950 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <label className="text-sm text-slate-300">Manual item entries</label>
-                    <p className="text-xs text-slate-500">Type the product details for items without QR codes (thickness, pieces, etc.).</p>
-                  </div>
-                  <button type="button" onClick={addManualEmployee} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
-                    Add item
+              <div className="rounded-xl border border-slate-800 bg-slate-950 p-6 flex flex-col items-center gap-3">
+                <p className="text-sm text-slate-300">View employees deployed to this department to check who is involved in the scan.</p>
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={() => setShowEmployeeTable(true)} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
+                    View employees in department
                   </button>
-                </div>
-
-                <div className="space-y-3">
-                  {manualEmployees.map((employee, rowIndex) => (
-                    <div key={`${rowIndex}-${employee.productId || 'manual'}`} className="grid gap-3 md:grid-cols-[1fr_1.2fr_1fr_1fr_auto]">
-                      <input value={employee.productId} onChange={(e) => updateManualEmployee(rowIndex, 'productId', e.target.value)} placeholder="Product ID" className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
-                      <input value={employee.productName} onChange={(e) => updateManualEmployee(rowIndex, 'productName', e.target.value)} placeholder="Product Name" className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
-                      <input value={employee.thickness} onChange={(e) => updateManualEmployee(rowIndex, 'thickness', e.target.value)} placeholder="Thickness" className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
-                      <input value={employee.pieces} onChange={(e) => updateManualEmployee(rowIndex, 'pieces', e.target.value)} placeholder="Pieces" className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
-                      <button type="button" onClick={() => removeManualEmployee(rowIndex)} className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-slate-300 transition-colors hover:bg-slate-800">
-                        Remove
-                      </button>
-                    </div>
-                  ))}
+                  <div className="text-sm text-slate-300">Employee/s: <span className="font-semibold text-emerald-300">{selectedEmployeeIds.length}</span></div>
                 </div>
               </div>
             )}
 
-            {spec.fields
-              .filter((field) => !field.auto && field.key !== 'department')
-              .map((field) => (
-                <div key={field.key}>
-                  <label className="text-sm text-slate-300">{field.label}</label>
-                  <input
-                    value={values[field.key] || ''}
-                    onChange={(e) => handleChange(field.key, e.target.value)}
-                    placeholder={field.placeholder || ''}
-                    className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none"
-                  />
-                </div>
-              ))}
-          <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Preview</p>
-            <p className="mt-2 text-slate-300">
-              {submissionEmployees.length > 0
-                ? `${submissionEmployees.length} employee${submissionEmployees.length > 1 ? 's' : ''} included${autoSummary ? ` | ${autoSummary}` : ''}`
-                : autoSummary || 'No scan fields filled yet.'}
-            </p>
-          </div>
+            {entryMode === 'manual' ? (
+              <>
+                {spec.fields
+                  .filter((field) => !field.auto && field.key !== 'department')
+                  .map((field) => (
+                    <div key={field.key}>
+                      <label className="text-sm text-slate-300">{field.label}</label>
+                      <input
+                        value={values[field.key] || ''}
+                        onChange={(e) => handleChange(field.key, e.target.value)}
+                        placeholder={field.placeholder || ''}
+                        readOnly={field.type === 'date' || field.key === 'date'}
+                        className={`mt-2 w-full rounded-xl border border-slate-800 ${field.type === 'date' || field.key === 'date' ? 'bg-slate-950 cursor-not-allowed' : 'bg-slate-900'} px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none`}
+                      />
+                    </div>
+                  ))}
+
+                {/* Preview removed per request; count shown in manual tab header */}
+              </>
+            ) : null}
 
           <div className="mt-5 flex items-center justify-end gap-3">
             <button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2.5 text-slate-200 transition-colors hover:bg-slate-700">
@@ -339,7 +320,14 @@ export default function DepartmentScanModal({
           </div>
         </form>
 
-        {/* Employee picker removed for manual-only UX */}
+        <EmployeePickerModal
+          open={showEmployeeTable}
+          department={department}
+          employeeOptions={validEmployeeOptions}
+          selectedEmployeeIds={selectedEmployeeIds}
+          onToggleEmployee={toggleEmployee}
+          onClose={() => setShowEmployeeTable(false)}
+        />
       </div>
     </Portal>
   )

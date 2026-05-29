@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ClipboardList, Filter, Search, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { fetchDailyReportsApi } from '../../lib/api'
+import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from '../../components/reports/report-entry-utils'
 
 function formatReportDate(value) {
   if (!value) return '-'
@@ -38,7 +39,7 @@ function resolveEntryDepartment(entry, fallbackDepartment) {
 
 function buildReportCards(reports = []) {
   return (Array.isArray(reports) ? reports : []).map((report) => {
-    const entries = Array.isArray(report.entries) ? report.entries : []
+    const entries = Array.isArray(report.entries) ? report.entries.filter(hasMeaningfulEntry) : []
     const reportDate = report.reportDate || report.report_date || report.createdAt || report.created_at || new Date().toISOString()
     const firstEntry = entries[0] || {}
     const department = report.department || firstEntry.department || 'Unknown Department'
@@ -47,11 +48,14 @@ function buildReportCards(reports = []) {
       || firstEntry.qrFields?.cratePieces
       || firstEntry.raw?.qrFields?.crates
       || firstEntry.qrFields?.crates
+      || firstEntry.raw?.qrFields?.pieces
+      || firstEntry.qrFields?.pieces
       || firstEntry.cratePieces
       || firstEntry.crates
+      || firstEntry.pieces
       || '-'
     const scannedAt = report.createdAt || report.created_at || reportDate
-    const employeeCount = new Set(entries.map((entry) => String(entry.employeeId || entry.employeeName || entry.id || ''))).size
+    const employeeCount = new Set(entries.map((entry) => String(getEntryIdentifier(entry) || getEntryLabel(entry) || entry.id || ''))).size
 
     return {
       id: report.id,
@@ -120,14 +124,14 @@ function ReportDetailModal({ report, onClose }) {
               </thead>
               <tbody className="divide-y divide-slate-800/70 bg-slate-900/50">
                 {report.entries.map((entry) => (
-                  <tr key={entry.id} className="text-slate-300 hover:bg-slate-900/80">
+                  <tr key={entry.id || `${getEntryIdentifier(entry)}-${getEntryLabel(entry)}-${entry.scannedAt || ''}`} className="text-slate-300 hover:bg-slate-900/80">
                     <td className="px-4 py-4">
-                      <div className="font-medium text-white">{entry.employeeName}</div>
-                      <div className="text-xs text-slate-500">{entry.employeeId ?? '-'}</div>
+                      <div className="font-medium text-white">{getEntryLabel(entry) || 'Untitled item'}</div>
+                      <div className="text-xs text-slate-500">{getEntryIdentifier(entry) || '-'}</div>
                     </td>
                     <td className="px-4 py-4 text-slate-300">{resolveEntryDepartment(entry, report.department)}</td>
                     <td className="px-4 py-4 text-slate-300">{getFieldValue(entry, 'thickness') || report.thickness || '-'}</td>
-                    <td className="px-4 py-4 text-slate-300">{getFieldValue(entry, 'cratePieces') || getFieldValue(entry, 'crates') || report.cratesPieces || '-'}</td>
+                    <td className="px-4 py-4 text-slate-300">{getEntryPieces(entry) || report.cratesPieces || '-'}</td>
                     <td className="px-4 py-4 text-slate-300">{getFieldValue(entry, 'date') || getFieldValue(entry, 'dateIn') || formatReportDate(entry.scannedAt || report.scannedAt)}</td>
                     <td className="px-4 py-4 font-semibold text-white">₱{Number(entry.amount || 0).toLocaleString()}</td>
                   </tr>
@@ -246,6 +250,18 @@ export default function ProductionDashboard() {
         <div className="text-sm text-slate-400">Production In-Charge can view all submitted reports, inspect the employee table, and confirm report details.</div>
       </div>
 
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-black/10">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-white">Need consolidated totals?</h3>
+            <p className="text-sm text-slate-400">Open the consolidated reports page for daily production summary and salary totals.</p>
+          </div>
+          <Link to="/app/production/consolidated" className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-black hover:bg-emerald-400">
+            <ClipboardList className="h-4 w-4" /> Open consolidated page
+          </Link>
+        </div>
+      </div>
+
       <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div>
@@ -327,18 +343,6 @@ export default function ProductionDashboard() {
             ))}
           </div>
         ) : null}
-      </div>
-
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-black/10">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-white">Need consolidated totals?</h3>
-            <p className="text-sm text-slate-400">Open the consolidated reports page for daily production summary and salary totals.</p>
-          </div>
-          <Link to="/app/production/consolidated" className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-black hover:bg-emerald-400">
-            <ClipboardList className="h-4 w-4" /> Open consolidated page
-          </Link>
-        </div>
       </div>
 
       <ReportDetailModal report={selectedReport} onClose={() => setSelectedReportId('')} />

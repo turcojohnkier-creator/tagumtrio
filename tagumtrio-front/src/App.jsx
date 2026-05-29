@@ -1,33 +1,39 @@
+import { Suspense, lazy } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { DialogProvider } from './context/dialog-context'
 import QRProvider from './context/qr-provider'
-import LeadmanDashboard from './pages/leadman/LeadmanDashboard'
 import LeadmanLayout from './components/layout/LeadmanLayout'
-import LeadmanTransfers from './pages/leadman/LeadmanTransfers'
-import LeadmanWorkers from './pages/leadman/LeadmanWorkers'
-import LeadmanDailyReport from './pages/leadman/LeadmanDailyReport'
-import LeadmanHistory from './pages/leadman/LeadmanHistory'
 import MainLayout from './components/layout/MainLayout'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Landing from './pages/Landing'
-import RoleDashboard from './pages/RoleDashboard'
-import ProductionDashboard from './pages/production/ProductionDashboard'
-import ProductionConsolidatedReports from './pages/production/ProductionConsolidatedReports'
-import Commissions from './pages/finance/Commissions'
-import FinanceReports from './pages/finance/FinanceReports'
-import FinanceConsolidatedReports from './pages/finance/FinanceConsolidatedReports'
-import EmployeePayroll from './pages/finance/EmployeePayroll'
-import PayrollPeriodView from './pages/finance/PayrollPeriodView'
-import FinanceArchive from './pages/finance/FinanceArchive'
-import EmployeeDirectory from './pages/HR/EmployeeDirectory'
 import EmployeeLayout from './components/layout/EmployeeLayout'
-import EmployeeDashboard from './pages/employee/EmployeeDashboard'
-import MyAttendance from './pages/employee/MyAttendance'
-import MyPayslips from './pages/employee/MyPayslips'
-import ViewPayslip from './pages/employee/ViewPayslip'
-import Requests from './pages/converted/Requests'
+
+const Login = lazy(() => import('./pages/Login'))
+const Register = lazy(() => import('./pages/Register'))
+const Landing = lazy(() => import('./pages/Landing'))
+const RoleDashboard = lazy(() => import('./pages/RoleDashboard'))
+const LeadmanDashboard = lazy(() => import('./pages/leadman/LeadmanDashboard'))
+const LeadmanTransfers = lazy(() => import('./pages/leadman/LeadmanTransfers'))
+const LeadmanWorkers = lazy(() => import('./pages/leadman/LeadmanWorkers'))
+const LeadmanDailyReport = lazy(() => import('./pages/leadman/LeadmanDailyReport'))
+const LeadmanHistory = lazy(() => import('./pages/leadman/LeadmanHistory'))
+const ProductionDashboard = lazy(() => import('./pages/production/ProductionDashboard'))
+const ProductionConsolidatedReports = lazy(() => import('./pages/production/ProductionConsolidatedReports'))
+const Commissions = lazy(() => import('./pages/finance/Commissions'))
+const FinanceReports = lazy(() => import('./pages/finance/FinanceReports'))
+const FinanceConsolidatedReports = lazy(() => import('./pages/finance/FinanceConsolidatedReports'))
+const EmployeePayroll = lazy(() => import('./pages/finance/EmployeePayroll'))
+const PayrollPeriodView = lazy(() => import('./pages/finance/PayrollPeriodView'))
+const FinanceArchive = lazy(() => import('./pages/finance/FinanceArchive'))
+const EmployeeDirectory = lazy(() => import('./pages/HR/EmployeeDirectory'))
+const EmployeeDashboard = lazy(() => import('./pages/employee/EmployeeDashboard'))
+const MyAttendance = lazy(() => import('./pages/employee/MyAttendance'))
+const MyPayslips = lazy(() => import('./pages/employee/MyPayslips'))
+const ViewPayslip = lazy(() => import('./pages/employee/ViewPayslip'))
+const Requests = lazy(() => import('./pages/converted/Requests'))
+
+function RouteLoadingFallback() {
+  return <div className="p-6 text-sm text-slate-400">Loading...</div>
+}
 
 export default function App() {
   return (
@@ -35,6 +41,7 @@ export default function App() {
       <DialogProvider>
         <QRProvider>
           <BrowserRouter>
+          <Suspense fallback={<RouteLoadingFallback />}>
           <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -87,6 +94,7 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </Suspense>
           </BrowserRouter>
         </QRProvider>
       </DialogProvider>

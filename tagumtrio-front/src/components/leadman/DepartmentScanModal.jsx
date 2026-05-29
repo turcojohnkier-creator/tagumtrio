@@ -112,7 +112,7 @@ export default function DepartmentScanModal({
       .filter((employee) => employee.normalizedEmployeeId && (employee.employeeName || employee.name || employee.fullName))
   }, [employeeOptions])
 
-  const [entryMode, setEntryMode] = useState(validEmployeeOptions.length > 0 ? 'scan' : 'manual')
+  const [entryMode, setEntryMode] = useState('scan')
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState(() => {
     const defaultId = normalizeEmployeeId({ employeeId: initialEmployeeId }) || validEmployeeOptions[0]?.normalizedEmployeeId
     return defaultId ? [defaultId] : []
@@ -126,7 +126,7 @@ export default function DepartmentScanModal({
   useEffect(() => {
     if (!open) return
     const defaultId = normalizeEmployeeId({ employeeId: initialEmployeeId }) || validEmployeeOptions[0]?.normalizedEmployeeId
-    setEntryMode(validEmployeeOptions.length > 0 ? 'scan' : 'manual')
+    setEntryMode('scan')
     setSelectedEmployeeIds((current) => (Array.isArray(current) && current.length > 0 ? current : defaultId ? [defaultId] : []))
     setShowEmployeeTable(false)
     setSubmissionError('')
@@ -244,65 +244,22 @@ export default function DepartmentScanModal({
           <p className="mt-1 text-sm text-slate-400">{description}</p>
 
           <div className="mt-5 space-y-4">
-            {allowManualEntry ? (
-              <div className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950 p-1">
-                <button type="button" onClick={() => setEntryMode('scan')} className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${entryMode === 'scan' ? 'bg-emerald-500 text-black' : 'text-slate-300 hover:bg-slate-900'}`}>
-                  QR scan mode
-                </button>
-                <button type="button" onClick={() => setEntryMode('manual')} className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${entryMode === 'manual' ? 'bg-emerald-500 text-black' : 'text-slate-300 hover:bg-slate-900'}`}>
-                  Manual entry
-                </button>
-              </div>
-            ) : null}
+            {/* QR-only mode (manual tab removed) */}
 
             {submissionError ? (
               <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">{submissionError}</div>
             ) : null}
 
-            {entryMode === 'scan' ? (
-              <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950 px-4 py-3">
-                <div>
-                  <label className="text-sm text-slate-300">Employees Included</label>
-                  <p className="text-xs text-slate-500">Click the count to open the employee picker in a separate window.</p>
-                </div>
-                <button type="button" onClick={() => setShowEmployeeTable((current) => !current)} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
-                  View {selectedEmployeeIds.length} employee{selectedEmployeeIds.length === 1 ? '' : 's'}
-                </button>
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950 px-4 py-3">
+              <div>
+                <label className="text-sm text-slate-300">Employees Included</label>
+                <p className="text-xs text-slate-500">Click the count to open the employee picker in a separate window.</p>
               </div>
-            ) : (
-              <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-950 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <label className="text-sm text-slate-300">Manual employee entries</label>
-                    <p className="text-xs text-slate-500">Type the employee details directly for departments without QR scanning.</p>
-                  </div>
-                  <button type="button" onClick={addManualEmployee} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
-                    Add employee
-                  </button>
-                </div>
-
-                <div className="space-y-3">
-                  {manualEmployees.map((employee, rowIndex) => (
-                    <div key={`${rowIndex}-${employee.employeeId || 'manual'}`} className="grid gap-3 md:grid-cols-[1fr_1.2fr_1fr_auto]">
-                      <input value={employee.employeeId} onChange={(e) => updateManualEmployee(rowIndex, 'employeeId', e.target.value)} placeholder="Employee No." className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
-                      <input value={employee.employeeName} onChange={(e) => updateManualEmployee(rowIndex, 'employeeName', e.target.value)} placeholder="Employee Name" className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
-                      <input value={employee.department} onChange={(e) => updateManualEmployee(rowIndex, 'department', e.target.value)} placeholder="Department" className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
-                      <button type="button" onClick={() => removeManualEmployee(rowIndex)} className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-slate-300 transition-colors hover:bg-slate-800">
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div>
-              <label className="text-sm text-slate-300">Department</label>
-              <input value={values.department || department || ''} readOnly type="text" className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
+              <button type="button" onClick={() => setShowEmployeeTable((current) => !current)} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
+                View {selectedEmployeeIds.length} employee{selectedEmployeeIds.length === 1 ? '' : 's'}
+              </button>
             </div>
-          </div>
 
-          <div className="mt-5 space-y-4">
             {spec.fields
               .filter((field) => !field.auto && field.key !== 'department')
               .map((field) => (
@@ -310,25 +267,12 @@ export default function DepartmentScanModal({
                   <label className="text-sm text-slate-300">{field.label}</label>
                   <input
                     value={values[field.key] || ''}
-                      {/* Manual-only form: removed scan toggle per UX request */}
-                      <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-950 p-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <label className="text-sm text-slate-300">Manual employee entries</label>
-                            <p className="text-xs text-slate-500">Type the employee details directly for departments without QR scanning.</p>
-                          </div>
-                          <button type="button" onClick={addManualEmployee} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
-                            Add employee
-                          </button>
-                        </div>
-                        <div className="space-y-3">
-                          {manualEmployees.map((employee, rowIndex) => (
-                            <div key={`${rowIndex}-${employee.employeeId || 'manual'}`} className="grid gap-3 md:grid-cols-[1fr_1.2fr_1fr_auto]">
-                              <input value={employee.employeeId} onChange={(e) => updateManualEmployee(rowIndex, 'employeeId', e.target.value)} placeholder="Employee No." className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
-                              <input value={employee.employeeName} onChange={(e) => updateManualEmployee(rowIndex, 'employeeName', e.target.value)} placeholder="Employee Name" className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
-                              <input value={employee.department} onChange={(e) => updateManualEmployee(rowIndex, 'department', e.target.value)} placeholder="Department" className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
-                              <button type="button" onClick={() => removeManualEmployee(rowIndex)} className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-slate-300 transition-colors hover:bg-slate-800">
-                                Remove
+                    onChange={(e) => handleChange(field.key, e.target.value)}
+                    placeholder={field.placeholder || ''}
+                    className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none"
+                  />
+                </div>
+              ))}
                               </button>
                             </div>
                           ))}

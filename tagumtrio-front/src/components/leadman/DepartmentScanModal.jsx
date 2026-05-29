@@ -112,7 +112,7 @@ export default function DepartmentScanModal({
       .filter((employee) => employee.normalizedEmployeeId && (employee.employeeName || employee.name || employee.fullName))
   }, [employeeOptions])
 
-  const [entryMode, setEntryMode] = useState('scan')
+  const [entryMode, setEntryMode] = useState(validEmployeeOptions.length > 0 ? 'scan' : 'manual')
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState(() => {
     const defaultId = normalizeEmployeeId({ employeeId: initialEmployeeId }) || validEmployeeOptions[0]?.normalizedEmployeeId
     return defaultId ? [defaultId] : []
@@ -121,7 +121,7 @@ export default function DepartmentScanModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submissionError, setSubmissionError] = useState('')
   const [values, setValues] = useState(() => buildInitialValues(spec, department))
-  const [manualEmployees, setManualEmployees] = useState(() => [{ employeeId: '', employeeName: '', department: department || '' }])
+  const [manualEmployees, setManualEmployees] = useState(() => [{ productId: '', productName: '', thickness: '', pieces: '', department: department || '' }])
 
   useEffect(() => {
     if (!open) return
@@ -138,19 +138,21 @@ export default function DepartmentScanModal({
   const selectedEmployees = validEmployeeOptions.filter((employee) => selectedEmployeeIds.includes(employee.normalizedEmployeeId))
   const manualSubmissionEmployees = useMemo(() => {
     return manualEmployees
-      .map((employee) => ({
-        employeeId: String(employee.employeeId || '').trim(),
-        employeeName: String(employee.employeeName || '').trim(),
-        department: String(employee.department || department || '').trim(),
+      .map((item) => ({
+        productId: String(item.productId || '').trim(),
+        productName: String(item.productName || '').trim(),
+        thickness: String(item.thickness || '').trim(),
+        pieces: Number(item.pieces || 0),
+        department: String(item.department || department || '').trim(),
       }))
-      .filter((employee) => employee.employeeId || employee.employeeName || employee.department)
+      .filter((item) => item.productId || item.productName || item.department)
   }, [department, manualEmployees])
 
   const submissionEmployees = entryMode === 'manual'
     ? manualSubmissionEmployees
     : selectedEmployees.map((employee) => ({
-        employeeId: String(employee.employeeId || employee.id || employee.identifier || '').trim(),
-        employeeName: String(employee.employeeName || employee.name || employee.fullName || '').trim(),
+        productId: String(employee.productId || employee.id || employee.identifier || employee.employeeId || '').trim(),
+        productName: String(employee.productName || employee.employeeName || employee.name || employee.fullName || '').trim(),
         department: String(employee.department || department || employee.dept || '').trim(),
       }))
 
@@ -172,13 +174,13 @@ export default function DepartmentScanModal({
   }
 
   function addManualEmployee() {
-    setManualEmployees((current) => [...current, { employeeId: '', employeeName: '', department: department || '' }])
+    setManualEmployees((current) => [...current, { productId: '', productName: '', thickness: '', pieces: '', department: department || '' }])
   }
 
   function removeManualEmployee(rowIndex) {
     setManualEmployees((current) => {
       const next = current.filter((_, index) => index !== rowIndex)
-      return next.length > 0 ? next : [{ employeeId: '', employeeName: '', department: department || '' }]
+      return next.length > 0 ? next : [{ productId: '', productName: '', thickness: '', pieces: '', department: department || '' }]
     })
   }
 
@@ -220,8 +222,8 @@ export default function DepartmentScanModal({
       }
     })
 
-    if (payloads.some((payload) => !payload.employeeId || !payload.employeeName || !payload.department)) {
-      setSubmissionError('Selected employee data is incomplete. Please choose a valid employee and try again.')
+    if (payloads.some((payload) => !payload.department || (!payload.productId && !payload.productName))) {
+      setSubmissionError('Selected item data is incomplete. Please provide a product ID or name and a department.')
       return
     }
 
@@ -244,21 +246,65 @@ export default function DepartmentScanModal({
           <p className="mt-1 text-sm text-slate-400">{description}</p>
 
           <div className="mt-5 space-y-4">
-            {/* QR-only mode (manual tab removed) */}
+            <div className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950 p-1">
+              <button type="button" onClick={() => setEntryMode('scan')} className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${entryMode === 'scan' ? 'bg-emerald-500 text-black' : 'text-slate-300 hover:bg-slate-900'}`}>
+                QR scan mode
+              </button>
+              <button type="button" onClick={() => setEntryMode('manual')} className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${entryMode === 'manual' ? 'bg-emerald-500 text-black' : 'text-slate-300 hover:bg-slate-900'}`}>
+                Manual entry
+              </button>
+            </div>
 
             {submissionError ? (
               <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">{submissionError}</div>
             ) : null}
 
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950 px-4 py-3">
-              <div>
-                <label className="text-sm text-slate-300">Employees Included</label>
-                <p className="text-xs text-slate-500">Click the count to open the employee picker in a separate window.</p>
+            {entryMode === 'scan' ? (
+              <div className="rounded-xl border border-slate-800 bg-slate-950 p-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center justify-center border-2 border-dashed border-slate-700 rounded-lg bg-slate-900 h-64">
+                    <div className="text-center text-slate-400">Scanner placeholder (camera view)</div>
+                  </div>
+                  <div className="flex flex-col justify-between">
+                    <div>
+                      <label className="text-sm text-slate-300">Items Included</label>
+                      <p className="text-xs text-slate-500">Click the count to open the item picker in a separate window.</p>
+                    </div>
+                    <div className="flex items-center justify-end">
+                      <button type="button" onClick={() => setShowEmployeeTable((current) => !current)} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
+                        View {selectedEmployeeIds.length} item{selectedEmployeeIds.length === 1 ? '' : 's'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <button type="button" onClick={() => setShowEmployeeTable((current) => !current)} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
-                View {selectedEmployeeIds.length} employee{selectedEmployeeIds.length === 1 ? '' : 's'}
-              </button>
-            </div>
+            ) : (
+              <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-950 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <label className="text-sm text-slate-300">Manual item entries</label>
+                    <p className="text-xs text-slate-500">Type the product details for items without QR codes (thickness, pieces, etc.).</p>
+                  </div>
+                  <button type="button" onClick={addManualEmployee} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
+                    Add item
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {manualEmployees.map((employee, rowIndex) => (
+                    <div key={`${rowIndex}-${employee.productId || 'manual'}`} className="grid gap-3 md:grid-cols-[1fr_1.2fr_1fr_1fr_auto]">
+                      <input value={employee.productId} onChange={(e) => updateManualEmployee(rowIndex, 'productId', e.target.value)} placeholder="Product ID" className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
+                      <input value={employee.productName} onChange={(e) => updateManualEmployee(rowIndex, 'productName', e.target.value)} placeholder="Product Name" className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
+                      <input value={employee.thickness} onChange={(e) => updateManualEmployee(rowIndex, 'thickness', e.target.value)} placeholder="Thickness" className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
+                      <input value={employee.pieces} onChange={(e) => updateManualEmployee(rowIndex, 'pieces', e.target.value)} placeholder="Pieces" className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none" />
+                      <button type="button" onClick={() => removeManualEmployee(rowIndex)} className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-slate-300 transition-colors hover:bg-slate-800">
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {spec.fields
               .filter((field) => !field.auto && field.key !== 'department')

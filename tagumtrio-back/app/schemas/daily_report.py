@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, Extra
 from typing import Any
 
 
@@ -12,6 +12,9 @@ class DailyReportEntry(BaseModel):
     amount: float
     notes: str | None = None
 
+    class Config:
+        extra = Extra.allow
+
 
 class DailyReportCreate(BaseModel):
     department: str
@@ -21,6 +24,9 @@ class DailyReportCreate(BaseModel):
     status: str | None = Field(default='submitted')
     summary: str | None = None
     entries: list[DailyReportEntry] | list[dict] | Any
+
+    class Config:
+        extra = Extra.allow
 
 
 class DailyReportPublic(BaseModel):

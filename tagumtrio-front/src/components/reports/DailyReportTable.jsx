@@ -11,7 +11,7 @@ function resolveEntryDepartment(entry, fallbackDepartment) {
 }
 
 export default function DailyReportTable({ entries = [], fallbackDepartment = '' }) {
-  const safeEntries = Array.isArray(entries) ? entries.filter((entry) => getEntryLabel(entry) || getEntryIdentifier(entry) || entry.department || entry.raw?.department || entry.raw?.qrFields?.department || entry.qrFields?.department || entry.raw?.qrFields?.employeeName || entry.raw?.qrFields?.employee_name || entry.raw?.employeeName || entry.raw?.employee_name) : []
+  const safeEntries = Array.isArray(entries) ? entries.filter((entry) => getEntryLabel(entry) || getEntryIdentifier(entry) || entry.department || entry.raw?.department || entry.raw?.qrFields?.department || entry.qrFields?.department || entry.thickness || entry.crates || entry.pieces || entry.date || entry.dateIn || entry.raw?.qrFields?.date || entry.raw?.qrFields?.dateIn) : []
 
   if (safeEntries.length === 0) {
     return <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">No report entries yet.</div>
@@ -38,9 +38,9 @@ export default function DailyReportTable({ entries = [], fallbackDepartment = ''
                 <div className="text-xs text-slate-500">{getEntryIdentifier(entry) || '-'}</div>
               </td>
               <td className="px-4 py-4 text-slate-300">{resolveEntryDepartment(entry, fallbackDepartment)}</td>
-              <td className="px-4 py-4 text-slate-300">{(entry.raw?.qrFields?.thickness) || (entry.qrFields?.thickness) || '-'}</td>
-              <td className="px-4 py-4 text-slate-300">{getEntryPieces(entry) || '-'}</td>
-              <td className="px-4 py-4 text-slate-300">{(entry.raw?.qrFields?.date) || (entry.qrFields?.date) || (entry.raw?.qrFields?.dateIn) || (entry.qrFields?.dateIn) || '-'}</td>
+              <td className="px-4 py-4 text-slate-300">{entry.thickness || entry.raw?.qrFields?.thickness || entry.qrFields?.thickness || '-'}</td>
+              <td className="px-4 py-4 text-slate-300">{getEntryPieces(entry) || entry.crates || entry.pieces || entry.raw?.pieces || entry.raw?.crates || entry.raw?.qrFields?.pieces || entry.raw?.qrFields?.crates || '-'}</td>
+              <td className="px-4 py-4 text-slate-300">{entry.date || entry.dateIn || entry.raw?.qrFields?.date || entry.qrFields?.date || entry.raw?.qrFields?.dateIn || entry.qrFields?.dateIn || '-'}</td>
               <td className="px-4 py-4 font-semibold text-emerald-400">₱{Number(entry.amount || 0).toLocaleString()}</td>
             </tr>
           ))}

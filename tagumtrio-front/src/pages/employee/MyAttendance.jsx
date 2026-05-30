@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowLeft, BadgeCheck, CheckCircle2, FileText, Hourglass, LayoutGrid } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, CheckCircle2, FileText, Hourglass, LayoutGrid, XCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
@@ -16,6 +16,7 @@ export default function MyAttendance() {
 
   const approvedLeaves = useMemo(() => leaveRequests.filter((request) => String(request.status || '').toLowerCase() === 'approved'), [leaveRequests])
   const pendingLeaves = useMemo(() => leaveRequests.filter((request) => String(request.status || '').toLowerCase() === 'pending'), [leaveRequests])
+  const rejectedLeaves = useMemo(() => leaveRequests.filter((request) => String(request.status || '').toLowerCase() === 'rejected'), [leaveRequests])
 
   return (
     <div className="space-y-6">
@@ -38,7 +39,11 @@ export default function MyAttendance() {
           <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
             <p className="text-xs uppercase tracking-wider text-slate-500">Leave requests</p>
             <p className="mt-2 text-lg font-semibold text-white">{leaveRequests.length}</p>
-            <p className="text-xs text-slate-500">{approvedLeaves.length} approved</p>
+            <div className="mt-2 space-y-1 text-xs text-slate-400">
+              <p>{approvedLeaves.length} approved</p>
+              <p>{pendingLeaves.length} pending</p>
+              <p>{rejectedLeaves.length} rejected</p>
+            </div>
           </div>
         </div>
       </div>
@@ -59,6 +64,13 @@ export default function MyAttendance() {
               className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'pending-leaves' ? 'bg-emerald-500 text-black' : 'border border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700'}`}
             >
               <Hourglass className="h-4 w-4" /> Pending Leaves
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('rejected-leaves')}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'rejected-leaves' ? 'bg-rose-500 text-black' : 'border border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700'}`}
+            >
+              <XCircle className="h-4 w-4" /> Rejected Leaves
             </button>
             <button
               type="button"
@@ -112,6 +124,40 @@ export default function MyAttendance() {
                     <p className="text-sm font-medium text-white">{request.leaveType || 'Leave'}</p>
                     <p className="mt-1 text-xs text-slate-500">Requested {formatDateTime(request.requestedAt || request.createdAt || Date.now())}</p>
                     <p className="mt-4 text-sm text-slate-300">{request.startDate || request.start_date || '—'} to {request.endDate || request.end_date || '—'}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        {activeTab === 'rejected-leaves' ? (
+          <div className="p-6">
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><XCircle className="w-5 h-5 text-rose-400" /> Rejected Leaves</h3>
+            <p className="mt-1 text-sm text-slate-400">These leave requests were declined.</p>
+            {rejectedLeaves.length === 0 ? (
+              <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950 p-6 text-sm text-slate-400">No rejected leaves yet.</div>
+            ) : (
+              <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {rejectedLeaves.map((request) => (
+                  <div key={request.id} className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium text-white">{request.leaveType || 'Leave'}</p>
+                        <p className="mt-1 text-xs text-slate-400">Requested {formatDateTime(request.requestedAt || request.createdAt || Date.now())}</p>
+                      </div>
+                      <span className="rounded-full bg-rose-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-rose-300">Rejected</span>
+                    </div>
+                    <div className="mt-4 space-y-2 text-sm text-slate-300">
+                      <p><span className="text-slate-500">Date range:</span> {request.startDate || request.start_date || '—'} to {request.endDate || request.end_date || '—'}</p>
+                      <p><span className="text-slate-500">Reason:</span> {request.reason || 'No reason provided'}</p>
+                      {request.approvedBy || request.approverId ? (
+                        <p><span className="text-slate-500">Reviewed by:</span> {request.approvedBy || request.approverId}</p>
+                      ) : null}
+                      {request.note ? (
+                        <p><span className="text-slate-500">Note:</span> {request.note}</p>
+                      ) : null}
+                    </div>
                   </div>
                 ))}
               </div>

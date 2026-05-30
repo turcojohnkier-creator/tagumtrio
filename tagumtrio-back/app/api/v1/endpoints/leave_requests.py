@@ -34,7 +34,7 @@ def post_leave_request(payload: LeaveRequestCreate, db: Session = Depends(get_db
 
 @router.patch("/{request_id}/approve", response_model=LeaveRequestPublic)
 def approve_leave_request_endpoint(request_id: str, payload: LeaveRequestApprove, db: Session = Depends(get_db), approver_id: int | None = Query(default=None, alias="approverId"), current_user = Depends(get_current_user)) -> LeaveRequestPublic:
-    if current_user.role not in {"leadman", "production_incharge", "hr", "admin"}:
+    if current_user.role not in {"leadman", "production_incharge", "hr", "admin", "gm"}:
         raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
     approver = approver_id or current_user.id
     try:
@@ -45,7 +45,7 @@ def approve_leave_request_endpoint(request_id: str, payload: LeaveRequestApprove
 
 @router.patch("/{request_id}/reject", response_model=LeaveRequestPublic)
 def reject_leave_request_endpoint(request_id: str, payload: LeaveRequestApprove, db: Session = Depends(get_db), approver_id: int | None = Query(default=None, alias="approverId"), current_user = Depends(get_current_user)) -> LeaveRequestPublic:
-    if current_user.role not in {"leadman", "production_incharge", "hr", "admin"}:
+    if current_user.role not in {"leadman", "production_incharge", "hr", "admin", "gm"}:
         raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
     approver = approver_id or current_user.id
     try:

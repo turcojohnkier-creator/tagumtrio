@@ -8,7 +8,7 @@ export default function Requests() {
   const { user } = useAuth()
   const dialog = useDialog()
 
-  const canApprove = user && ['leadman', 'production_incharge', 'hr', 'admin'].includes(user.role)
+  const canApprove = user && ['leadman', 'production_incharge', 'hr', 'admin', 'gm'].includes(user.role)
 
   async function handleApprove(req) {
     const confirmed = await dialog.confirm({

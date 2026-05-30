@@ -4,6 +4,8 @@ export function getEntryLabel(entry) {
     || entry?.productName
     || entry?.itemName
     || entry?.raw?.employeeName
+    || entry?.raw?.employee_name
+    || entry?.raw?.name
     || entry?.raw?.productName
     || entry?.raw?.itemName
     || entry?.employeeId
@@ -19,7 +21,9 @@ export function getEntryIdentifier(entry) {
     entry?.employeeId
     || entry?.productId
     || entry?.raw?.employeeId
+    || entry?.raw?.employee_id
     || entry?.raw?.productId
+    || entry?.raw?.product_id
     || ''
   ).trim()
 }

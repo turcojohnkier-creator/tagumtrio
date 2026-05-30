@@ -11,7 +11,7 @@ function resolveEntryDepartment(entry, fallbackDepartment) {
 }
 
 export default function DailyReportTable({ entries = [], fallbackDepartment = '' }) {
-  const safeEntries = Array.isArray(entries) ? entries.filter((entry) => getEntryLabel(entry) || getEntryIdentifier(entry) || entry.department || entry.raw?.department || entry.raw?.qrFields?.department || entry.qrFields?.department) : []
+  const safeEntries = Array.isArray(entries) ? entries.filter((entry) => getEntryLabel(entry) || getEntryIdentifier(entry) || entry.department || entry.raw?.department || entry.raw?.qrFields?.department || entry.qrFields?.department || entry.raw?.qrFields?.employeeName || entry.raw?.qrFields?.employee_name || entry.raw?.employeeName || entry.raw?.employee_name) : []
 
   if (safeEntries.length === 0) {
     return <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">No report entries yet.</div>

@@ -202,6 +202,8 @@ export default function DepartmentScanModal({
       const itemDepartment = String(item.department || department || '').trim()
 
       return {
+        employeeId: item.employeeId || null,
+        employeeName: item.employeeName || null,
         productId,
         productName,
         thickness,
@@ -214,14 +216,8 @@ export default function DepartmentScanModal({
         batchCapturedAt,
         batchItemCount: submissionEmployees.length,
         raw: {
-          department: itemDepartment,
-          productId,
-          productName,
-          thickness,
-          pieces,
-          qrFields: values,
-          qrSummary: autoSummary,
-          batchId,
+          employeeId: item.employeeId || null,
+          employeeName: item.employeeName || null,
           batchCapturedAt,
           batchItemCount: submissionEmployees.length,
         },

@@ -1,5 +1,5 @@
 import { LayoutDashboard, Factory, BarChart2, FileSpreadsheet } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { NavLink, Link } from 'react-router-dom'
 import { useQr } from '../../context/qr-context'
 
 export default function GMDashboard() {
@@ -7,6 +7,7 @@ export default function GMDashboard() {
   return (
     <div className="space-y-6">
       <div>
+        <div>
         <h2 className="text-2xl font-bold text-white">General Manager Dashboard</h2>
         <p className="text-slate-400 mt-1">Overview of production, daily reports, and workforce analytics.</p>
       </div>
@@ -61,5 +62,6 @@ export default function GMDashboard() {
         </div>
       ) : null}
     </div>
+  </div>
   )
 }

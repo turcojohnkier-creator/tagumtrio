@@ -1,6 +1,6 @@
 import { Outlet, NavLink, Navigate, useNavigate } from 'react-router-dom'
 import PageTransition from '../ui/PageTransition'
-import { Bell, LogOut, QrCode, X, Users, Factory, FileSpreadsheet, LayoutDashboard, CalendarDays, Megaphone } from 'lucide-react'
+import { Bell, LogOut, Menu, QrCode, X, Users, Factory, FileSpreadsheet, LayoutDashboard, CalendarDays, Megaphone } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import { useMemo, useState } from 'react'
@@ -15,6 +15,7 @@ const allNavItems = [
   { name: 'Production', href: '/app/production', icon: Factory, roles: ['hr', 'production_incharge', 'leadman', 'gm'] },
   { name: 'Production Oversight', href: '/app/production/oversight', icon: Factory, roles: ['production_incharge'] },
   { name: 'GM Dashboard', href: '/app/gm', icon: LayoutDashboard, roles: ['gm'] },
+  { name: 'Departments Overview', href: '/app/gm/overview', icon: Users, roles: ['gm'] },
   { name: 'Announcements', href: '/app/hr/announcements', icon: Megaphone, roles: ['hr'] },
   { name: 'Finance Home', href: '/app/payroll', icon: LayoutDashboard, roles: ['finance'] },
   { name: 'Daily Production', href: '/app/payroll/production', icon: CalendarDays, roles: ['finance'] },
@@ -212,11 +213,11 @@ export default function MainLayout() {
               key={item.name}
               to={item.href}
               title={item.name}
-              end={item.href === '/app/production' || item.href === '/app/hr'}
+              end={['/app/production', '/app/hr', '/app/gm', '/app/gm/overview', '/app/payroll', '/app/employees', '/app/requests'].includes(item.href)}
               className={({ isActive }) => cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-emerald-500/10 text-emerald-400'
+                  ? 'bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20'
                   : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
               )}
             >
@@ -238,9 +239,18 @@ export default function MainLayout() {
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 bg-slate-950 border-b border-slate-800 hidden md:flex items-center justify-between px-6 shrink-0">
-          <div className="flex-1"></div>
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800 bg-slate-950 px-4 md:px-6">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setMobileMenuOpen((open) => !open)} className="inline-flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900 p-2 text-slate-300 md:hidden" aria-label="Toggle navigation">
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+            <div>
+              <p className="text-sm font-semibold text-white">Workspace</p>
+              <p className="text-xs text-slate-500">Dashboard & navigation</p>
+            </div>
+          </div>
+
           <div className="flex items-center gap-4">
             <div className="relative">
               <button onClick={() => setNotificationsOpen((open) => !open)} className="relative p-2 text-slate-400 hover:text-white transition-colors bg-slate-900 rounded-lg border border-slate-800" aria-expanded={notificationsOpen} aria-label="Toggle notifications">

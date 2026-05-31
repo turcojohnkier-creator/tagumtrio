@@ -27,6 +27,7 @@ const HRDashboard = lazy(() => import('./pages/HR/HRDashboard'))
 const EmployeeManagement = lazy(() => import('./pages/HR/EmployeeManagement'))
 const HRAnnouncements = lazy(() => import('./pages/HR/Announcements'))
 const GMDashboard = lazy(() => import('./pages/gm/GMDashboard'))
+const GMOverview = lazy(() => import('./pages/gm/GMOverview'))
 const EmployeeDashboard = lazy(() => import('./pages/employee/EmployeeDashboard'))
 const EmployeeAnnouncements = lazy(() => import('./pages/employee/Announcements'))
 const EmployeeWorkDetails = lazy(() => import('./pages/employee/Schedules'))
@@ -78,6 +79,7 @@ export default function App() {
                   <Route path="hr/employees" element={<EmployeeManagement />} />
                   <Route path="hr/announcements" element={<HRAnnouncements />} />
                   <Route path="gm" element={<GMDashboard />} />
+                  <Route path="gm/overview" element={<GMOverview />} />
                   <Route path="requests" element={<Requests />} />
                   <Route path="*" element={<Navigate to="" replace />} />
                 </Route>

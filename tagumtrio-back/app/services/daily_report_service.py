@@ -41,10 +41,15 @@ def create_daily_report(db: Session, payload: DailyReportCreate) -> DailyReportP
     })
 
 
-def list_daily_reports(db: Session, department: str | None = None) -> list[DailyReportPublic]:
+def list_daily_reports(db: Session, department: str | list[str] | None = None, report_date: str | None = None) -> list[DailyReportPublic]:
     query = db.query(DailyReport)
     if department:
-        query = query.filter(DailyReport.department == department)
+        if isinstance(department, list):
+            query = query.filter(DailyReport.department.in_(department))
+        else:
+            query = query.filter(DailyReport.department == department)
+    if report_date:
+        query = query.filter(DailyReport.report_date == report_date)
     rows = query.order_by(DailyReport.created_at.desc()).all()
     return [DailyReportPublic.model_validate({
         "id": row.id,

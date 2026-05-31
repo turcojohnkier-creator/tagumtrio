@@ -1,41 +1,14 @@
 import { LayoutDashboard, Factory, BarChart2, FileSpreadsheet, TrendingUp, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useQr } from '../../context/qr-context'
-import { DEPARTMENTS } from '../../constants/departments'
 
 export default function GMDashboard() {
   const { announcements = [] } = useQr()
-  const departmentCount = DEPARTMENTS.length
   const announcementCount = announcements.length
 
   return (
     <div className="space-y-6 pb-8">
-      <section className="rounded-[2rem] border border-slate-800 bg-slate-950 p-6 shadow-2xl shadow-black/20">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-3xl">
-            <p className="text-sm uppercase tracking-[0.3em] text-slate-500">General Manager</p>
-            <h1 className="mt-2 text-3xl font-semibold text-white">Analytics Overview</h1>
-            <p className="mt-3 text-sm text-slate-400">
-              This is your analytics home. Get quick insight into department staffing, reports, and workforce performance.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="rounded-3xl border border-slate-800 bg-slate-900 p-5 text-white shadow-sm">
-              <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Departments</p>
-              <p className="mt-3 text-3xl font-semibold text-emerald-400">{departmentCount}</p>
-            </div>
-            <div className="rounded-3xl border border-slate-800 bg-slate-900 p-5 text-white shadow-sm">
-              <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Announcements</p>
-              <p className="mt-3 text-3xl font-semibold text-sky-400">{announcementCount}</p>
-            </div>
-            <div className="rounded-3xl border border-slate-800 bg-slate-900 p-5 text-white shadow-sm">
-              <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Insights</p>
-              <p className="mt-3 text-3xl font-semibold text-white">Live trends</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.25fr_0.85fr]">
         <div className="space-y-6">

@@ -11,11 +11,11 @@ function cn(...inputs) {
 }
 
 const allNavItems = [
-  { name: 'Dashboard', href: '/app/hr', icon: LayoutDashboard, roles: ['hr'] },
+  { name: 'Dashboard', href: '/app/gm', icon: LayoutDashboard, roles: ['gm'] },
+  { name: 'Departments Overview', href: '/app/gm/overview', icon: Users, roles: ['gm'] },
   { name: 'Production', href: '/app/production', icon: Factory, roles: ['hr', 'production_incharge', 'leadman', 'gm'] },
   { name: 'Production Oversight', href: '/app/production/oversight', icon: Factory, roles: ['production_incharge'] },
-  { name: 'GM Dashboard', href: '/app/gm', icon: LayoutDashboard, roles: ['gm'] },
-  { name: 'Departments Overview', href: '/app/gm/overview', icon: Users, roles: ['gm'] },
+  { name: 'Dashboard', href: '/app/hr', icon: LayoutDashboard, roles: ['hr'] },
   { name: 'Announcements', href: '/app/hr/announcements', icon: Megaphone, roles: ['hr'] },
   { name: 'Finance Home', href: '/app/payroll', icon: LayoutDashboard, roles: ['finance'] },
   { name: 'Daily Production', href: '/app/payroll/production', icon: CalendarDays, roles: ['finance'] },

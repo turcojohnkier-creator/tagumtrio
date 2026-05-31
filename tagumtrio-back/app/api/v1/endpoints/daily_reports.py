@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -20,12 +20,22 @@ def post_daily_report(payload: DailyReportCreate, db: Session = Depends(get_db),
 
 
 @router.get("", response_model=list[DailyReportPublic])
-def get_daily_reports(department: str | None = None, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    # allow finance/hr/admin/production_incharge to list all; leadman constrained by department
+def get_daily_reports(
+    department: str | None = Query(default=None),
+    report_date: str | None = Query(default=None, alias="reportDate"),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+):
+    # allow finance/hr/admin/production_incharge to list all; leadman constrained by department(s)
     if current_user.role in {"finance", "hr", "admin", "production_incharge"}:
-        return list_daily_reports(db, department=department)
-    # for leadman return only matching department
+        return list_daily_reports(db, department=department, report_date=report_date)
+
     if current_user.role == 'leadman':
-        dept = current_user.department
-        return list_daily_reports(db, department=dept)
+        allowed_departments = [d for d in (current_user.departments or []) if d] or ([current_user.department] if current_user.department else [])
+        if department and department in allowed_departments:
+            return list_daily_reports(db, department=department, report_date=report_date)
+        if len(allowed_departments) == 1:
+            return list_daily_reports(db, department=allowed_departments[0], report_date=report_date)
+        return list_daily_reports(db, department=allowed_departments, report_date=report_date)
+
     raise HTTPException(status_code=403, detail="Insufficient permissions")

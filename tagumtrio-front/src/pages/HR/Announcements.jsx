@@ -4,12 +4,17 @@ import { useAuth } from '../../context/auth-context'
 import AnnouncementPost from '../../components/ui/AnnouncementPost'
 
 export default function Announcements() {
-  const { announcements = [], createAnnouncement, removeAnnouncement } = useQr()
+  const { announcements = [], createAnnouncement, updateAnnouncement, removeAnnouncement } = useQr()
   const { user } = useAuth()
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [pinned, setPinned] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [editingAnnouncementId, setEditingAnnouncementId] = useState(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editBody, setEditBody] = useState('')
+  const [editPinned, setEditPinned] = useState(false)
+  const [editSubmitting, setEditSubmitting] = useState(false)
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -61,10 +66,88 @@ export default function Announcements() {
           <div className="space-y-3">
             {announcements.map((a) => (
               <div key={a.id} className="space-y-2">
-                <AnnouncementPost announcement={a} showActions={false} />
-                <div className="flex justify-end px-1">
-                  <button onClick={() => removeAnnouncement(a.id)} className="text-xs font-medium text-rose-400 transition-colors hover:text-rose-300">Delete post</button>
-                </div>
+                {editingAnnouncementId === a.id ? (
+                  <form
+                    onSubmit={async (event) => {
+                      event.preventDefault()
+                      setEditSubmitting(true)
+                      try {
+                        await updateAnnouncement(a.id, {
+                          title: editTitle,
+                          body: editBody,
+                          pinned: editPinned,
+                        })
+                        setEditingAnnouncementId(null)
+                      } catch (err) {
+                        console.error(err)
+                        alert('Failed to save announcement')
+                      } finally {
+                        setEditSubmitting(false)
+                      }
+                    }}
+                    className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950 p-5"
+                  >
+                    <div className="grid gap-4">
+                      <input
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        placeholder="Announcement title"
+                        className="w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-white focus:border-emerald-500 focus:outline-none"
+                      />
+                      <textarea
+                        value={editBody}
+                        onChange={(e) => setEditBody(e.target.value)}
+                        rows={4}
+                        placeholder="Announcement body"
+                        className="w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-white focus:border-emerald-500 focus:outline-none"
+                      />
+                      <label className="flex items-center gap-2 text-sm text-slate-300">
+                        <input type="checkbox" checked={editPinned} onChange={(e) => setEditPinned(e.target.checked)} /> Pin to top
+                      </label>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setEditingAnnouncementId(null)}
+                        className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-slate-200 hover:bg-slate-700"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={editSubmitting}
+                        className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-medium text-black hover:bg-emerald-400"
+                      >
+                        {editSubmitting ? 'Saving...' : 'Save changes'}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <AnnouncementPost announcement={a} showActions={false} />
+                    <div className="flex flex-wrap justify-end gap-3 px-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingAnnouncementId(a.id)
+                          setEditTitle(a.title || '')
+                          setEditBody(a.body || '')
+                          setEditPinned(Boolean(a.pinned))
+                        }}
+                        className="text-xs font-medium text-slate-200 transition-colors hover:text-white"
+                      >
+                        Edit post
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeAnnouncement(a.id)}
+                        className="text-xs font-medium text-rose-400 transition-colors hover:text-rose-300"
+                      >
+                        Delete post
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>

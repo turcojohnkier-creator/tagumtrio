@@ -51,17 +51,6 @@ export default function FinanceHome() {
           <StatCard label="Amount" value={`₱${stats.totalAmount.toLocaleString()}`} hint="Total value across finance records" />
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link to="/app/payroll/production" className="inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-300">
-            <CalendarDays className="h-4 w-4" /> Daily Production
-          </Link>
-          <Link to="/app/payroll/employees" className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-sm font-semibold text-slate-100 transition-colors hover:border-slate-700">
-            <Users className="h-4 w-4" /> Department Employees
-          </Link>
-          <Link to="/app/production" className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-sm font-semibold text-slate-100 transition-colors hover:border-slate-700">
-            <BarChart3 className="h-4 w-4" /> Production In-Charge View
-          </Link>
-        </div>
       </section>
     </div>
   )

@@ -7,6 +7,20 @@ import { fetchDailyReportsApi } from '../../lib/api'
 
 function asText(v) { return String(v || '').toLowerCase() }
 
+function aggregateReport(reports = []) {
+  return reports.reduce(
+    (acc, report) => {
+      const entries = Array.isArray(report.entries) ? report.entries : []
+      const pieces = entries.reduce((sum, item) => sum + Number(item.pieces || item.quantity || 0), 0)
+      const amount = entries.reduce((sum, item) => sum + Number(item.amount || item.total || 0), 0)
+      acc.totalPieces += pieces
+      acc.totalAmount += amount
+      return acc
+    },
+    { totalPieces: 0, totalAmount: 0 }
+  )
+}
+
 export default function LeadmanHistory() {
   const { user } = useAuth()
   const { formatDateTime, selectedLeadmanDepartment } = useQr()

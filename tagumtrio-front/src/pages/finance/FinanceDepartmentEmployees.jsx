@@ -30,10 +30,39 @@ function recentOnly(records = []) {
 }
 
 function EmployeeModal({ employee, history, onClose }) {
+  const [confirmAction, setConfirmAction] = useState('')
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
   if (!employee) return null
 
   const totalAmount = history.reduce((sum, record) => sum + Number(record.amount || 0), 0)
   const totalHours = history.reduce((sum, record) => sum + Number(record.loggedHours || 0), 0)
+
+  function openConfirmation(action) {
+    setConfirmAction(action)
+    setConfirmOpen(true)
+  }
+
+  function closeConfirmation() {
+    setConfirmOpen(false)
+    setConfirmAction('')
+  }
+
+  function handleConfirm() {
+    closeConfirmation()
+  }
+
+  const confirmationTitle = confirmAction === 'submit'
+    ? 'Confirm submit'
+    : confirmAction === 'pdf'
+      ? 'Confirm PDF generation'
+      : ''
+
+  const confirmationMessage = confirmAction === 'submit'
+    ? `Submit the salary summary for ${employee.employeeName} now?`
+    : confirmAction === 'pdf'
+      ? `Generate a PDF version of ${employee.employeeName}'s 15-day production summary?`
+      : ''
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
@@ -95,12 +124,59 @@ function EmployeeModal({ employee, history, onClose }) {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-800 px-5 py-4">
-          <button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2.5 text-slate-200 transition-colors hover:bg-slate-700">
-            Close
-          </button>
+        <div className="flex flex-col gap-3 border-t border-slate-800 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-slate-400">Use the action buttons below to submit or export this payroll summary.</p>
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => openConfirmation('pdf')}
+              className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:border-cyan-500/50 hover:bg-slate-900"
+            >
+              Generate PDF
+            </button>
+            <button
+              type="button"
+              onClick={() => openConfirmation('submit')}
+              className="rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-emerald-400"
+            >
+              Submit
+            </button>
+            <button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2.5 text-sm text-slate-200 transition-colors hover:bg-slate-700">
+              Close
+            </button>
+          </div>
         </div>
       </div>
+
+      {confirmOpen ? (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-800 bg-slate-950 p-6 text-white shadow-2xl">
+            <div className="mb-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">{confirmationTitle || 'Confirm action'}</p>
+              <h4 className="mt-2 text-xl font-semibold">{confirmationTitle}</h4>
+              <p className="mt-3 text-sm leading-6 text-slate-300">{confirmationMessage}</p>
+              <p className="mt-2 text-xs text-slate-500">This is a placeholder confirmation modal for the finance employee summary action.</p>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeConfirmation}
+                className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-slate-200 transition-colors hover:border-slate-500 hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirm}
+                className="rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-emerald-400"
+              >
+                Confirm {confirmAction === 'submit' ? 'Submit' : 'Generate PDF'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

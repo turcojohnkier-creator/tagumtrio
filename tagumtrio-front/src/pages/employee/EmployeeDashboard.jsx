@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Briefcase, Calendar as CalendarIcon, FileText, Megaphone, BadgeCheck, TimerReset, ChevronRight } from 'lucide-react'
+import { Briefcase, Calendar as CalendarIcon, FileText, Megaphone, BadgeCheck, TimerReset, ChevronRight, DollarSign } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import { DEPARTMENTS } from '../../constants/departments'
@@ -173,15 +173,6 @@ export default function EmployeeDashboard() {
 
   return (
     <div className="space-y-6">
-      {Array.isArray(activeReminders) && activeReminders.length > 0 ? (
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/8 p-4">
-          {activeReminders.map((r, idx) => (
-            <div key={idx} className="text-sm text-amber-200">
-              {r.type === 'announcement' ? `Announcement: ${r.announcement.title}` : r.type === 'shift' ? `Upcoming shift: ${r.schedule.department} ${r.schedule.employeeId ? `• ${r.schedule.employeeId}` : ''} at ${r.schedule.startAt}` : null}
-            </div>
-          ))}
-        </div>
-      ) : null}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-transparent to-cyan-500/10 pointer-events-none"></div>
         <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
@@ -197,7 +188,22 @@ export default function EmployeeDashboard() {
             </div>
           </div>
           <div className="flex flex-col items-start gap-3 text-sm text-slate-300 max-w-md">
-            
+            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4">
+                <div className="flex items-center gap-2 text-slate-400">
+                  <DollarSign className="w-4 h-4" />
+                  <p className="text-xs uppercase tracking-[0.24em]">Total salary accumulated</p>
+                </div>
+                <p className="mt-2 text-2xl font-semibold text-white">₱{(totals.totalAmount || 0).toLocaleString()}</p>
+              </div>
+              <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4">
+                <div className="flex items-center gap-2 text-slate-400">
+                  <DollarSign className="w-4 h-4" />
+                  <p className="text-xs uppercase tracking-[0.24em]">Today's salary</p>
+                </div>
+                <p className="mt-2 text-2xl font-semibold text-white">₱{todaysAmount.toLocaleString()}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

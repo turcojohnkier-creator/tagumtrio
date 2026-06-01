@@ -23,6 +23,7 @@ import {
   submitDailyReportApi,
   fetchAnnouncementsApi,
   createAnnouncementApi,
+  updateAnnouncementApi,
   deleteAnnouncementApi,
   fetchSchedulesApi,
   createScheduleApi,
@@ -726,6 +727,19 @@ export function QRProvider({ children }) {
     }
   }
 
+  async function updateAnnouncement(id, updates) {
+    const prev = announcements.slice()
+    setAnnouncements((cur) => cur.map((a) => (a.id === id ? { ...a, ...updates, updatedAt: new Date().toISOString() } : a)))
+    try {
+      const updated = await updateAnnouncementApi(id, updates)
+      setAnnouncements((cur) => cur.map((a) => (a.id === id ? updated : a)))
+      return updated
+    } catch (e) {
+      setAnnouncements(prev)
+      throw e
+    }
+  }
+
   // Schedules management
   async function createSchedule(record) {
     const tempId = `SCH-${Date.now()}`
@@ -1206,6 +1220,7 @@ export function QRProvider({ children }) {
         buildDepartmentQrSummary,
         announcements,
         createAnnouncement,
+        updateAnnouncement,
         removeAnnouncement,
         schedules,
         createSchedule,

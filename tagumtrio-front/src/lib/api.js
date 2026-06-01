@@ -274,6 +274,13 @@ export async function createAnnouncementApi(payload) {
   })
 }
 
+export async function updateAnnouncementApi(id, payload) {
+  return apiRequest(`/v1/announcements/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function deleteAnnouncementApi(id) {
   return apiRequest(`/v1/announcements/${encodeURIComponent(id)}`, {
     method: 'DELETE',

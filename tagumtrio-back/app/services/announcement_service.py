@@ -6,7 +6,7 @@ import uuid
 from sqlalchemy.orm import Session
 
 from app.models.announcement import Announcement
-from app.schemas.announcement import AnnouncementCreate, AnnouncementPublic
+from app.schemas.announcement import AnnouncementCreate, AnnouncementPublic, AnnouncementUpdate
 
 
 def _make_id(prefix: str = "ANN") -> str:
@@ -45,6 +45,29 @@ def create_announcement(db: Session, payload: AnnouncementCreate) -> Announcemen
         created_at=datetime.now(timezone.utc),
     )
     db.add(record)
+    db.commit()
+    db.refresh(record)
+    return _to_public(record)
+
+
+def update_announcement(db: Session, announcement_id: str, payload: AnnouncementUpdate) -> AnnouncementPublic:
+    record = db.get(Announcement, announcement_id)
+    if record is None:
+        raise ValueError("Announcement not found.")
+
+    if payload.title is not None:
+        record.title = payload.title.strip()
+    if payload.body is not None:
+        record.body = payload.body.strip()
+    if payload.author is not None:
+        record.author = payload.author.strip()
+    if payload.pinned is not None:
+        record.pinned = bool(payload.pinned)
+    if payload.audience is not None:
+        record.audience = payload.audience.strip()
+    if payload.visibility is not None:
+        record.visibility = payload.visibility.strip()
+
     db.commit()
     db.refresh(record)
     return _to_public(record)

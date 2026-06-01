@@ -22,6 +22,7 @@ const ProductionOversight = lazy(() => import('./pages/production/ProductionOver
 const FinanceHome = lazy(() => import('./pages/finance/FinanceHome'))
 const FinanceProductionReports = lazy(() => import('./pages/finance/FinanceProductionReports'))
 const FinanceDepartmentEmployees = lazy(() => import('./pages/finance/FinanceDepartmentEmployees'))
+const GMOversight = lazy(() => import('./pages/gm/GMOversight'))
 const EmployeeDirectory = lazy(() => import('./pages/HR/EmployeeDirectory'))
 const HRDashboard = lazy(() => import('./pages/HR/HRDashboard'))
 const EmployeeManagement = lazy(() => import('./pages/HR/EmployeeManagement'))
@@ -67,7 +68,6 @@ export default function App() {
                   <Route path="dashboard" element={<RoleDashboard />} />
 
                   <Route path="production" element={<ProductionDashboard />} />
-                  <Route path="production/oversight" element={<ProductionOversight />} />
                   <Route path="production/consolidated" element={<ProductionConsolidatedReports />} />
 
                   <Route path="payroll" element={<FinanceHome />} />
@@ -80,6 +80,7 @@ export default function App() {
                   <Route path="hr/announcements" element={<HRAnnouncements />} />
                   <Route path="gm" element={<GMDashboard />} />
                   <Route path="gm/overview" element={<GMOverview />} />
+                  <Route path="gm/oversight" element={<GMOversight />} />
                   <Route path="requests" element={<Requests />} />
                   <Route path="*" element={<Navigate to="" replace />} />
                 </Route>

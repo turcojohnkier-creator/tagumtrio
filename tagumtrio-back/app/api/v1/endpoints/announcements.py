@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.deps import get_current_user
-from app.schemas.announcement import AnnouncementCreate, AnnouncementPublic
-from app.services.announcement_service import create_announcement, delete_announcement, list_announcements
+from app.schemas.announcement import AnnouncementCreate, AnnouncementPublic, AnnouncementUpdate
+from app.services.announcement_service import create_announcement, delete_announcement, list_announcements, update_announcement
 
 router = APIRouter(prefix="/announcements", tags=["announcements"])
 
@@ -32,6 +32,21 @@ def post_announcement(
     if not payload.title.strip():
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail="Title is required")
     return create_announcement(db, payload)
+
+
+@router.patch("/{announcement_id}", response_model=AnnouncementPublic)
+def patch_announcement(
+    announcement_id: str,
+    payload: AnnouncementUpdate,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+) -> AnnouncementPublic:
+    if current_user.role not in {"hr", "admin"}:
+        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+    try:
+        return update_announcement(db, announcement_id, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
 @router.delete("/{announcement_id}", status_code=http_status.HTTP_204_NO_CONTENT)

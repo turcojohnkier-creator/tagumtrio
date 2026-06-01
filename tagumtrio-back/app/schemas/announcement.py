@@ -12,6 +12,15 @@ class AnnouncementCreate(BaseModel):
     visibility: str | None = None
 
 
+class AnnouncementUpdate(BaseModel):
+    title: str | None = None
+    body: str | None = None
+    pinned: bool | None = None
+    author: str | None = None
+    audience: str | None = None
+    visibility: str | None = None
+
+
 class AnnouncementPublic(BaseModel):
     id: str
     title: str

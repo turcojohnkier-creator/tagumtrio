@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Edit, Trash2 } from 'lucide-react'
 import { useQr } from '../../context/qr-context'
 import { DEPARTMENTS } from '../../constants/departments'
 
 export default function EmployeeManagement() {
+  const navigate = useNavigate()
   const { employees = [] } = useQr()
   const [searchText, setSearchText] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('All Departments')
@@ -28,7 +30,9 @@ export default function EmployeeManagement() {
           <p className="text-slate-400 mt-1">Create, view, and manage employee records backed by the database.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500 text-black"><Plus className="w-4 h-4" />Add Employee</button>
+          <button onClick={() => navigate('/app/hr/create-account')} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500 text-black">
+            <Plus className="w-4 h-4" />Create account
+          </button>
         </div>
       </div>
 

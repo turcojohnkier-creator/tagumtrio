@@ -4,6 +4,7 @@ import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import DepartmentScanModal from '../../components/leadman/DepartmentScanModal'
 import { useDialog } from '../../context/dialog-context'
+import EmployeeCard from '../../components/employee/EmployeeCard'
 
 function asText(value) {
   return String(value || '').toLowerCase()
@@ -137,15 +138,22 @@ export default function LeadmanDashboard() {
             {scanCandidates.length === 0 ? (
               <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">No employees found in {selectedDepartment} yet.</div>
             ) : (
-              scanCandidates.map((employee) => (
-                <button key={employee.employeeId} onClick={() => { setSelectedEmployeeId(employee.employeeId); setScanModalOpen(true) }} className="flex w-full items-center justify-between rounded-xl border border-slate-800 bg-slate-950 p-4 text-left transition-colors hover:border-slate-700 hover:bg-slate-900">
-                  <div>
-                    <p className="font-medium text-white">{employee.employeeName}</p>
-                    <p className="mt-1 text-sm text-slate-400">{employee.employeeId}{employee.approvedAt ? ` • approved ${formatDateTime(employee.approvedAt)}` : ''}</p>
+              <div className="grid grid-cols-1 gap-3">
+                {scanCandidates.map((employee) => (
+                  <div key={employee.employeeId} onClick={() => { setSelectedEmployeeId(employee.employeeId); setScanModalOpen(true) }}>
+                    <EmployeeCard
+                      employee={{
+                        employeeId: employee.employeeId,
+                        employeeName: employee.employeeName,
+                        role: employee.role || 'Worker',
+                        department: employee.department,
+                        status: employee.approvedAt ? `Approved` : 'Deployed',
+                      }}
+                      showActions={false}
+                    />
                   </div>
-                  <span className="text-xs uppercase tracking-widest text-slate-500">Tap to scan</span>
-                </button>
-              ))
+                ))}
+              </div>
             )}
           </div>
         </div>

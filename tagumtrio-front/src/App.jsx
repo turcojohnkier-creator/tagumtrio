@@ -25,6 +25,7 @@ const FinanceDepartmentEmployees = lazy(() => import('./pages/finance/FinanceDep
 const GMOversight = lazy(() => import('./pages/gm/GMOversight'))
 const Employees = lazy(() => import('./pages/converted/Employees'))
 const HRDashboard = lazy(() => import('./pages/HR/HRDashboard'))
+const HRCreateAccount = lazy(() => import('./pages/HR/HRCreateAccount'))
 const EmployeeManagement = lazy(() => import('./pages/HR/EmployeeManagement'))
 const HRAnnouncements = lazy(() => import('./pages/HR/Announcements'))
 const GMDashboard = lazy(() => import('./pages/gm/GMDashboard'))
@@ -76,6 +77,7 @@ export default function App() {
 
                   <Route path="employees" element={<Employees />} />
                   <Route path="hr" element={<HRDashboard />} />
+                  <Route path="hr/create-account" element={<HRCreateAccount />} />
                   <Route path="hr/employees" element={<EmployeeManagement />} />
                   <Route path="hr/announcements" element={<HRAnnouncements />} />
                   <Route path="gm" element={<GMDashboard />} />

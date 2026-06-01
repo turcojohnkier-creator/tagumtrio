@@ -5,6 +5,7 @@ import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import Portal from '../../components/ui/Portal'
 import AnnouncementPost from '../../components/ui/AnnouncementPost'
+import EmployeeCard from '../../components/employee/EmployeeCard'
 
 export default function EmployeePortal() {
   const navigate = useNavigate()
@@ -54,25 +55,24 @@ export default function EmployeePortal() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-          <div className="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center text-3xl font-bold text-slate-300 border-4 border-slate-950 shadow-xl">{user?.name?.split(' ').map(n=>n[0]).join('')}</div>
-          <div className="text-center sm:text-left flex-1">
-            <h2 className="text-3xl font-bold text-white">{user?.name || 'Employee'}</h2>
-            <p className="text-emerald-400 font-medium mt-1">{user?.role === 'employee' ? `${user.department} Dept` : user?.role}</p>
-            <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-slate-400">
-              <span className="flex items-center gap-1"><Briefcase className="w-4 h-4"/> ID: {user?.id || '—'}</span>
-              <span className="flex items-center gap-1"><CalendarIcon className="w-4 h-4"/> Joined: Jan 2025</span>
-            </div>
+      <div className="max-w-xl">
+        <EmployeeCard
+          employee={{
+            employeeId: user?.id,
+            employeeName: user?.name,
+            role: user?.role,
+            department: user?.department,
+            status: 'Active',
+          }}
+          showActions={false}
+        />
+        {user?.role === 'employee' && (
+          <div className="mt-3">
+            <button onClick={() => { setShowScanner(true); handleSimulateScan() }} className="bg-emerald-500 hover:bg-emerald-600 text-black px-4 py-2.5 rounded-lg font-medium flex items-center gap-2" aria-label="Start scanner and parse QR demo">
+              <QrCode className="w-5 h-5" /> Scan Physical QR (demo)
+            </button>
           </div>
-          <div className="flex gap-3">
-            {user?.role === 'employee' && (
-              <button onClick={() => { setShowScanner(true); handleSimulateScan() }} className="bg-emerald-500 hover:bg-emerald-600 text-black px-4 py-2.5 rounded-lg font-medium flex items-center gap-2" aria-label="Start scanner and parse QR demo">
-                <QrCode className="w-5 h-5" /> Scan Physical QR (demo)
-              </button>
-            )}
-          </div>
-        </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

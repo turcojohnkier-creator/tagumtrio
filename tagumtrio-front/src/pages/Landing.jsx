@@ -17,7 +17,6 @@ export default function Landing() {
           </div>
           <div className="flex items-center gap-2">
             <Link to="/login" className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-200 hover:border-slate-600">Log in</Link>
-            <Link to="/register" className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-black hover:bg-emerald-400">Register</Link>
           </div>
         </header>
 

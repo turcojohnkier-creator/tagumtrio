@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { useQr } from '../../context/qr-context'
 import { DEPARTMENTS } from '../../constants/departments'
+import EmployeeCard from '../../components/employee/EmployeeCard'
 import EmployeeDetailModal from '../../components/employee/EmployeeDetailModal'
 
 export default function EmployeeDirectory() {
@@ -62,34 +63,15 @@ export default function EmployeeDirectory() {
 
       {employeesLoading && <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-6 text-sm text-slate-400">Loading employees from the database...</div>}
 
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredEmployees.map((emp) => {
-          const id = emp.employeeId || emp.id || emp.employee_id || ''
-          const name = emp.employeeName || emp.name || emp.employee_name || 'Unknown'
-          const dept = emp.department || emp.dept || emp.departmentName || '—'
+          const id = emp.employeeId || emp.id || emp.employee_id || emp.employeeName || emp.name || emp.employee_name || String(emp)
           return (
-            <div key={id || name} onClick={() => setSelectedEmployee(emp)} className="bg-slate-900 border border-slate-800 rounded-xl p-4 xl:p-5 hover:border-slate-700 transition-colors group cursor-pointer">
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                <div className="flex items-center gap-4 min-w-0 xl:flex-1">
-                  <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-lg font-bold text-slate-300 border border-slate-700 group-hover:border-emerald-500/50 transition-colors shrink-0">
-                    {name.split(' ').map((n) => n[0]).join('')}
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-white truncate">{name}</h3>
-                    <p className="text-xs text-slate-400">{id}</p>
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2 xl:w-[40%] 2xl:w-[36%]">
-                  <div className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 sm:col-span-2">
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Department</p>
-                    <p className="mt-1 text-sm font-medium text-slate-200">{dept}</p>
-                  </div>
-                </div>
-
-                <div className="xl:min-w-[220px]" />
-              </div>
-            </div>
+            <EmployeeCard
+              key={id}
+              employee={emp}
+              onClick={() => setSelectedEmployee(emp)}
+            />
           )
         })}
       </div>

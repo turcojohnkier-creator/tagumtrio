@@ -15,6 +15,7 @@ const allNavItems = [
   { name: 'Departments Overview', href: '/app/gm/overview', icon: Users, roles: ['gm'] },
   { name: 'Production', href: '/app/production', icon: Factory, roles: ['hr', 'production_incharge', 'leadman', 'gm'] },
   { name: 'Dashboard', href: '/app/hr', icon: LayoutDashboard, roles: ['hr'] },
+  { name: 'Create Accounts', href: '/app/hr/create-account', icon: Users, roles: ['hr'] },
   { name: 'Announcements', href: '/app/hr/announcements', icon: Megaphone, roles: ['hr'] },
   { name: 'Finance Home', href: '/app/payroll', icon: LayoutDashboard, roles: ['finance'] },
   { name: 'Daily Production', href: '/app/payroll/production', icon: CalendarDays, roles: ['finance'] },

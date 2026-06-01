@@ -168,8 +168,7 @@ export default function Login() {
               </button>
 
               <p className="text-center text-sm text-slate-400">
-                New here?{' '}
-                <Link to="/register" className="font-semibold text-emerald-300 hover:text-emerald-200">Create account</Link>
+                Account creation is managed by HR. Please contact your administrator to provision access.
               </p>
 
               <p className="text-[11px] text-slate-500 text-center">

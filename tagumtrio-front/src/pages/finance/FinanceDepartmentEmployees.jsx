@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { ArrowUpDown, Search, Users, X } from 'lucide-react'
 import { useQr } from '../../context/qr-context'
+import { fetchEmployeesByDepartmentApi } from '../../lib/api'
 
 function formatDate(value) {
   if (!value) return '-'
@@ -199,6 +200,31 @@ export default function FinanceDepartmentEmployees() {
       })
   }, [getFinanceEmployees])
 
+  // server-sourced employees for selected department (prefer backend when available)
+  const [serverEmployees, setServerEmployees] = useState([])
+  const [serverLoading, setServerLoading] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      if (!departmentFilter || departmentFilter === 'All Departments') {
+        setServerEmployees([])
+        return
+      }
+      setServerLoading(true)
+      try {
+        const list = await fetchEmployeesByDepartmentApi(departmentFilter)
+        if (!cancelled) setServerEmployees(Array.isArray(list) ? list : [])
+      } catch (e) {
+        if (!cancelled) setServerEmployees([])
+      } finally {
+        if (!cancelled) setServerLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [departmentFilter])
+
   const departments = useMemo(() => {
     return ['All Departments', ...Array.from(new Set(employees.map((employee) => getDepartment(employee)).filter(Boolean))).sort()]
   }, [employees])
@@ -304,21 +330,19 @@ export default function FinanceDepartmentEmployees() {
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{filteredEmployees.length} result{filteredEmployees.length === 1 ? '' : 's'}</p>
         </div>
 
-        <div className="mt-5 space-y-3">
-          {filteredEmployees.length === 0 ? (
-            <div className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-6 text-sm text-slate-400">No employees match your search.</div>
-          ) : (
-            filteredEmployees.map((employee) => (
+          <div className="mt-5 space-y-3">
+          {((serverEmployees && serverEmployees.length > 0) || filteredEmployees.length > 0) ? (
+            (serverEmployees && serverEmployees.length > 0 ? serverEmployees : filteredEmployees).map((employee) => (
               <button
-                key={employee.employeeId}
+                key={employee.employeeId || employee.id}
                 type="button"
-                onClick={() => setSelectedEmployeeId(String(employee.employeeId))}
+                onClick={() => setSelectedEmployeeId(String(employee.employeeId || employee.id))}
                 className="w-full rounded-2xl border border-slate-800 bg-slate-950 p-4 text-left transition-colors hover:border-cyan-500/30 hover:bg-cyan-500/10"
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-white">{employee.employeeName}</p>
-                    <p className="mt-1 text-xs text-slate-500">{employee.employeeId}</p>
+                    <p className="text-sm font-semibold text-white">{employee.employeeName || employee.name}</p>
+                    <p className="mt-1 text-xs text-slate-500">{employee.employeeId || employee.id}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-slate-200">{getDepartment(employee)}</p>
@@ -327,6 +351,8 @@ export default function FinanceDepartmentEmployees() {
                 </div>
               </button>
             ))
+          ) : (
+            <div className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-6 text-sm text-slate-400">No employees match your search.</div>
           )}
         </div>
       </section>

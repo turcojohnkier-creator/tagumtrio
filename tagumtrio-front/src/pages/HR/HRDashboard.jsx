@@ -20,6 +20,16 @@ export default function HRDashboard() {
           </div>
         </Link>
 
+        <Link to="/app/hr/create-account" className="rounded-xl border border-slate-800 bg-slate-900 p-5 hover:border-slate-700 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="bg-cyan-500/10 p-2 rounded-md"><Users className="w-5 h-5 text-cyan-400" /></div>
+            <div>
+              <p className="text-xs text-slate-400">Provision accounts</p>
+              <p className="text-lg font-semibold text-white">Create user accounts</p>
+            </div>
+          </div>
+        </Link>
+
         <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
           <div className="flex items-center gap-3">
             <div className="bg-emerald-500/10 p-2 rounded-md"><FileSpreadsheet className="w-5 h-5 text-emerald-400" /></div>

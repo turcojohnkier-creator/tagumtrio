@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { ChevronRight } from 'lucide-react'
 import DepartmentCard from '../../components/gm/DepartmentCard'
 import EmployeeListModal from '../../components/gm/EmployeeListModal'
 import { DEPARTMENTS } from '../../constants/departments'
 import { useQr } from '../../context/qr-context'
+import { fetchEmployeesByDepartmentApi, fetchEmployeesApi } from '../../lib/api'
 
 export default function GMOverview() {
   const { employees = [], employeesLoading } = useQr()
@@ -13,14 +14,36 @@ export default function GMOverview() {
 
   const activeEmployees = useMemo(() => employees.filter((employee) => employee.is_active !== false), [employees])
 
+  // Prefer server-provided employees for accurate department counts
+  const [serverEmployees, setServerEmployees] = useState([])
+  const [serverLoading, setServerLoading] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadAll() {
+      setServerLoading(true)
+      try {
+        const list = await fetchEmployeesApi()
+        if (!cancelled) setServerEmployees(Array.isArray(list) ? list : [])
+      } catch (e) {
+        if (!cancelled) setServerEmployees([])
+      } finally {
+        if (!cancelled) setServerLoading(false)
+      }
+    }
+    loadAll()
+    return () => { cancelled = true }
+  }, [])
+
   const departments = useMemo(() => {
     const counts = {}
-    activeEmployees.forEach((employee) => {
+    const list = (serverEmployees && serverEmployees.length > 0) ? serverEmployees : activeEmployees
+    list.forEach((employee) => {
       const department = employee.department || 'Unassigned'
       counts[department] = (counts[department] || 0) + 1
     })
     return DEPARTMENTS.map((name) => ({ name, activeCount: counts[name] || 0 }))
-  }, [activeEmployees])
+  }, [serverEmployees, activeEmployees])
 
   const sortedDepartments = useMemo(() => {
     return [...departments].sort((a, b) => {
@@ -35,6 +58,28 @@ export default function GMOverview() {
     setSelectedDept(dept)
     setShowModal(true)
   }
+
+  // load employees for selected department when modal opens
+  const [deptEmployees, setDeptEmployees] = useState([])
+  const [deptLoading, setDeptLoading] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadDept() {
+      if (!selectedDept) return
+      setDeptLoading(true)
+      try {
+        const list = await fetchEmployeesByDepartmentApi(selectedDept.name)
+        if (!cancelled) setDeptEmployees(Array.isArray(list) ? list : [])
+      } catch (e) {
+        if (!cancelled) setDeptEmployees([])
+      } finally {
+        if (!cancelled) setDeptLoading(false)
+      }
+    }
+    loadDept()
+    return () => { cancelled = true }
+  }, [selectedDept])
 
   return (
     <div className="space-y-6 pb-8">
@@ -82,7 +127,7 @@ export default function GMOverview() {
       </div>
 
       {showModal && selectedDept && (
-        <EmployeeListModal department={selectedDept} onClose={() => setShowModal(false)} employees={employees} />
+        <EmployeeListModal department={selectedDept} onClose={() => setShowModal(false)} employees={deptEmployees.length > 0 ? deptEmployees : employees} loading={deptLoading} />
       )}
     </div>
   )

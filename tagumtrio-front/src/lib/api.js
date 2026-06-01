@@ -121,6 +121,15 @@ export async function fetchEmployeesApi() {
   return apiRequest('/v1/employees')
 }
 
+export async function fetchEmployeesByDepartmentApi(department) {
+  const q = department ? `?department=${encodeURIComponent(department)}` : ''
+  try {
+    return await apiRequest(`/v1/employees${q}`)
+  } catch (e) {
+    return []
+  }
+}
+
 
 export async function fetchDepartmentRequestsApi() {
   return apiRequest('/v1/department-requests')

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Search, Users } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
+import EmployeeCard from '../../components/employee/EmployeeCard'
 
 export default function LeadmanWorkers() {
   const { user } = useAuth()
@@ -61,18 +62,21 @@ export default function LeadmanWorkers() {
         {deployedEmployees.length === 0 ? (
           <div className="p-6 text-sm text-slate-400">No deployed employees in {selectedDepartment} yet.</div>
         ) : (
-          <div className="divide-y divide-slate-800">
+          <div className="grid grid-cols-1 gap-4">
             {deployedEmployees.map((employee) => {
               const employeeAttendance = getEmployeeAttendance(employee.employeeId).filter((record) => record.status === 'leadman_verified')
               return (
-                <div key={employee.employeeId} className="flex flex-col gap-3 p-6 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-white">{employee.employeeName}</p>
-                    <p className="mt-1 text-sm text-slate-400">{employee.employeeId} • {employee.department}</p>
-                    <p className="mt-1 text-xs text-slate-500">Approved {formatDateTime(employee.approvedAt)}</p>
-                    <p className="mt-1 text-xs text-slate-500">Scans waiting for head verification: {employeeAttendance.length}</p>
-                  </div>
-                </div>
+                <EmployeeCard
+                  key={employee.employeeId}
+                  employee={{
+                    employeeId: employee.employeeId,
+                    employeeName: employee.employeeName,
+                    department: employee.department,
+                    role: employee.role || 'Worker',
+                    status: employeeAttendance.length > 0 ? `${employeeAttendance.length} scans` : 'No scans',
+                  }}
+                  showActions={false}
+                />
               )
             })}
           </div>

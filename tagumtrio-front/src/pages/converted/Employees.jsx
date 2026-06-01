@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { Search, Mail, Phone } from 'lucide-react'
 import { useQr } from '../../context/qr-context'
+import EmployeeDetailModal from '../../components/employee/EmployeeDetailModal'
 
 export default function Employees() {
   const { employees = [] } = useQr()
+  const [selectedEmployee, setSelectedEmployee] = useState(null)
   const visibleEmployees = (employees || []).filter(emp => String(emp.role || '').toLowerCase() === 'employee')
 
   return (
@@ -12,6 +15,7 @@ export default function Employees() {
           <h2 className="text-2xl font-bold text-white">Employee Directory</h2>
           <p className="text-slate-400 mt-1">Manage personnel, departments, and roles.</p>
         </div>
+      </div>
 
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6 flex flex-col sm:flex-row gap-4 items-center">
         <div className="relative w-full">
@@ -36,7 +40,7 @@ export default function Employees() {
           const dept = emp.department || emp.dept || emp.departmentName || '—'
           const status = emp.status || 'Active'
           return (
-            <div key={id} className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-colors group cursor-pointer">
+            <div key={id} onClick={() => setSelectedEmployee(emp)} className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-colors group cursor-pointer">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-lg font-bold text-slate-300 border border-slate-700 group-hover:border-emerald-500/50 transition-colors">
@@ -71,6 +75,10 @@ export default function Employees() {
           )
         })}
       </div>
+
+      {selectedEmployee && (
+        <EmployeeDetailModal employee={selectedEmployee} onClose={() => setSelectedEmployee(null)} />
+      )}
     </div>
   )
 }

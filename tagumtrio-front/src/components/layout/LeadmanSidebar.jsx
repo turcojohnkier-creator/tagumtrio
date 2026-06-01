@@ -15,7 +15,7 @@ const links = [
 
 export default function LeadmanSidebar({ user, onLogout, onNavigate, mobileOpen = false }) {
   return (
-    <aside className={cn('fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-slate-800 bg-slate-950 transition-transform duration-300 md:static md:translate-x-0', mobileOpen ? 'translate-x-0' : '-translate-x-full')}>
+    <aside className={cn('fixed inset-y-0 left-0 z-30 flex w-72 flex-col border-r border-slate-800 bg-slate-950 transition-transform duration-300 md:static md:translate-x-0', mobileOpen ? 'translate-x-0' : '-translate-x-full')}>
       <div className="border-b border-slate-800 p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 p-2 shadow-lg shadow-emerald-500/20">

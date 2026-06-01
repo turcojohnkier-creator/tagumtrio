@@ -132,7 +132,7 @@ export default function EmployeePortal() {
 
       {showScanner && (
         <Portal>
-          <div className={`fixed left-0 right-0 top-16 bottom-0 flex items-center justify-center bg-black/40 p-4 transition-opacity duration-200 z-30 ${modalOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <div className={`fixed left-0 right-0 top-16 bottom-0 flex items-center justify-center bg-black/40 p-4 transition-opacity duration-200 z-50 ${modalOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <div className={`bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl relative transform transition-all duration-200 z-40 ${modalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
               <button onClick={() => setShowScanner(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
               <h3 className="text-lg font-bold text-white mb-3">Camera Scan — Demo</h3>

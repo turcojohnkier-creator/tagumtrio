@@ -1,20 +1,20 @@
 import { useMemo, useState } from 'react'
 import { DEPARTMENTS } from '../../constants/departments'
 import { ChevronDown, Users, Clock3, FileText } from 'lucide-react'
-
-const EMPLOYEE_PLACEHOLDERS = [
-  { name: 'Employee A', salary: '₱0.00' },
-  { name: 'Employee B', salary: '₱0.00' },
-  { name: 'Employee C', salary: '₱0.00' },
-  { name: 'Employee D', salary: '₱0.00' },
-]
+import { useQr } from '../../context/qr-context'
 
 export default function GMOversight() {
+  const { employees = [], employeesLoading } = useQr()
   const [selectedDepartment, setSelectedDepartment] = useState(DEPARTMENTS[0] || 'Rotary')
 
-  const employeeTotal = useMemo(() => {
-    return EMPLOYEE_PLACEHOLDERS.reduce((sum, employee) => sum + 0, 0)
-  }, [])
+  const departmentEmployees = useMemo(() => {
+    return (Array.isArray(employees) ? employees : []).filter((employee) => {
+      const department = employee.department || 'Unassigned'
+      return department === selectedDepartment
+    })
+  }, [employees, selectedDepartment])
+
+  const employeeTotal = departmentEmployees.length
 
   return (
     <div className="space-y-6">
@@ -28,7 +28,7 @@ export default function GMOversight() {
             <div>
               <h1 className="text-3xl font-bold text-white">{selectedDepartment} Department Oversight</h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-                Select a department to review the active leadman, daily scan volume, and salary accumulation for the current day.
+                Select a department to review the active team roster and live employee data.
               </p>
             </div>
           </div>
@@ -68,12 +68,12 @@ export default function GMOversight() {
         <div className="rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-xl shadow-black/10">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Scans today</p>
-              <h2 className="mt-3 text-2xl font-semibold text-white">0</h2>
-              <p className="mt-2 text-sm text-slate-400">Total cards scanned for {selectedDepartment}</p>
+              <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Employees in department</p>
+              <h2 className="mt-3 text-2xl font-semibold text-white">{employeeTotal}</h2>
+              <p className="mt-2 text-sm text-slate-400">Total active employees in {selectedDepartment}</p>
             </div>
             <div className="rounded-2xl bg-slate-950 p-3 text-slate-200">
-              <Clock3 className="h-6 w-6" />
+              <Users className="h-6 w-6" />
             </div>
           </div>
         </div>
@@ -81,9 +81,9 @@ export default function GMOversight() {
         <div className="rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-xl shadow-black/10">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Salary total</p>
+              <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Salary placeholder</p>
               <h2 className="mt-3 text-2xl font-semibold text-white">₱0.00</h2>
-              <p className="mt-2 text-sm text-slate-400">Accumulated for {selectedDepartment} today</p>
+              <p className="mt-2 text-sm text-slate-400">Salary totals are not available in this view.</p>
             </div>
             <div className="rounded-2xl bg-slate-950 p-3 text-slate-200">
               <FileText className="h-6 w-6" />
@@ -95,11 +95,11 @@ export default function GMOversight() {
       <section className="rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-xl shadow-black/10">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Employee salary overview</p>
+            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Department roster</p>
             <h2 className="mt-2 text-lg font-semibold text-white">{selectedDepartment} employees</h2>
           </div>
           <div className="rounded-2xl border border-slate-800 bg-slate-950 px-4 py-2 text-sm text-slate-400">
-            Total salary: <span className="font-semibold text-white">₱{employeeTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            Total: <span className="font-semibold text-white">{employeeTotal}</span>
           </div>
         </div>
 
@@ -109,17 +109,27 @@ export default function GMOversight() {
               <tr>
                 <th className="px-4 py-3 font-medium">Employee</th>
                 <th className="px-4 py-3 font-medium">Department</th>
-                <th className="px-4 py-3 font-medium">Accumulated salary</th>
+                <th className="px-4 py-3 font-medium">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800 bg-slate-950 text-slate-300">
-              {EMPLOYEE_PLACEHOLDERS.map((employee) => (
-                <tr key={employee.name} className="hover:bg-slate-900/70">
-                  <td className="px-4 py-4">{employee.name}</td>
-                  <td className="px-4 py-4 text-slate-400">{selectedDepartment}</td>
-                  <td className="px-4 py-4 font-semibold text-white">{employee.salary}</td>
+              {employeesLoading ? (
+                <tr>
+                  <td colSpan={3} className="px-4 py-8 text-center text-slate-400">Loading employees from the database...</td>
                 </tr>
-              ))}
+              ) : departmentEmployees.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="px-4 py-8 text-center text-slate-400">No employees are currently assigned to this department.</td>
+                </tr>
+              ) : (
+                departmentEmployees.map((employee) => (
+                  <tr key={employee.employeeId || employee.id || String(employee.employeeName)} className="hover:bg-slate-900/70">
+                    <td className="px-4 py-4 text-white">{employee.employeeName || employee.name || 'Unknown'}</td>
+                    <td className="px-4 py-4 text-slate-400">{employee.department || 'Unassigned'}</td>
+                    <td className="px-4 py-4 text-slate-400">{employee.is_active === false ? 'Inactive' : 'Active'}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

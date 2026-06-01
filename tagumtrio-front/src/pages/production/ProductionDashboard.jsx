@@ -77,8 +77,8 @@ function ReportDetailModal({ report, onClose }) {
   if (!report) return null
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-5xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl max-h-[90vh] overflow-auto">
         <div className="flex items-start justify-between gap-4 border-b border-slate-800 px-5 py-4">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Submitted daily report</p>

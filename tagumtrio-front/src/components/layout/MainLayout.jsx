@@ -122,10 +122,10 @@ export default function MainLayout() {
     user?.role,
   ])
 
-  if (user.role === 'employee' || user.role === 'leadman') {
+    if (user.role === 'employee' || user.role === 'leadman') {
     return (
       <div className="h-screen bg-slate-900 text-slate-200 flex flex-col overflow-hidden">
-        <header className="h-16 bg-slate-950 border-b border-slate-800 flex items-center justify-between px-6 shrink-0 sticky top-0 z-50">
+        <header className="h-16 bg-slate-950 border-b border-slate-800 flex items-center justify-between px-6 shrink-0 sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <div className="bg-emerald-500 p-2 rounded-lg"><QrCode className="w-5 h-5 text-white" /></div>
             <h1 className="text-lg font-bold text-white">TriOPS</h1>
@@ -149,7 +149,7 @@ export default function MainLayout() {
               </button>
 
               {notificationsOpen && (
-                <div className="absolute right-0 top-12 z-50 w-[320px] overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl shadow-black/30">
+                <div className="absolute right-0 top-12 z-30 w-[320px] overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl shadow-black/30">
                   <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
                     <div>
                       <p className="text-sm font-semibold text-white">Notifications</p>
@@ -194,7 +194,7 @@ export default function MainLayout() {
     <div className="h-screen bg-slate-900 text-slate-200 flex overflow-hidden">
       {mobileMenuOpen && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setMobileMenuOpen(false)}></div>}
 
-      <aside className={cn('fixed md:static inset-y-0 left-0 z-50 w-64 md:h-screen bg-slate-950 border-r border-slate-800 flex flex-col transition-transform duration-300', mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0')}>
+      <aside className={cn('fixed md:static inset-y-0 left-0 z-30 w-64 md:h-screen bg-slate-950 border-r border-slate-800 flex flex-col transition-transform duration-300', mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0')}>
         <div className="p-6 flex items-center justify-between md:justify-start gap-3 border-b border-slate-800">
           <div className="flex items-center gap-3">
             <div className="bg-emerald-500 p-2 rounded-lg shadow-lg shadow-emerald-500/20"><QrCode className="w-6 h-6 text-white" /></div>
@@ -260,8 +260,8 @@ export default function MainLayout() {
                 )}
               </button>
 
-              {notificationsOpen && (
-                <div className="absolute right-0 top-12 z-50 w-[340px] overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl shadow-black/30">
+                  {notificationsOpen && (
+                    <div className="absolute right-0 top-12 z-30 w-[340px] overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl shadow-black/30">
                   <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
                     <div>
                       <p className="text-sm font-semibold text-white">Notifications</p>

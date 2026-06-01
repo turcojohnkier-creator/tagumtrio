@@ -206,7 +206,7 @@ function ReportDetailModal({ report, onClose }) {
   const totalAmount = safeEntries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0)
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-5xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-slate-800 px-5 py-4">
           <div>

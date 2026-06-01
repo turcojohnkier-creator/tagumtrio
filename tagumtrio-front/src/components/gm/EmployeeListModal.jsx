@@ -39,7 +39,7 @@ export default function EmployeeListModal({ department, onClose, employees = [] 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
       <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-      <div className="relative z-10 w-full max-w-6xl overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950 shadow-2xl shadow-black/50">
+      <div className="relative z-10 w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-6xl overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950 shadow-2xl shadow-black/50 max-h-[90vh]">
         <div className="flex flex-col justify-between gap-4 border-b border-slate-800 bg-slate-900 px-6 py-5 sm:flex-row sm:items-center">
           <div>
             <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Department team</p>
@@ -83,7 +83,7 @@ export default function EmployeeListModal({ department, onClose, employees = [] 
             </div>
           </div>
 
-          <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-slate-800 bg-slate-900 shadow-sm">
+          <div className="mt-6 overflow-x-auto rounded-[1.5rem] border border-slate-800 bg-slate-900 shadow-sm">
             <div className="grid grid-cols-[minmax(220px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_180px] gap-0 border-b border-slate-800 bg-slate-950 px-5 py-3 text-xs uppercase tracking-[0.24em] text-slate-500">
               <span>Employee</span>
               <span>ID</span>
@@ -94,32 +94,35 @@ export default function EmployeeListModal({ department, onClose, employees = [] 
               {localEmployees.length === 0 ? (
                 <div className="p-8 text-center text-sm text-slate-400">No active employees assigned to this department.</div>
               ) : (
-                localEmployees.map((emp) => (
-                  <div key={emp.id} className="grid grid-cols-[minmax(220px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_180px] gap-0 border-b border-slate-800 px-5 py-4 text-sm text-slate-200 hover:bg-slate-950/70">
-                    <div>
-                      <div className="font-semibold text-white">{emp.name || emp.employeeName || emp.fullName || 'Unknown'}</div>
-                      <div className="text-xs text-slate-500">{emp.department || 'Unassigned'}</div>
+                localEmployees.map((emp) => {
+                  const employeeKey = emp.employeeId ?? emp.id
+                  return (
+                    <div key={employeeKey} className="grid grid-cols-[minmax(220px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_180px] gap-0 border-b border-slate-800 px-5 py-4 text-sm text-slate-200 hover:bg-slate-950/70">
+                      <div>
+                        <div className="font-semibold text-white">{emp.employeeName || emp.name || emp.fullName || 'Unknown'}</div>
+                        <div className="text-xs text-slate-500">{emp.department || 'Unassigned'}</div>
+                      </div>
+                      <div className="text-slate-400">{employeeKey}</div>
+                      <div className="text-slate-400">{emp.role || 'Employee'}</div>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          className="rounded-full border border-slate-700 bg-slate-950 px-4 py-2 text-xs font-medium text-slate-300 transition hover:border-slate-600 hover:text-white"
+                        >
+                          View
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!targetDept || reassigningId === employeeKey}
+                          onClick={() => reassign(employeeKey)}
+                          className="inline-flex items-center justify-center rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {reassigningId === employeeKey ? 'Saving...' : 'Reassign'}
+                        </button>
+                      </div>
                     </div>
-                    <div className="text-slate-400">{emp.id}</div>
-                    <div className="text-slate-400">{emp.role || 'Employee'}</div>
-                    <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
-                        className="rounded-full border border-slate-700 bg-slate-950 px-4 py-2 text-xs font-medium text-slate-300 transition hover:border-slate-600 hover:text-white"
-                      >
-                        View
-                      </button>
-                      <button
-                        type="button"
-                        disabled={!targetDept || reassigningId === emp.id}
-                        onClick={() => reassign(emp.id)}
-                        className="inline-flex items-center justify-center rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {reassigningId === emp.id ? 'Saving...' : 'Reassign'}
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  )
+                })
               )}
             </div>
           </div>

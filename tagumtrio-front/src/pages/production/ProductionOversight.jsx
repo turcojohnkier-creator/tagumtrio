@@ -11,17 +11,41 @@ const INITIAL_SECTIONS = [
 
 export default function ProductionOversight() {
   const [sections, setSections] = useState(INITIAL_SECTIONS)
-  const { productionRecords } = useQr()
+  const { productionRecords, employees = [] } = useQr()
   const [selected, setSelected] = useState(null)
   const [tick, setTick] = useState(0)
   const [confirm, setConfirm] = useState(null)
 
+  const employeeMap = useMemo(() => {
+    const map = new Map()
+    (employees || []).forEach((employee) => {
+      const key = String(employee.employeeId || employee.id || '').trim()
+      if (key) map.set(key, employee)
+    })
+    return map
+  }, [employees])
+
+  const enrichedProductionRecords = useMemo(() => {
+    return (Array.isArray(productionRecords) ? productionRecords : []).map((rec) => {
+      const employeeId = String(rec.employeeId || rec.operatorId || '').trim()
+      const employee = employeeMap.get(employeeId)
+      const employeeName = rec.employeeName || employee?.employeeName || rec.operator || 'Unknown'
+      const department = rec.department || employee?.department || rec.section || rec.dept || 'Unknown'
+      return {
+        ...rec,
+        employeeId,
+        employeeName,
+        department,
+      }
+    })
+  }, [productionRecords, employeeMap])
+
   // Seed sections from productionRecords when available
   useEffect(() => {
-    if (!Array.isArray(productionRecords) || productionRecords.length === 0) return
+    if (!Array.isArray(enrichedProductionRecords) || enrichedProductionRecords.length === 0) return
     const map = new Map()
-    for (const rec of productionRecords) {
-      const dept = rec.department || rec.section || rec.dept || rec.departmentName || 'Unknown'
+    for (const rec of enrichedProductionRecords) {
+      const dept = rec.department || 'Unknown'
       const key = String(dept).trim()
       if (!map.has(key)) map.set(key, { id: key.toLowerCase().replace(/\s+/g, '_'), name: key, throughput: 0, activeWorkersSet: new Set(), status: 'Running' })
       const entry = map.get(key)
@@ -29,14 +53,14 @@ export default function ProductionOversight() {
       const amount = Number(rec.amount || rec.total || 0)
       const hours = Number(rec.loggedHours || 0)
       entry.throughput += amount > 0 ? amount : (hours > 0 ? hours : 1)
-      const empKey = String(rec.employeeId || rec.employeeName || rec.operator || rec.operatorId || '').trim()
+      const empKey = String(rec.employeeId || rec.employeeName || '').trim()
       if (empKey) entry.activeWorkersSet.add(empKey)
       if (String(rec.status || '').toLowerCase().includes('issue')) entry.status = 'Issue'
     }
 
     const computed = Array.from(map.values()).map((v) => ({ id: v.id, name: v.name, throughput: v.throughput, activeWorkers: v.activeWorkersSet.size, status: v.status }))
     if (computed.length > 0) setSections(computed)
-  }, [productionRecords])
+  }, [enrichedProductionRecords])
 
   // mock realtime updater: change throughput and occasionally toggle status
   useEffect(() => {

@@ -62,10 +62,11 @@ function toEmployeeRecord(employee) {
   const raw = employee?.employeeId ?? employee?.identifier ?? employee?.id
   const parsed = Number(raw)
   return {
+    ...employee,
     employeeId: Number.isFinite(parsed) ? parsed : undefined,
-    employeeName: employee.employeeName || employee.name,
-    department: employee.department,
-    role: employee.role,
+    employeeName: employee.employeeName || employee.name || employee.fullName || employee.employee_name,
+    department: employee.department || employee.dept || employee.departmentName,
+    role: employee.role || employee.position || employee.title,
   }
 }
 
@@ -181,6 +182,7 @@ export function QRProvider({ children }) {
   const [leaveRequests, setLeaveRequests] = useState(initialState.leaveRequests || [])
   const [syncPending, setSyncPending] = useState(0)
   const [employees, setEmployees] = useState([])
+  const [employeesLoading, setEmployeesLoading] = useState(false)
   const [dailyReports, setDailyReports] = useState([])
   const [productionRecords, setProductionRecords] = useState([])
   const [payrollCycles, setPayrollCycles] = useState([])
@@ -204,12 +206,13 @@ export function QRProvider({ children }) {
     async function loadRemoteData() {
       const payrollRoles = new Set(['finance', 'hr', 'production_incharge', 'admin'])
       const paymentRoles = new Set(['finance', 'hr', 'admin'])
-      const employeeRoles = new Set(['finance', 'hr', 'production_incharge', 'leadman', 'admin'])
+      const employeeRoles = new Set(['finance', 'hr', 'production_incharge', 'leadman', 'admin', 'gm'])
       const loadPayrollCycles = payrollRoles.has(user?.role)
       const loadPayrollPayments = paymentRoles.has(user?.role)
       const loadEmployees = employeeRoles.has(user?.role)
       const loadReports = payrollRoles.has(user?.role)
 
+      if (loadEmployees) setEmployeesLoading(true)
       const [remoteEmployees, remoteDepartmentRequests, remotePayments, remoteProduction, remotePayrollCycles, remoteDailyReports, remoteLeaveRequests] = await Promise.allSettled([
         loadEmployees ? fetchEmployeesApi() : Promise.resolve([]),
         fetchDepartmentRequestsApi(),
@@ -254,6 +257,7 @@ export function QRProvider({ children }) {
         if (remoteAnnouncements2.status === 'fulfilled' && Array.isArray(remoteAnnouncements2.value)) setAnnouncements(remoteAnnouncements2.value)
         if (remoteSchedules2.status === 'fulfilled' && Array.isArray(remoteSchedules2.value)) setSchedules(remoteSchedules2.value)
       } catch (e) { /* ignore */ }
+      if (!cancelled) setEmployeesLoading(false)
 
       // Keep the existing state when a fetch fails so live request data does not disappear
       // behind the demo defaults during a partial backend outage or auth hiccup.
@@ -1215,6 +1219,7 @@ export function QRProvider({ children }) {
         periodKey,
         payrollCycleKey,
         payrollCycleLabel,
+        employeesLoading,
         DEPARTMENTS,
         DEPARTMENT_RATES,
         buildDepartmentQrSummary,

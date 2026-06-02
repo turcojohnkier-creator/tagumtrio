@@ -11,18 +11,17 @@ function cn(...inputs) {
 }
 
 const allNavItems = [
-  { name: 'Dashboard', href: '/app/gm', icon: LayoutDashboard, roles: ['gm'] },
   { name: 'Departments Overview', href: '/app/gm/overview', icon: Users, roles: ['gm'] },
+  { name: 'Employees', href: '/app/gm/employees', icon: Users, roles: ['gm'] },
   { name: 'Production', href: '/app/production', icon: Factory, roles: ['hr', 'production_incharge', 'leadman', 'gm'] },
-  { name: 'Dashboard', href: '/app/hr', icon: LayoutDashboard, roles: ['hr'] },
+  { name: 'Reports', href: '/app/production/reports', icon: FileSpreadsheet, roles: ['production_incharge'] },
+  { name: 'All Accounts', href: '/app/hr/employees', icon: Users, roles: ['hr'] },
   { name: 'Create Accounts', href: '/app/hr/create-account', icon: Users, roles: ['hr'] },
-  { name: 'Announcements', href: '/app/hr/announcements', icon: Megaphone, roles: ['hr'] },
+  { name: 'Announcements', href: '/app/gm/announcements', icon: Megaphone, roles: ['gm'] },
   { name: 'Finance Home', href: '/app/payroll', icon: LayoutDashboard, roles: ['finance'] },
   { name: 'Daily Production', href: '/app/payroll/production', icon: CalendarDays, roles: ['finance'] },
   { name: 'Department Employees', href: '/app/payroll/employees', icon: Users, roles: ['finance'] },
-  { name: 'Oversight', href: '/app/gm/oversight', icon: BarChart3, roles: ['gm'] },
-  { name: 'Employees', href: '/app/employees', icon: Users, roles: ['hr'] },
-  { name: 'Requests', href: '/app/requests', icon: FileSpreadsheet, roles: ['hr', 'production_incharge', 'gm'] },
+  { name: 'Requests', href: '/app/requests', icon: FileSpreadsheet, roles: ['production_incharge', 'gm'] },
 ]
 
 export default function MainLayout() {
@@ -214,7 +213,7 @@ export default function MainLayout() {
               key={item.name}
               to={item.href}
               title={item.name}
-              end={['/app/production', '/app/hr', '/app/gm', '/app/gm/overview', '/app/payroll', '/app/employees', '/app/requests'].includes(item.href)}
+              end={['/app/production', '/app/hr', '/app/gm/overview', '/app/gm/announcements', '/app/payroll', '/app/requests'].includes(item.href)}
               className={({ isActive }) => cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                 isActive

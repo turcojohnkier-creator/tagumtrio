@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import { FileText, CheckCircle, XCircle, Clock, ArrowRightLeft, ClipboardList } from 'lucide-react'
 import { useQr } from '../../context/qr-context'
 import { useAuth } from '../../context/auth-context'
 import { useDialog } from '../../context/dialog-context'
 import { fetchDailyReportsApi } from '../../lib/api'
+import LeadmanTransfers from '../../pages/leadman/LeadmanTransfers'
 
 export default function Requests() {
   const { leaveRequests = [], approveLeaveRequest, rejectLeaveRequest, formatDateTime } = useQr()
   const { user } = useAuth()
   const dialog = useDialog()
+
+  if (user?.role === 'hr') {
+    return <Navigate to="/app/hr" replace />
+  }
   const [activeTab, setActiveTab] = useState('requests')
   const [dailyReports, setDailyReports] = useState([])
   const [dailyLoading, setDailyLoading] = useState(false)
@@ -98,7 +104,7 @@ export default function Requests() {
             onClick={() => setActiveTab('requests')}
             className={`px-4 py-2 text-sm font-semibold transition-colors ${activeTab === 'requests' ? 'bg-slate-900 text-white' : 'text-slate-400 hover:bg-slate-900/60'}`}
           >
-            Employee submissions
+            Leave requests
           </button>
           <button
             type="button"
@@ -106,6 +112,13 @@ export default function Requests() {
             className={`px-4 py-2 text-sm font-semibold transition-colors ${activeTab === 'dailyReports' ? 'bg-slate-900 text-white' : 'text-slate-400 hover:bg-slate-900/60'}`}
           >
             Daily report submissions
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('reassign')}
+            className={`px-4 py-2 text-sm font-semibold transition-colors ${activeTab === 'reassign' ? 'bg-slate-900 text-white' : 'text-slate-400 hover:bg-slate-900/60'}`}
+          >
+            Reassign
           </button>
         </div>
 
@@ -163,7 +176,7 @@ export default function Requests() {
             <div className="p-6 text-sm text-slate-400">No employee submissions found.</div>
           )}
         </div>
-      ) : (
+      ) : activeTab === 'dailyReports' ? (
         <div className="space-y-4">
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -224,7 +237,11 @@ export default function Requests() {
             </div>
           )}
         </div>
-      )}
+      ) : activeTab === 'reassign' ? (
+        <div>
+          <LeadmanTransfers />
+        </div>
+      ) : null}
     </div>
   )
 }

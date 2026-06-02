@@ -6,11 +6,10 @@ import { useQr } from '../../context/qr-context'
 
 export default function MyAttendance() {
   const { user } = useAuth()
-  const { getEmployeeDepartmentRequests, getEmployeeLeaveRequests, getEmployeeTotals, formatDateTime } = useQr()
+  const { getEmployeeLeaveRequests, getEmployeeTotals, formatDateTime } = useQr()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('approved-leaves')
 
-  const departmentRequests = getEmployeeDepartmentRequests(user?.id)
   const leaveRequests = getEmployeeLeaveRequests(user?.id)
   const totals = getEmployeeTotals(user?.id)
 
@@ -72,13 +71,7 @@ export default function MyAttendance() {
             >
               <XCircle className="h-4 w-4" /> Rejected Leaves
             </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('requests')}
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'requests' ? 'bg-emerald-500 text-black' : 'border border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700'}`}
-            >
-              <LayoutGrid className="h-4 w-4" /> Requests
-            </button>
+            
           </div>
         </div>
 
@@ -165,28 +158,7 @@ export default function MyAttendance() {
           </div>
         ) : null}
 
-        {activeTab === 'requests' ? (
-          <div className="p-6">
-            <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><BadgeCheck className="w-5 h-5 text-emerald-400" /> Request History</h3>
-            {departmentRequests.length === 0 ? (
-              <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950 p-6 text-sm text-slate-400">No department requests submitted yet.</div>
-            ) : (
-              <div className="mt-4 divide-y divide-slate-800 rounded-xl border border-slate-800 bg-slate-950">
-                {departmentRequests.map((request) => (
-                  <div key={request.id} className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-white">{request.requestedDepartment}</p>
-                      <p className="mt-1 text-xs text-slate-500">{formatDateTime(request.requestedAt)}</p>
-                    </div>
-                    <span className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-medium ${request.status === 'approved' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-amber-500/10 text-amber-300'}`}>
-                      {request.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : null}
+        
       </div>
     </div>
   )

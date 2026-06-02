@@ -10,7 +10,7 @@ export default function HRDashboard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Link to="/app/hr/employees" className="rounded-xl border border-slate-800 bg-slate-900 p-5 hover:border-slate-700 transition-colors">
+        <Link to="/app/gm/employees" className="rounded-xl border border-slate-800 bg-slate-900 p-5 hover:border-slate-700 transition-colors">
           <div className="flex items-center gap-3">
             <div className="bg-emerald-500/10 p-2 rounded-md"><Users className="w-5 h-5 text-emerald-400" /></div>
             <div>

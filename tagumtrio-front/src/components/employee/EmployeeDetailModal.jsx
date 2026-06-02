@@ -1,7 +1,7 @@
 import { X, File, Info } from 'lucide-react'
 import { DEPARTMENTS } from '../../constants/departments'
 
-export default function EmployeeDetailModal({ employee, onClose }) {
+export default function EmployeeDetailModal({ employee, onClose, onToggleActive, actionLoading = false }) {
   if (!employee) return null
 
   const id = employee.employeeId || employee.id || employee.employee_id || ''
@@ -10,6 +10,8 @@ export default function EmployeeDetailModal({ employee, onClose }) {
   const role = employee.role || '—'
   const contact = employee.contact || employee.phone || employee.mobile || '—'
   const email = employee.email || employee.employeeEmail || '—'
+  const isActive = employee.is_active !== false
+  const toggleLabel = isActive ? 'Archive account' : 'Reactivate account'
 
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
@@ -108,9 +110,17 @@ export default function EmployeeDetailModal({ employee, onClose }) {
 
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 text-center">
               <p className="text-sm text-slate-400">Actions</p>
-              <div className="mt-3 flex flex-col gap-2">
-                <button className="px-4 py-2 rounded-lg bg-emerald-500 text-black font-medium">Open Edit (UI only)</button>
-                <button className="px-4 py-2 rounded-lg border border-slate-800 text-slate-300">Download Profile</button>
+              <div className="mt-3 space-y-2">
+                <button
+                  onClick={() => onToggleActive && onToggleActive(employee)}
+                  disabled={actionLoading}
+                  className="w-full px-4 py-2 rounded-lg bg-emerald-500 text-black font-medium disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {actionLoading ? 'Updating...' : toggleLabel}
+                </button>
+                <button onClick={onClose} className="w-full px-4 py-2 rounded-lg border border-slate-800 text-slate-300 hover:bg-slate-950 transition-colors">
+                  Close
+                </button>
               </div>
             </div>
           </div>

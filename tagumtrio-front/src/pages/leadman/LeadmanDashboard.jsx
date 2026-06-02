@@ -86,9 +86,9 @@ export default function LeadmanDashboard() {
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Leadman scanning</p>
-            <h2 className="mt-2 text-2xl font-bold text-white">QR Scan Dashboard</h2>
-            <p className="mt-1 max-w-2xl text-sm text-slate-400">Use this page to scan deployed workers. Transfer approvals, deployed workers, and the daily report live on separate pages.</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Leadman reporting</p>
+            <h2 className="mt-2 text-2xl font-bold text-white">Report Dashboard</h2>
+            <p className="mt-1 max-w-2xl text-sm text-slate-400">Use this page to create reports for deployed workers. Transfer approvals, deployed workers, and the daily report live on separate pages.</p>
           </div>
 
           <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
@@ -107,7 +107,7 @@ export default function LeadmanDashboard() {
             <p className="mt-2 text-2xl font-bold text-white">{stats.deployed}</p>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-500">Scans</p>
+            <p className="text-xs uppercase tracking-wider text-slate-500">Reports</p>
             <p className="mt-2 text-2xl font-bold text-white">{stats.scans}</p>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
@@ -121,11 +121,11 @@ export default function LeadmanDashboard() {
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><ScanLine className="h-5 w-5 text-emerald-400" /> QR Scan</h3>
-              <p className="mt-1 text-sm text-slate-400">Open the scan form and select the deployed worker being scanned.</p>
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><ScanLine className="h-5 w-5 text-emerald-400" /> Create Report</h3>
+              <p className="mt-1 text-sm text-slate-400">Open the report form and select the deployed worker to include in this report.</p>
             </div>
             <button onClick={() => setScanModalOpen(true)} disabled={scanCandidates.length === 0} className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 font-medium text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50">
-              <ScanLine className="h-4 w-4" /> Start Scan
+              <ScanLine className="h-4 w-4" /> Create Report
             </button>
           </div>
 
@@ -160,7 +160,7 @@ export default function LeadmanDashboard() {
 
         <div className="space-y-6">
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><BadgeCheck className="h-5 w-5 text-cyan-400" /> Recent Scans</h3>
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><BadgeCheck className="h-5 w-5 text-cyan-400" /> Recent Reports</h3>
             <div className="mt-4 space-y-3">
               {currentScans.length === 0 ? (
                 <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">No scans recorded yet.</div>
@@ -187,9 +187,9 @@ export default function LeadmanDashboard() {
         department={selectedDepartment}
         employeeOptions={scanCandidates}
         initialEmployeeId={selectedEmployeeId}
-        title="Start QR Scan"
-        description="Select a deployed employee and fill the department QR details for this scan."
-        submitLabel="Record Scan"
+        title="Create Report"
+        description="Select a deployed employee and fill the department report details for this entry."
+        submitLabel="Create Report"
         onClose={() => setScanModalOpen(false)}
         onSubmit={(payloads) => {
           const list = Array.isArray(payloads) ? payloads : [payloads]
@@ -198,8 +198,8 @@ export default function LeadmanDashboard() {
           list.forEach((payload) => recordAttendanceScan(payload))
           setScanModalOpen(false)
           dialog.success({
-            title: 'Scan recorded',
-            message: 'The worker scan was submitted successfully.',
+            title: 'Report recorded',
+            message: 'The worker report was submitted successfully.',
           })
         }}
       />

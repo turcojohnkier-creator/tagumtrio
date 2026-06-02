@@ -95,9 +95,9 @@ export default function DepartmentScanModal({
   initialEmployeeId = '',
   initialHours = 8,
   allowManualEntry = true,
-  title = 'Scan Employee QR',
-  description = 'Select employees and fill in the department scan details before recording the scan.',
-  submitLabel = 'Submit Scan',
+  title = 'Create Report',
+  description = 'Select employees and fill in the department report details before submitting.',
+  submitLabel = 'Create Report',
   onClose,
   onSubmit,
 }) {
@@ -112,7 +112,6 @@ export default function DepartmentScanModal({
       .filter((employee) => employee.normalizedEmployeeId && (employee.employeeName || employee.name || employee.fullName))
   }, [employeeOptions])
 
-  const [entryMode, setEntryMode] = useState(validEmployeeOptions.length > 0 ? 'scan' : 'manual')
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState(() => {
     const defaultId = normalizeEmployeeId({ employeeId: initialEmployeeId }) || validEmployeeOptions[0]?.normalizedEmployeeId
     return defaultId ? [defaultId] : []
@@ -122,33 +121,47 @@ export default function DepartmentScanModal({
   const [submissionError, setSubmissionError] = useState('')
   const [values, setValues] = useState(() => buildInitialValues(spec, department))
   const [manualEmployees, setManualEmployees] = useState(() => [{ productId: '', productName: '', thickness: '', pieces: '', department: department || '' }])
+  const [photos, setPhotos] = useState({ photo1: null, photo2: null, photo3: null, photo4: null })
+  const [photoPreview, setPhotoPreview] = useState({ photo1: null, photo2: null, photo3: null, photo4: null })
+
+  function handlePhotoChange(photoIndex, file) {
+    if (!file) {
+      setPhotos((current) => ({ ...current, [photoIndex]: null }))
+      setPhotoPreview((current) => ({ ...current, [photoIndex]: null }))
+      return
+    }
+
+    // Only accept image files
+    if (!file.type.startsWith('image/')) {
+      setSubmissionError('Please upload only image files.')
+      return
+    }
+
+    // Store file and create preview
+    setPhotos((current) => ({ ...current, [photoIndex]: file }))
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setPhotoPreview((current) => ({ ...current, [photoIndex]: e.target.result }))
+    }
+    reader.readAsDataURL(file)
+    setSubmissionError('')
+  }
 
   useEffect(() => {
     // Initialize modal state only when it is opened. Do not overwrite user selection while open.
     if (!open) return
     const defaultId = normalizeEmployeeId({ employeeId: initialEmployeeId }) || validEmployeeOptions[0]?.normalizedEmployeeId
-    setEntryMode(validEmployeeOptions.length > 0 ? 'scan' : 'manual')
     setSelectedEmployeeIds((current) => (Array.isArray(current) && current.length > 0 ? current : defaultId ? [defaultId] : []))
     setShowEmployeeTable(false)
     setSubmissionError('')
     setIsSubmitting(false)
     setValues(buildInitialValues(spec, department))
     setManualEmployees([{ productId: '', productName: '', thickness: '', pieces: '', department: department || '' }])
+    setPhotos({ photo1: null, photo2: null, photo3: null, photo4: null })
+    setPhotoPreview({ photo1: null, photo2: null, photo3: null, photo4: null })
   }, [open])
 
   const selectedEmployees = validEmployeeOptions.filter((employee) => selectedEmployeeIds.includes(employee.normalizedEmployeeId))
-  const manualSubmissionEmployees = useMemo(() => {
-    return manualEmployees
-      .map((item) => ({
-        productId: String(item.productId || '').trim(),
-        productName: String(item.productName || '').trim(),
-        thickness: String(item.thickness || '').trim(),
-        pieces: Number(item.pieces || 0),
-        department: String(item.department || department || '').trim(),
-      }))
-      .filter((item) => item.productId || item.productName || item.department)
-  }, [department, manualEmployees])
-
   const submissionEmployees = selectedEmployees.map((employee) => ({
     employeeId: String(employee.employeeId || employee.id || employee.identifier || '').trim(),
     employeeName: String(employee.employeeName || employee.name || employee.fullName || '').trim(),
@@ -191,6 +204,13 @@ export default function DepartmentScanModal({
     event.preventDefault()
     if (submissionEmployees.length === 0 || isSubmitting) return
 
+    // Check if at least one photo is uploaded
+    const uploadedPhotos = Object.values(photos).filter(Boolean)
+    if (uploadedPhotos.length === 0) {
+      setSubmissionError('Please upload at least one work verification photo.')
+      return
+    }
+
     const batchId = `DRB-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
     const batchCapturedAt = new Date().toISOString()
 
@@ -215,6 +235,12 @@ export default function DepartmentScanModal({
         batchId,
         batchCapturedAt,
         batchItemCount: submissionEmployees.length,
+        photos: {
+          photo1: photos.photo1 || null,
+          photo2: photos.photo2 || null,
+          photo3: photos.photo3 || null,
+          photo4: photos.photo4 || null,
+        },
         raw: {
           employeeId: item.employeeId || null,
           employeeName: item.employeeName || null,
@@ -250,61 +276,81 @@ export default function DepartmentScanModal({
           <p className="mt-1 text-sm text-slate-400">{description}</p>
 
           <div className="mt-5 space-y-4">
-            <div className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950 p-1">
-              <button type="button" onClick={() => setEntryMode('scan')} className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${entryMode === 'scan' ? 'bg-emerald-500 text-black' : 'text-slate-300 hover:bg-slate-900'}`}>
-                QR scan mode
-              </button>
-              <button type="button" onClick={() => setEntryMode('manual')} className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${entryMode === 'manual' ? 'bg-emerald-500 text-black' : 'text-slate-300 hover:bg-slate-900'}`}>
-                Manual entry
-              </button>
-            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-950 p-6 flex flex-col items-center gap-3">
+              <p className="text-sm text-slate-300">View employees deployed to this department to check who is involved in the report.</p>
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={() => setShowEmployeeTable(true)} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
+                  View employees in department
+                </button>
+                <div className="text-sm text-slate-300">Employee/s: <span className="font-semibold text-emerald-300">{selectedEmployeeIds.length}</span></div>
+              </div>
             </div>
 
             {submissionError ? (
               <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">{submissionError}</div>
             ) : null}
 
-            {entryMode === 'scan' ? (
-              <div className="rounded-xl border border-slate-800 bg-slate-950 p-6 flex justify-center">
-                <div className="relative w-full max-w-[960px]">
-                  <div className="aspect-square rounded-lg border-2 border-dashed border-slate-700 bg-slate-900 flex items-center justify-center">
-                    <div className="text-center text-slate-400">Scanner placeholder (camera view)</div>
-                  </div>
-                
+            {spec.fields
+              .filter((field) => !field.auto && field.key !== 'department')
+              .map((field) => (
+                <div key={field.key}>
+                  <label className="text-sm text-slate-300">{field.label}</label>
+                  <input
+                    value={values[field.key] || ''}
+                    onChange={(e) => handleChange(field.key, e.target.value)}
+                    placeholder={field.placeholder || ''}
+                    readOnly={field.type === 'date' || field.key === 'date'}
+                    className={`mt-2 w-full rounded-xl border border-slate-800 ${field.type === 'date' || field.key === 'date' ? 'bg-slate-950 cursor-not-allowed' : 'bg-slate-900'} px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none`}
+                  />
                 </div>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-slate-800 bg-slate-950 p-6 flex flex-col items-center gap-3">
-                <p className="text-sm text-slate-300">View employees deployed to this department to check who is involved in the scan.</p>
-                <div className="flex items-center gap-3">
-                  <button type="button" onClick={() => setShowEmployeeTable(true)} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
-                    View employees in department
-                  </button>
-                  <div className="text-sm text-slate-300">Employee/s: <span className="font-semibold text-emerald-300">{selectedEmployeeIds.length}</span></div>
-                </div>
-              </div>
-            )}
+              ))}
 
-            {entryMode === 'manual' ? (
-              <>
-                {spec.fields
-                  .filter((field) => !field.auto && field.key !== 'department')
-                  .map((field) => (
-                    <div key={field.key}>
-                      <label className="text-sm text-slate-300">{field.label}</label>
+            <div className="border-t border-slate-800 pt-4">
+              <h4 className="text-sm font-semibold text-white mb-4">Work Verification Photos (Required)</h4>
+              <div className="grid grid-cols-2 gap-4">
+                {[1, 2, 3, 4].map((num) => {
+                  const photoKey = `photo${num}`
+                  return (
+                    <div key={photoKey} className="flex flex-col">
+                      <label className="text-xs text-slate-400 mb-2">Photo {num}</label>
                       <input
-                        value={values[field.key] || ''}
-                        onChange={(e) => handleChange(field.key, e.target.value)}
-                        placeholder={field.placeholder || ''}
-                        readOnly={field.type === 'date' || field.key === 'date'}
-                        className={`mt-2 w-full rounded-xl border border-slate-800 ${field.type === 'date' || field.key === 'date' ? 'bg-slate-950 cursor-not-allowed' : 'bg-slate-900'} px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none`}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handlePhotoChange(photoKey, e.target.files?.[0] || null)}
+                        className="hidden"
+                        id={`photo-${num}`}
                       />
+                      <label htmlFor={`photo-${num}`} className="flex-1 flex items-center justify-center rounded-xl border-2 border-dashed border-slate-700 bg-slate-950 p-3 cursor-pointer hover:border-emerald-500/50 hover:bg-slate-900 transition-colors">
+                        {photoPreview[photoKey] ? (
+                          <div className="relative w-full h-24 rounded">
+                            <img src={photoPreview[photoKey]} alt={`Preview ${num}`} className="w-full h-full object-cover rounded" />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                handlePhotoChange(photoKey, null)
+                              }}
+                              className="absolute top-1 right-1 bg-rose-500 rounded-full p-1 text-white hover:bg-rose-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="text-center">
+                            <div className="text-2xl mb-1">📷</div>
+                            <div className="text-xs text-slate-400">Upload photo</div>
+                          </div>
+                        )}
+                      </label>
                     </div>
-                  ))}
+                  )
+                })}
+              </div>
+            </div>
 
-                {/* Preview removed per request; count shown in manual tab header */}
-              </>
-            ) : null}
+            {/* Preview removed per request; count shown in manual section header */}
+          </div>
 
           <div className="mt-5 flex items-center justify-end gap-3">
             <button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2.5 text-slate-200 transition-colors hover:bg-slate-700">

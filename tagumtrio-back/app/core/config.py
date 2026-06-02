@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     DATABASE_URL: AnyUrl
     SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 43200
-    BACKEND_CORS_ORIGINS: str = "http://localhost:5173"
+    BACKEND_CORS_ORIGINS: str = "http://localhost:5173,http://localhost:5174"
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 

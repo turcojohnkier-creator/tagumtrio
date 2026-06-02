@@ -1,9 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Briefcase, Calendar as CalendarIcon, FileText, Megaphone, BadgeCheck, TimerReset, ChevronRight, DollarSign } from 'lucide-react'
+import { Briefcase, Calendar as CalendarIcon, FileText, Megaphone, TimerReset, ChevronRight } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
-import { DEPARTMENTS } from '../../constants/departments'
 import { useDialog } from '../../context/dialog-context'
 import AnnouncementPost from '../../components/ui/AnnouncementPost'
 
@@ -103,73 +101,22 @@ function toDateKey(value) {
 }
 
 export default function EmployeeDashboard() {
-  const navigate = useNavigate()
   const { user } = useAuth()
   const {
-    submitDepartmentRequest,
     getEmployeeDepartment,
-    getEmployeeDepartmentRequests,
     getEmployeeTotals,
-    getFinanceRecords,
-    formatDateTime,
     getEmployeeAttendance,
     submitLeaveRequest,
-    announcements = [],
-    activeReminders = [],
   } = useQr()
   const dialog = useDialog()
 
-  const [requestedDepartment, setRequestedDepartment] = useState(DEPARTMENTS[0])
-  const [confirmRequestOpen, setConfirmRequestOpen] = useState(false)
-  const [requestSubmitting, setRequestSubmitting] = useState(false)
-  const [requestMessage, setRequestMessage] = useState('')
-  const [requestError, setRequestError] = useState('')
   const currentDepartment = getEmployeeDepartment(user?.id)
-  const departmentRequests = getEmployeeDepartmentRequests(user?.id)
   const totals = getEmployeeTotals(user?.id)
   const attendance = getEmployeeAttendance(user?.id)
-  const todayKey = new Date().toISOString().slice(0, 10)
-  const allWorkRecords = typeof getFinanceRecords === 'function' ? getFinanceRecords() : []
-  const employeeWorkRecords = allWorkRecords.filter((record) => String(record.employeeId) === String(user?.id))
-  const departmentWorkRecords = employeeWorkRecords.filter((record) => String(record.department || '').trim().toLowerCase() === String(currentDepartment || '').trim().toLowerCase())
-  const todaysWorkRecords = departmentWorkRecords.filter((record) => toDateKey(record.scannedAt || record.reportDate || record.createdAt) === todayKey)
-  const assignedSection = currentDepartment || departmentWorkRecords[0]?.department || employeeWorkRecords[0]?.department || user?.department || 'Unassigned'
-  const workSummaryRecord = todaysWorkRecords[0] || departmentWorkRecords[0] || employeeWorkRecords[0] || null
-  const todaysHours = todaysWorkRecords.reduce((sum, record) => sum + Number(record.loggedHours || 0), 0)
-  const todaysAmount = todaysWorkRecords.reduce((sum, record) => sum + Number(record.amount || 0), 0)
   const latestRecord = totals.latestRecord
-  const approvedRequests = departmentRequests.filter((request) => request.status === 'approved')
-  const pendingRequests = departmentRequests.filter((request) => request.status === 'pending')
+  
 
-  async function submitDepartmentTransferRequest() {
-    if (!requestedDepartment || !user) return
-
-    setRequestSubmitting(true)
-    setRequestMessage('')
-    setRequestError('')
-
-    try {
-      await submitDepartmentRequest({
-        employeeId: user.id,
-        employeeName: user.name,
-        requestedDepartment,
-      })
-      setRequestMessage(`Request sent for ${requestedDepartment}.`)
-      setConfirmRequestOpen(false)
-      dialog.success({
-        title: 'Request sent',
-        message: `Department transfer request for ${requestedDepartment} was submitted successfully.`,
-      })
-    } catch (error) {
-      setRequestError(error?.message || 'Unable to send request right now.')
-      dialog.error({
-        title: 'Request failed',
-        message: error?.message || 'Unable to send request right now.',
-      })
-    } finally {
-      setRequestSubmitting(false)
-    }
-  }
+  
 
   return (
     <div className="space-y-6">
@@ -187,117 +134,10 @@ export default function EmployeeDashboard() {
               </div>
             </div>
           </div>
-          <div className="flex flex-col items-start gap-3 text-sm text-slate-300 max-w-md">
-            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4">
-                <div className="flex items-center gap-2 text-slate-400">
-                  <DollarSign className="w-4 h-4" />
-                  <p className="text-xs uppercase tracking-[0.24em]">Total salary accumulated</p>
-                </div>
-                <p className="mt-2 text-2xl font-semibold text-white">₱{(totals.totalAmount || 0).toLocaleString()}</p>
-              </div>
-              <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4">
-                <div className="flex items-center gap-2 text-slate-400">
-                  <DollarSign className="w-4 h-4" />
-                  <p className="text-xs uppercase tracking-[0.24em]">Today's salary</p>
-                </div>
-                <p className="mt-2 text-2xl font-semibold text-white">₱{todaysAmount.toLocaleString()}</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2"><Briefcase className="w-5 h-5 text-emerald-400" /> Assigned Section</h3>
-          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 space-y-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Department Today</p>
-            <p className="text-2xl font-bold text-white">{assignedSection}</p>
-            <p className="text-sm text-slate-400">This is the section tied to your current department for today’s work flow.</p>
-          </div>
-        </div>
-
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2"><FileText className="w-5 h-5 text-blue-400" /> Daily Work Details</h3>
-          {workSummaryRecord ? (
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 space-y-3">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                <span>{formatDateTime(workSummaryRecord.scannedAt || workSummaryRecord.reportDate || workSummaryRecord.createdAt || new Date().toISOString())}</span>
-                <span>•</span>
-                <span>{workSummaryRecord.department || assignedSection}</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="rounded-lg border border-slate-800 bg-slate-900 p-3">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Entries Today</p>
-                  <p className="mt-1 text-lg font-semibold text-white">{todaysWorkRecords.length}</p>
-                </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-900 p-3">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Hours</p>
-                  <p className="mt-1 text-lg font-semibold text-white">{todaysHours.toLocaleString()}</p>
-                </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-900 p-3">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Amount</p>
-                  <p className="mt-1 text-lg font-semibold text-white">₱{todaysAmount.toLocaleString()}</p>
-                </div>
-              </div>
-              <div className="text-sm text-slate-300">
-                <p className="font-medium text-slate-200">{workSummaryRecord.summary || workSummaryRecord.qrSummary || workSummaryRecord.notes || 'No work summary recorded yet.'}</p>
-                <p className="mt-2 text-slate-400">{workSummaryRecord.product || workSummaryRecord.productName || workSummaryRecord.section || workSummaryRecord.department || assignedSection}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
-              No daily work details are available yet for your department.
-            </div>
-          )}
-        </div>
-      </div>
-
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.9fr)] gap-6">
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2"><BadgeCheck className="w-5 h-5 text-emerald-400" /> Department Request</h3>
-
-          </div>
-          <form onSubmit={(event) => event.preventDefault()} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Select Department</label>
-                <select value={requestedDepartment} onChange={(e) => setRequestedDepartment(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500">
-                  {DEPARTMENTS.map((department) => (
-                    <option key={department} value={department}>{department}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Current Department</label>
-                <div className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-white min-h-[44px] flex items-center">
-                  {currentDepartment || 'No active department yet'}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <p className="text-sm text-slate-400">Once submitted, your leadman approves the placement before scans are logged.</p>
-              <button type="button" onClick={() => setConfirmRequestOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-black rounded-lg font-medium transition-colors">
-                Send Request <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </form>
-          {requestMessage ? <p className="mt-3 text-sm text-emerald-400">{requestMessage}</p> : null}
-          {requestError ? <p className="mt-3 text-sm text-rose-400">{requestError}</p> : null}
-
-          {Array.isArray(announcements) && announcements.length > 0 ? (
-            <div className="mt-4 space-y-3">
-              <h4 className="text-sm font-semibold text-white">Broadcasts</h4>
-              {announcements.slice(0, 2).map((announcement) => (
-                <AnnouncementPost key={announcement.id} announcement={announcement} compact />
-              ))}
-            </div>
-          ) : null}
-        </div>
-
         <div className="space-y-6">
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-amber-400" /> Quick Actions</h3>
@@ -316,36 +156,6 @@ export default function EmployeeDashboard() {
           </div>
         </div>
       </div>
-
-      {confirmRequestOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <button type="button" aria-label="Close request confirmation" className="absolute inset-0 bg-black/60" onClick={() => setConfirmRequestOpen(false)} />
-          <div className="relative z-10 w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Confirm request</p>
-            <h3 className="mt-2 text-xl font-semibold text-white">Send transfer request?</h3>
-            <p className="mt-2 text-sm text-slate-400">
-              This will submit a department transfer request for <span className="font-medium text-slate-200">{requestedDepartment}</span>.
-            </p>
-            <p className="mt-2 text-sm text-slate-400">
-              Current department: <span className="font-medium text-slate-200">{currentDepartment || 'None'}</span>
-            </p>
-
-            <div className="mt-6 flex items-center justify-end gap-3">
-              <button type="button" onClick={() => setConfirmRequestOpen(false)} className="rounded-xl bg-slate-800 px-4 py-2.5 text-slate-200 transition-colors hover:bg-slate-700">
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={requestSubmitting}
-                onClick={submitDepartmentTransferRequest}
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 font-medium text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {requestSubmitting ? 'Sending...' : 'Confirm Send'}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }

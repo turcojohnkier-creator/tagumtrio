@@ -12,27 +12,25 @@ const Register = lazy(() => import('./pages/Register'))
 const Landing = lazy(() => import('./pages/Landing'))
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard'))
 const LeadmanDashboard = lazy(() => import('./pages/leadman/LeadmanDashboard'))
-const LeadmanTransfers = lazy(() => import('./pages/leadman/LeadmanTransfers'))
+const LeadmanIncomingReports = lazy(() => import('./pages/leadman/LeadmanIncomingReports'))
 const LeadmanWorkers = lazy(() => import('./pages/leadman/LeadmanWorkers'))
 const LeadmanDailyReport = lazy(() => import('./pages/leadman/LeadmanDailyReport'))
 const LeadmanHistory = lazy(() => import('./pages/leadman/LeadmanHistory'))
 const ProductionDashboard = lazy(() => import('./pages/production/ProductionDashboard'))
+const ProductionReports = lazy(() => import('./pages/production/ProductionReports'))
 const ProductionConsolidatedReports = lazy(() => import('./pages/production/ProductionConsolidatedReports'))
 const ProductionOversight = lazy(() => import('./pages/production/ProductionOversight'))
 const FinanceHome = lazy(() => import('./pages/finance/FinanceHome'))
 const FinanceProductionReports = lazy(() => import('./pages/finance/FinanceProductionReports'))
 const FinanceDepartmentEmployees = lazy(() => import('./pages/finance/FinanceDepartmentEmployees'))
-const GMOversight = lazy(() => import('./pages/gm/GMOversight'))
-const Employees = lazy(() => import('./pages/converted/Employees'))
-const HRDashboard = lazy(() => import('./pages/HR/HRDashboard'))
+// GMOversight removed — GMOverview will be the main GM entry
 const HRCreateAccount = lazy(() => import('./pages/HR/HRCreateAccount'))
-const EmployeeManagement = lazy(() => import('./pages/HR/EmployeeManagement'))
-const HRAnnouncements = lazy(() => import('./pages/HR/Announcements'))
-const GMDashboard = lazy(() => import('./pages/gm/GMDashboard'))
+const HREmployeeDirectory = lazy(() => import('./pages/HR/EmployeeDirectory'))
+const GMEmployeeManagement = lazy(() => import('./pages/gm/EmployeeManagement'))
+const GMAnnouncements = lazy(() => import('./pages/gm/Announcements'))
 const GMOverview = lazy(() => import('./pages/gm/GMOverview'))
 const EmployeeDashboard = lazy(() => import('./pages/employee/EmployeeDashboard'))
 const EmployeeAnnouncements = lazy(() => import('./pages/employee/Announcements'))
-const EmployeeWorkDetails = lazy(() => import('./pages/employee/Schedules'))
 const MyAttendance = lazy(() => import('./pages/employee/MyAttendance'))
 const MyPayslips = lazy(() => import('./pages/employee/MyPayslips'))
 const ViewPayslip = lazy(() => import('./pages/employee/ViewPayslip'))
@@ -57,7 +55,6 @@ export default function App() {
                 <Route path="/app/portal/*" element={<EmployeeLayout />}>
                   <Route index element={<EmployeeDashboard />} />
                   <Route path="announcements" element={<EmployeeAnnouncements />} />
-                  <Route path="work" element={<EmployeeWorkDetails />} />
                   <Route path="leaves" element={<MyAttendance />} />
                   <Route path="payslips" element={<MyPayslips />} />
                   <Route path="payslips/:id" element={<ViewPayslip />} />
@@ -69,27 +66,27 @@ export default function App() {
                   <Route path="dashboard" element={<RoleDashboard />} />
 
                   <Route path="production" element={<ProductionDashboard />} />
+                  <Route path="production/reports" element={<ProductionReports />} />
                   <Route path="production/consolidated" element={<ProductionConsolidatedReports />} />
 
                   <Route path="payroll" element={<FinanceHome />} />
                   <Route path="payroll/production" element={<FinanceProductionReports />} />
                   <Route path="payroll/employees" element={<FinanceDepartmentEmployees />} />
 
-                  <Route path="employees" element={<Employees />} />
-                  <Route path="hr" element={<HRDashboard />} />
+                  <Route path="hr" element={<Navigate to="/app/hr/create-account" replace />} />
                   <Route path="hr/create-account" element={<HRCreateAccount />} />
-                  <Route path="hr/employees" element={<EmployeeManagement />} />
-                  <Route path="hr/announcements" element={<HRAnnouncements />} />
-                  <Route path="gm" element={<GMDashboard />} />
+                  <Route path="hr/employees" element={<HREmployeeDirectory />} />
+                  <Route path="gm/employees" element={<GMEmployeeManagement />} />
+                  <Route path="gm/announcements" element={<GMAnnouncements />} />
+                  <Route path="gm" element={<GMOverview />} />
                   <Route path="gm/overview" element={<GMOverview />} />
-                  <Route path="gm/oversight" element={<GMOversight />} />
                   <Route path="requests" element={<Requests />} />
                   <Route path="*" element={<Navigate to="" replace />} />
                 </Route>
 
                 <Route path="/app/leadman/*" element={<LeadmanLayout />}>
                   <Route index element={<LeadmanDashboard />} />
-                  <Route path="transfers" element={<LeadmanTransfers />} />
+                  <Route path="reports" element={<LeadmanIncomingReports />} />
                   <Route path="workers" element={<LeadmanWorkers />} />
                   <Route path="report" element={<LeadmanDailyReport />} />
                   <Route path="history" element={<LeadmanHistory />} />
@@ -99,7 +96,7 @@ export default function App() {
                 <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
                 <Route path="/production" element={<Navigate to="/app/production" replace />} />
                 <Route path="/payroll" element={<Navigate to="/app/payroll" replace />} />
-                <Route path="/employees" element={<Navigate to="/app/employees" replace />} />
+                <Route path="/employees" element={<Navigate to="/app/gm/employees" replace />} />
                 <Route path="/requests" element={<Navigate to="/app/requests" replace />} />
                 <Route path="/portal" element={<Navigate to="/app/portal" replace />} />
                 <Route path="/portal/leaves" element={<Navigate to="/app/portal/leaves" replace />} />

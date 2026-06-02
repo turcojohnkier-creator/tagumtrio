@@ -6,8 +6,8 @@ function cn(...inputs) {
 }
 
 const links = [
-  { to: '/app/leadman', label: 'Scan QR', icon: ScanLine, end: true },
-  { to: '/app/leadman/transfers', label: 'Transfer Requests', icon: ClipboardList },
+  { to: '/app/leadman', label: 'Create Report', icon: ScanLine, end: true },
+  { to: '/app/leadman/reports', label: 'Incoming Reports', icon: ClipboardList },
   { to: '/app/leadman/workers', label: 'Deployed Workers', icon: Users },
   { to: '/app/leadman/report', label: 'Daily Report', icon: FileText },
   { to: '/app/leadman/history', label: 'History', icon: FileText },

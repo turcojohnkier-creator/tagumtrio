@@ -189,7 +189,7 @@ export default function LeadmanProduction() {
           <p className="text-2xl font-bold text-white mt-2">{stats.deployed}</p>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <p className="text-xs uppercase tracking-wider text-slate-500">Leadman Scans</p>
+          <p className="text-xs uppercase tracking-wider text-slate-500">Leadman Reports</p>
           <p className="text-2xl font-bold text-white mt-2">{stats.scans}</p>
         </div>
       </div>
@@ -240,7 +240,7 @@ export default function LeadmanProduction() {
                   openScan(scanCandidates[0])
               }
               }} disabled={scanCandidates.length === 0} className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-black rounded font-medium hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
-              <ScanLine className="w-4 h-4" /> Scan QR
+              <ScanLine className="w-4 h-4" /> Create Report
             </button>
           </div>
 
@@ -266,7 +266,7 @@ export default function LeadmanProduction() {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2"><ClipboardList className="w-5 h-5 text-amber-400" /> Recent Scans</h3>
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2"><ClipboardList className="w-5 h-5 text-amber-400" /> Recent Reports</h3>
           {currentScans.length === 0 ? (
             <div className="text-slate-400 p-4 rounded-lg border border-slate-800">No scans recorded yet.</div>
           ) : (
@@ -318,9 +318,9 @@ export default function LeadmanProduction() {
         employeeOptions={selectedEmployee ? [selectedEmployee] : deployedEmployees}
         initialEmployeeId={selectedEmployee?.employeeId || ''}
         initialHours={hours}
-        title="Scan Employee QR"
-        description="Leadman scan time is captured automatically and the department QR fields are recorded with the log."
-        submitLabel="Submit Scan"
+        title="Create Report"
+        description="Leadman report time is captured automatically and the department fields are recorded with the entry."
+        submitLabel="Create Report"
         onClose={() => setScanModalOpen(false)}
         onSubmit={(payloads) => {
           const list = Array.isArray(payloads) ? payloads : [payloads]
@@ -330,8 +330,8 @@ export default function LeadmanProduction() {
           setScanModalOpen(false)
           setSelectedEmployee(null)
           dialog.success({
-            title: 'Scan recorded',
-            message: 'The worker scan was submitted successfully.',
+            title: 'Report recorded',
+            message: 'The worker report was submitted successfully.',
           })
         }}
       />

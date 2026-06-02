@@ -1,11 +1,9 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Search, Plus, Edit, Trash2 } from 'lucide-react'
+import { Search, Edit, Trash2 } from 'lucide-react'
 import { useQr } from '../../context/qr-context'
 import { DEPARTMENTS } from '../../constants/departments'
 
 export default function EmployeeManagement() {
-  const navigate = useNavigate()
   const { employees = [] } = useQr()
   const [searchText, setSearchText] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('All Departments')
@@ -16,7 +14,7 @@ export default function EmployeeManagement() {
       const id = String(e.employeeId || e.id || e.employee_id || '')
       const name = String(e.employeeName || e.name || e.employee_name || '')
       const department = String(e.department || e.dept || e.departmentName || '')
-      const matchesQ = !q || name.toLowerCase().includes(q) || id.toLowerCase().includes(q)
+      const matchesQ = !q || name.toLowerCase().includes(q) || id.toLowerCase().includes(q) || department.toLowerCase().includes(q)
       const matchesDept = departmentFilter === 'All Departments' || department === departmentFilter
       return matchesQ && matchesDept
     })
@@ -27,12 +25,7 @@ export default function EmployeeManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">Employee Management</h2>
-          <p className="text-slate-400 mt-1">Create, view, and manage employee records backed by the database.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/app/hr/create-account')} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500 text-black">
-            <Plus className="w-4 h-4" />Create account
-          </button>
+          <p className="text-slate-400 mt-1">View and manage employee records backed by the database.</p>
         </div>
       </div>
 
@@ -47,7 +40,11 @@ export default function EmployeeManagement() {
           />
         </div>
 
-        <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)} className="bg-slate-950 border border-slate-800 text-slate-300 text-sm rounded-lg px-4 py-2.5">
+        <select
+          value={departmentFilter}
+          onChange={(e) => setDepartmentFilter(e.target.value)}
+          className="bg-slate-950 border border-slate-800 text-slate-300 text-sm rounded-lg px-4 py-2.5"
+        >
           {['All Departments', ...DEPARTMENTS].map((d) => (
             <option key={d} value={d}>{d}</option>
           ))}
@@ -57,7 +54,9 @@ export default function EmployeeManagement() {
       <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
         <div className="grid grid-cols-1 gap-3">
           {filtered.length === 0 ? (
-            <div className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-6 text-sm text-slate-400">No employees matched your filters.</div>
+            <div className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-6 text-sm text-slate-400">
+              No employees matched your filters.
+            </div>
           ) : (
             filtered.map((emp) => {
               const id = emp.employeeId || emp.id || emp.employee_id || '—'

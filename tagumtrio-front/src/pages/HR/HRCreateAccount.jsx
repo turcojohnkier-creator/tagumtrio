@@ -116,7 +116,7 @@ export default function HRCreateAccount() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-white">HR Account Provisioning</h2>
-        <p className="text-slate-400 mt-1">Create user accounts manually for employees, leadman, finance, GM, and HR staff.</p>
+        <p className="text-slate-400 mt-1">Create user accounts manually for employees, leadman, and production incharge.</p>
       </div>
 
       <div className="rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
@@ -143,7 +143,7 @@ export default function HRCreateAccount() {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="text-sm text-slate-300">Email or Employee ID</label>
+              <label className="text-sm text-slate-300">Email</label>
               <input
                 type="text"
                 value={identifier}

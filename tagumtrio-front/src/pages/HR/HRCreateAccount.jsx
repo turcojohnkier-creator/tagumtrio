@@ -30,6 +30,12 @@ export default function HRCreateAccount() {
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
 
+  function handleEmailBlur() {
+    if (identifier.trim() && !identifier.includes('@')) {
+      setIdentifier((prev) => prev + '@triops.local')
+    }
+  }
+
   const validationMessage = useMemo(() => {
     if (!name.trim()) return 'Enter full name.'
     if (!identifier.trim()) return 'Enter email or employee ID.'
@@ -136,12 +142,13 @@ export default function HRCreateAccount() {
               </div>
             </div>
 
-            <div>
+            <div className="sm:col-span-2">
               <label className="text-sm text-slate-300">Email or Employee ID</label>
               <input
                 type="text"
                 value={identifier}
                 onChange={(event) => setIdentifier(event.target.value)}
+                onBlur={handleEmailBlur}
                 className="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
                 placeholder="e.g. juan@triops.local"
               />
@@ -237,7 +244,7 @@ export default function HRCreateAccount() {
               onChange={(event) => setAgree(event.target.checked)}
               className="mt-0.5 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500"
             />
-            <span>I confirm the account details are correct and agree to TriOPS account usage policy.</span>
+            <span>I confirm the account details are correct.</span>
           </label>
 
           {(formError || validationMessage) && (

@@ -19,7 +19,6 @@ const LeadmanHistory = lazy(() => import('./pages/leadman/LeadmanHistory'))
 const ProductionDashboard = lazy(() => import('./pages/production/ProductionDashboard'))
 const ProductionReports = lazy(() => import('./pages/production/ProductionReports'))
 const ProductionConsolidatedReports = lazy(() => import('./pages/production/ProductionConsolidatedReports'))
-const ProductionOversight = lazy(() => import('./pages/production/ProductionOversight'))
 const FinanceHome = lazy(() => import('./pages/finance/FinanceHome'))
 const FinanceProductionReports = lazy(() => import('./pages/finance/FinanceProductionReports'))
 const FinanceDepartmentEmployees = lazy(() => import('./pages/finance/FinanceDepartmentEmployees'))
@@ -73,7 +72,7 @@ export default function App() {
                   <Route path="payroll/production" element={<FinanceProductionReports />} />
                   <Route path="payroll/employees" element={<FinanceDepartmentEmployees />} />
 
-                  <Route path="hr" element={<Navigate to="/app/hr/create-account" replace />} />
+                  <Route path="hr" element={<Navigate to="/app/hr/employees" replace />} />
                   <Route path="hr/create-account" element={<HRCreateAccount />} />
                   <Route path="hr/employees" element={<HREmployeeDirectory />} />
                   <Route path="gm/employees" element={<GMEmployeeManagement />} />

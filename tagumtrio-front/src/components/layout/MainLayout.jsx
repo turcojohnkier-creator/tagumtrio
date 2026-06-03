@@ -13,7 +13,7 @@ function cn(...inputs) {
 const allNavItems = [
   { name: 'Departments Overview', href: '/app/gm/overview', icon: Users, roles: ['gm'] },
   { name: 'Employees', href: '/app/gm/employees', icon: Users, roles: ['gm'] },
-  { name: 'Production', href: '/app/production', icon: Factory, roles: ['hr', 'production_incharge', 'leadman', 'gm'] },
+  { name: 'Production', href: '/app/production', icon: Factory, roles: ['production_incharge', 'leadman', 'gm'] },
   { name: 'Reports', href: '/app/production/reports', icon: FileSpreadsheet, roles: ['production_incharge'] },
   { name: 'All Accounts', href: '/app/hr/employees', icon: Users, roles: ['hr'] },
   { name: 'Create Accounts', href: '/app/hr/create-account', icon: Users, roles: ['hr'] },

@@ -9,7 +9,7 @@ export default function RoleDashboard() {
   if (user.role === 'employee') return <Navigate to="/app/portal" replace />
   if (user.role === 'finance') return <Navigate to="/app/payroll" replace />
   if (user.role === 'leadman') return <Navigate to="/app/leadman" replace />
-  if (user.role === 'hr') return <Navigate to="/app/hr/create-account" replace />
+  if (user.role === 'hr') return <Navigate to="/app/hr/employees" replace />
   if (user.role === 'gm') return <Navigate to="/app/gm" replace />
   if (user.role === 'production_incharge') return <Navigate to="/app/production" replace />
 

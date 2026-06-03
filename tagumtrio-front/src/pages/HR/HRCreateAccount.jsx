@@ -20,6 +20,7 @@ export default function HRCreateAccount() {
   const [name, setName] = useState('')
   const [identifier, setIdentifier] = useState('')
   const [role, setRole] = useState('employee')
+  const [employeeDepartment, setEmployeeDepartment] = useState(DEPARTMENTS[0] || '')
   const [leadmanDepartments, setLeadmanDepartments] = useState([DEPARTMENTS[0]])
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -33,6 +34,7 @@ export default function HRCreateAccount() {
     if (!name.trim()) return 'Enter full name.'
     if (!identifier.trim()) return 'Enter email or employee ID.'
     if (identifier.trim().length < 3) return 'Identifier is too short.'
+    if (role === 'employee' && !employeeDepartment) return 'Select a department for the employee.'
     if (role === 'leadman' && leadmanDepartments.length === 0) return 'Select at least one leadman department.'
     if (!password) return 'Enter the account password.'
     if (password.length < 6) return 'Password must be at least 6 characters.'
@@ -40,7 +42,7 @@ export default function HRCreateAccount() {
     if (password !== confirmPassword) return 'Passwords do not match.'
     if (!agree) return 'Please confirm the account policy.'
     return ''
-  }, [agree, confirmPassword, identifier, leadmanDepartments.length, name, password, role])
+  }, [agree, confirmPassword, employeeDepartment, identifier, leadmanDepartments.length, name, password, role])
 
   function toggleDepartment(department) {
     setLeadmanDepartments((current) => {
@@ -78,6 +80,7 @@ export default function HRCreateAccount() {
       identifier: identifier.trim(),
       password,
       role,
+      department: role === 'employee' ? employeeDepartment : undefined,
       departments: role === 'leadman' ? leadmanDepartments : undefined,
     })
 
@@ -90,6 +93,7 @@ export default function HRCreateAccount() {
     setName('')
     setIdentifier('')
     setRole('employee')
+    setEmployeeDepartment(DEPARTMENTS[0] || '')
     setLeadmanDepartments([DEPARTMENTS[0]])
     setPassword('')
     setConfirmPassword('')
@@ -155,6 +159,21 @@ export default function HRCreateAccount() {
                 ))}
               </select>
             </div>
+
+            {role === 'employee' && (
+              <div>
+                <label className="text-sm text-slate-300">Department</label>
+                <select
+                  value={employeeDepartment}
+                  onChange={(event) => setEmployeeDepartment(event.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                >
+                  {DEPARTMENTS.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {role === 'leadman' && (
               <div className="sm:col-span-2 rounded-xl border border-slate-800 bg-slate-950/80 p-4">

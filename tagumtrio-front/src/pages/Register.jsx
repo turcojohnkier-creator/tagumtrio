@@ -55,7 +55,7 @@ export default function Register() {
     })
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
     setFormError('')
 
@@ -65,13 +65,15 @@ export default function Register() {
     }
 
     setSubmitting(true)
-    Promise.resolve(registerUser({
-      name: name.trim(),
-      identifier: identifier.trim(),
-      password,
-      role,
-      departments: role === 'leadman' ? leadmanDepartments : undefined,
-    })).then((result) => {
+    try {
+      const result = await registerUser({
+        name: name.trim(),
+        identifier: identifier.trim(),
+        password,
+        role,
+        departments: role === 'leadman' ? leadmanDepartments : undefined,
+      })
+
       if (!result.ok) {
         setFormError(result.error || 'Unable to register account.')
         setSubmitting(false)
@@ -84,14 +86,14 @@ export default function Register() {
       })
 
       window.setTimeout(() => navigate('/login'), 1200)
-    }).catch((error) => {
+    } catch (error) {
       setFormError(error.message || 'Unable to register account.')
       dialog.error({
         title: 'Registration failed',
         message: error.message || 'Unable to register account.',
       })
       setSubmitting(false)
-    })
+    }
   }
 
   return (
@@ -205,7 +207,7 @@ export default function Register() {
               onChange={(event) => setAgree(event.target.checked)}
               className="mt-0.5 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500"
             />
-            <span>I confirm that the registration details are correct and agree to account usage policy.</span>
+            <span>I confirm that the registration details are correct</span>
           </label>
 
           {(formError || validationMessage) && (

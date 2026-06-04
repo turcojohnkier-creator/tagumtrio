@@ -22,6 +22,7 @@ function buildSessionUser(record) {
     id: record.id,
     name: record.name,
     role: normalizeRole(record.role),
+    created_at: record.created_at || record.createdAt,
   }
 
   if (record.role === 'leadman') {

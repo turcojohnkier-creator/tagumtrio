@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { AlertCircle, Eye, EyeOff, Lock, UserCircle2 } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
-import { useQr } from '../../context/qr-context'
 import { useDialog } from '../../context/dialog-context'
 import { DEPARTMENTS } from '../../constants/departments'
 
@@ -17,7 +16,6 @@ const ROLE_OPTIONS = [
 export default function HRCreateAccount() {
   const { user, registerUser } = useAuth()
   const dialog = useDialog()
-  const { refreshEmployees } = useQr()
 
   const [name, setName] = useState('')
   const [identifier, setIdentifier] = useState('')
@@ -31,6 +29,13 @@ export default function HRCreateAccount() {
   const [agree, setAgree] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
+
+  function formatCreatedAt(value) {
+    if (!value) return 'Unknown time'
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return 'Unknown time'
+    return date.toLocaleString()
+  }
 
   function handleEmailBlur() {
     if (identifier.trim() && !identifier.includes('@')) {
@@ -110,12 +115,8 @@ export default function HRCreateAccount() {
 
     dialog.success({
       title: 'Account created',
-      message: 'The user account was successfully provisioned.',
+      message: `The user account was successfully provisioned at ${formatCreatedAt(result.user?.created_at)}.`,
     })
-    // Refresh employee list in QR context so directories update immediately
-    try {
-      refreshEmployees().catch(() => {})
-    } catch {}
   }
 
   return (

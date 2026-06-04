@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator
@@ -27,6 +28,7 @@ class UserCreate(UserBase):
 class UserPublic(UserBase):
     id: int
     is_active: bool
+    created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 

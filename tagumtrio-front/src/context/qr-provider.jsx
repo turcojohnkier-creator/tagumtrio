@@ -3,6 +3,11 @@ import { useAuth } from './auth-context'
 import { QRContext } from './qr-context'
 import { DEPARTMENTS } from '../constants/departments'
 import { buildDepartmentQrSummary } from '../constants/qr-scan-fields'
+// Local storage keys and defaults
+const STORAGE_KEY = 'triops-qr-state'
+const LEADMAN_DEPARTMENT_KEY_PREFIX = 'triops-leadman-dept:'
+// Optional per-department rates; missing entries fall back to 70
+const DEPARTMENT_RATES = {}
 import {
   createAttendanceApi,
   fetchDepartmentRequestsApi,
@@ -21,52 +26,25 @@ import {
   headVerifyAttendanceApi,
   leadmanVerifyAttendanceApi,
   submitDailyReportApi,
+  updateDailyReportApi,
   fetchAnnouncementsApi,
   createAnnouncementApi,
   updateAnnouncementApi,
   deleteAnnouncementApi,
-  fetchSchedulesApi,
-  createScheduleApi,
-  updateScheduleApi,
-  deleteScheduleApi,
-  releasePayrollApi,
   hasAuthToken,
 } from '../lib/api'
-import { enqueueScan, pendingCount, trySyncOnce } from '../lib/offline/queue'
-
-const STORAGE_KEY = 'triops-demo-state'
-const LEADMAN_DEPARTMENT_KEY_PREFIX = 'triops-leadman-selected-department:'
-
-const DEPARTMENT_RATES = {
-  Sundry: 70,
-  Sorting: 70,
-  Assembly: 70,
-  'Cold Press': 75,
-  Repair: 70,
-  'Hot Press': 75,
-  Putty: 68,
-  Sunder: 70,
-  Spreadersizer: 72,
-  'Packing/Classifying': 70,
-  'Putty Make Up': 68,
-  'Sand Paper': 70,
-  'Paint Black': 72,
-  Bundle: 70,
-  Logo: 70,
-}
-
-/* Demo employee data removed. Prefer server-provided employees.
-   Fallbacks are empty arrays to avoid showing demo data in production. */
 
 function toEmployeeRecord(employee) {
-  const raw = employee?.employeeId ?? employee?.identifier ?? employee?.id
-  const parsed = Number(raw)
+  if (!employee) return {}
+  const rawId = employee.employeeId ?? employee.id ?? employee.employee_id ?? employee.normalizedEmployeeId
+  const parsed = Number(rawId)
+  const employeeId = Number.isFinite(parsed) ? parsed : (rawId !== undefined && rawId !== null ? String(rawId) : undefined)
   return {
     ...employee,
-    employeeId: Number.isFinite(parsed) ? parsed : undefined,
-    employeeName: employee.employeeName || employee.name || employee.fullName || employee.employee_name,
-    department: employee.department || employee.dept || employee.departmentName,
-    role: employee.role || employee.position || employee.title,
+    employeeId,
+    employeeName: String(employee.employeeName || employee.name || employee.fullName || employee.employee_name || '').trim(),
+    department: employee.department || employee.dept || employee.departmentName || '',
+    role: employee.role || employee.position || employee.title || 'employee',
   }
 }
 
@@ -178,7 +156,8 @@ export function QRProvider({ children }) {
   const [dailyReportDrafts, setDailyReportDrafts] = useState({})
   const [payments, setPayments] = useState(initialState.payments || [])
   const [announcements, setAnnouncements] = useState(initialState.announcements || [])
-  const [schedules, setSchedules] = useState(initialState.schedules || [])
+  // schedules feature removed; keep empty state to avoid breaking callers
+  const [schedules, setSchedules] = useState([])
   const [leaveRequests, setLeaveRequests] = useState(initialState.leaveRequests || [])
   const [syncPending, setSyncPending] = useState(0)
   const [employees, setEmployees] = useState([])
@@ -210,7 +189,7 @@ export function QRProvider({ children }) {
       const loadPayrollCycles = payrollRoles.has(user?.role)
       const loadPayrollPayments = paymentRoles.has(user?.role)
       const loadEmployees = employeeRoles.has(user?.role)
-      const loadReports = payrollRoles.has(user?.role)
+      const loadReports = payrollRoles.has(user?.role) || user?.role === 'leadman'
 
       if (loadEmployees) setEmployeesLoading(true)
       const [remoteEmployees, remoteDepartmentRequests, remotePayments, remoteProduction, remotePayrollCycles, remoteDailyReports, remoteLeaveRequests] = await Promise.allSettled([
@@ -253,9 +232,8 @@ export function QRProvider({ children }) {
       }
 
       try {
-        const [remoteAnnouncements2, remoteSchedules2] = await Promise.allSettled([fetchAnnouncementsApi(), fetchSchedulesApi()])
-        if (remoteAnnouncements2.status === 'fulfilled' && Array.isArray(remoteAnnouncements2.value)) setAnnouncements(remoteAnnouncements2.value)
-        if (remoteSchedules2.status === 'fulfilled' && Array.isArray(remoteSchedules2.value)) setSchedules(remoteSchedules2.value)
+        const remoteAnnouncements2 = await fetchAnnouncementsApi().catch(() => [])
+        if (Array.isArray(remoteAnnouncements2)) setAnnouncements(remoteAnnouncements2)
       } catch (e) { /* ignore */ }
       if (!cancelled) setEmployeesLoading(false)
 
@@ -269,6 +247,86 @@ export function QRProvider({ children }) {
     }
   }, [user?.id])
 
+  async function refreshEmployees() {
+    if (!user) return
+    if (!hasAuthToken()) return
+    setEmployeesLoading(true)
+    try {
+      const remote = await fetchEmployeesApi()
+      if (Array.isArray(remote)) setEmployees(mergeEmployees(remote))
+    } catch (e) {
+      // ignore transient errors
+    } finally {
+      setEmployeesLoading(false)
+    }
+  }
+
+  async function refreshDailyReports(params = {}) {
+    if (!user) return []
+    if (!hasAuthToken()) return []
+    const remote = await fetchDailyReportsApi(params)
+    if (Array.isArray(remote)) {
+      setDailyReports(remote)
+      return remote
+    }
+    return []
+  }
+
+  async function updateDailyReportStatus(reportId, updates) {
+    if (!reportId) throw new Error('Missing report id')
+    const previousReports = dailyReports.slice()
+    const patch = {
+      status: updates?.status,
+      verifiedBy: updates?.verifiedBy,
+      verifiedByName: updates?.verifiedByName,
+      notes: updates?.notes,
+    }
+
+    setDailyReports((current) => current.map((report) => (
+      String(report.id) === String(reportId)
+        ? { ...report, status: patch.status || report.status, verifiedBy: patch.verifiedBy ?? report.verifiedBy, verifiedByName: patch.verifiedByName ?? report.verifiedByName, notes: patch.notes ?? report.notes, updatedAt: new Date().toISOString() }
+        : report
+    )))
+
+    try {
+      const updated = await updateDailyReportApi(reportId, patch)
+      setDailyReports((current) => current.map((report) => (String(report.id) === String(reportId) ? updated : report)))
+      return updated
+    } catch (error) {
+      setDailyReports(previousReports)
+      throw error
+    }
+  }
+
+  function getReportsByStatuses(statuses = [], department = null) {
+    const statusSet = new Set((Array.isArray(statuses) ? statuses : [statuses]).filter(Boolean))
+    return dedupeBy(
+      (Array.isArray(dailyReports) ? dailyReports : []).filter((report) => {
+        if (statusSet.size > 0 && !statusSet.has(String(report.status || '').toLowerCase())) return false
+        if (department && String(report.department || '').toLowerCase() !== String(department || '').toLowerCase()) return false
+        return true
+      }),
+      (report) => String(report.id),
+      (left, right) => new Date(right.createdAt || right.created_at || right.reportDate || 0) - new Date(left.createdAt || left.created_at || left.reportDate || 0)
+    )
+  }
+
+  function getProductionPendingReports() {
+    return getReportsByStatuses(['submitted'])
+  }
+
+  function getProductionReviewedReports() {
+    return getReportsByStatuses(['production_verified', 'leadman_verified', 'gm_submitted', 'rejected'])
+  }
+
+  function getLeadmanIncomingReports(department = null) {
+    return getReportsByStatuses(['production_verified'], department)
+  }
+
+  function getLeadmanVerifiedReports(department = null) {
+    return getReportsByStatuses(['leadman_verified', 'gm_submitted'], department)
+  }
+
   // Poll announcements and schedules for updates every 10s
   useEffect(() => {
     if (!user) return
@@ -276,18 +334,15 @@ export function QRProvider({ children }) {
     let cancelled = false
     let interval
 
-    async function refreshAnnouncementsAndSchedules() {
+    async function refreshAnnouncements() {
       try {
-        const [annResp, schResp] = await Promise.allSettled([fetchAnnouncementsApi(), fetchSchedulesApi()])
-        if (!cancelled) {
-          if (annResp.status === 'fulfilled' && Array.isArray(annResp.value)) setAnnouncements(annResp.value)
-          if (schResp.status === 'fulfilled' && Array.isArray(schResp.value)) setSchedules(schResp.value)
-        }
+        const annResp = await fetchAnnouncementsApi()
+        if (!cancelled && Array.isArray(annResp)) setAnnouncements(annResp)
       } catch (e) { /* ignore */ }
     }
 
-    refreshAnnouncementsAndSchedules()
-    interval = setInterval(refreshAnnouncementsAndSchedules, 10000)
+    refreshAnnouncements()
+    interval = setInterval(refreshAnnouncements, 10000)
     return () => {
       cancelled = true
       if (interval) clearInterval(interval)
@@ -744,45 +799,11 @@ export function QRProvider({ children }) {
     }
   }
 
-  // Schedules management
-  async function createSchedule(record) {
-    const tempId = `SCH-${Date.now()}`
-    const payload = { id: tempId, ...record }
-    setSchedules((cur) => [payload, ...cur])
-    try {
-      const created = await createScheduleApi(record)
-      setSchedules((cur) => cur.map((s) => (s.id === tempId ? created : s)))
-      return created
-    } catch (e) {
-      setSchedules((cur) => cur.filter((s) => s.id !== tempId))
-      throw e
-    }
-  }
-
-  async function updateSchedule(id, updates) {
-    try {
-      const updated = await updateScheduleApi(id, updates)
-      setSchedules((cur) => cur.map((s) => (s.id === id ? { ...s, ...updated } : s)))
-      return updated
-    } catch (e) {
-      throw e
-    }
-  }
-
-  async function removeSchedule(id) {
-    const prev = schedules.slice()
-    setSchedules((cur) => cur.filter((s) => s.id !== id))
-    try {
-      await deleteScheduleApi(id)
-    } catch (e) {
-      setSchedules(prev)
-      throw e
-    }
-  }
-
-  function getEmployeeSchedules(employeeId) {
-    return (schedules || []).filter((s) => String(s.employeeId) === String(employeeId) || s.department === getEmployeeDepartment(employeeId))
-  }
+  // Schedules feature removed from backend; keep stubs for compatibility
+  async function createSchedule() { throw new Error('Schedules feature unavailable') }
+  async function updateSchedule() { throw new Error('Schedules feature unavailable') }
+  async function removeSchedule() { throw new Error('Schedules feature unavailable') }
+  function getEmployeeSchedules() { return [] }
 
   // Active reminders (client-side)
   const [activeReminders, setActiveReminders] = useState([])
@@ -1121,6 +1142,7 @@ export function QRProvider({ children }) {
     }
     try {
       const result = await submitDailyReportApi(payload)
+      setDailyReports((current) => [result, ...current.filter((report) => String(report.id) !== String(result.id))])
       setDailyReportDrafts((cur) => {
         const next = { ...cur }
         const existingDraft = next[key]
@@ -1198,6 +1220,7 @@ export function QRProvider({ children }) {
         getFinanceRecords,
         getFinanceEmployees,
         getFinanceEmployeeHistory,
+        refreshDailyReports,
         getDailyReportDraft,
         removeDailyReportBatch,
         getFinancePayrollCycles,
@@ -1232,13 +1255,20 @@ export function QRProvider({ children }) {
         getEmployeeSchedules,
         activeReminders,
         employees,
+        dailyReports,
         productionRecords,
         dailyReportDrafts,
         submitDailyReport,
+        updateDailyReportStatus,
+        getProductionPendingReports,
+        getProductionReviewedReports,
+        getLeadmanIncomingReports,
+        getLeadmanVerifiedReports,
         rejectLeaveRequest,
         selectedLeadmanDepartment,
         setSelectedLeadmanDepartment,
         redirectDepartmentRequest,
+        refreshEmployees,
       }}
     >
       {children}

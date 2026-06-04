@@ -6,7 +6,7 @@ import EmployeeCard from '../../components/employee/EmployeeCard'
 import EmployeeDetailModal from '../../components/employee/EmployeeDetailModal'
 
 export default function EmployeeDirectory() {
-  const { employees = [], employeesLoading } = useQr()
+  const { employees = [], employeesLoading, refreshEmployees } = useQr()
   const [searchText, setSearchText] = useState('')
   const [roleFilter, setRoleFilter] = useState('All Roles')
   const [sortByRole, setSortByRole] = useState(false)
@@ -15,7 +15,12 @@ export default function EmployeeDirectory() {
   const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
-    setLocalEmployees(Array.isArray(employees) ? employees : [])
+    const list = Array.isArray(employees) ? employees : []
+    const excluded = new Set(['hr', 'gm', 'admin'])
+    setLocalEmployees(list.filter((emp) => {
+      const role = String(emp.role || '').toLowerCase()
+      return !excluded.has(role)
+    }))
   }, [employees])
 
   const roleOptions = useMemo(() => {
@@ -70,6 +75,54 @@ export default function EmployeeDirectory() {
     })
   }, [localEmployees, searchText, roleFilter, sortByRole])
 
+  const activeEmployees = useMemo(
+    () => filteredEmployees.filter((employee) => employee.is_active !== false),
+    [filteredEmployees]
+  )
+
+  const inactiveEmployees = useMemo(
+    () => filteredEmployees.filter((employee) => employee.is_active === false),
+    [filteredEmployees]
+  )
+
+  function renderEmployeeSection(title, employeesList, emptyMessage) {
+    return (
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">
+            {title}
+          </h3>
+          <span className="rounded-full border border-slate-800 bg-slate-950 px-2.5 py-1 text-xs text-slate-400">
+            {employeesList.length}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3">
+          {employeesList.map((emp) => {
+            const id = emp.employeeId || emp.id || emp.employee_id || emp.employeeName || emp.name || emp.employee_name || String(emp)
+            const statusLabel = emp.is_active === false ? 'Inactive' : 'Active'
+            return (
+              <EmployeeCard
+                key={id}
+                employee={emp}
+                onClick={() => setSelectedEmployee(emp)}
+                statusLabel={statusLabel}
+                onToggleActive={handleToggleActive}
+                actionLoading={actionLoading}
+              />
+            )
+          })}
+        </div>
+
+        {employeesList.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-800 bg-slate-900 px-4 py-5 text-sm text-slate-500">
+            {emptyMessage}
+          </div>
+        ) : null}
+      </section>
+    )
+  }
+
   
   return (
     <div className="space-y-6">
@@ -114,24 +167,30 @@ export default function EmployeeDirectory() {
 
       {employeesLoading && <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-6 text-sm text-slate-400">Loading accounts from the database...</div>}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredEmployees.map((emp) => {
-          const id = emp.employeeId || emp.id || emp.employee_id || emp.employeeName || emp.name || emp.employee_name || String(emp)
-          const statusLabel = emp.is_active === false ? 'Inactive' : 'Active'
-          return (
-            <EmployeeCard
-              key={id}
-              employee={emp}
-              onClick={() => setSelectedEmployee(emp)}
-              statusLabel={statusLabel}
-            />
-          )
-        })}
+      <div className="space-y-6">
+        {renderEmployeeSection('Active Accounts', activeEmployees, 'No active accounts match your filters.')}
+        {renderEmployeeSection('Inactive Accounts', inactiveEmployees, 'No inactive accounts match your filters.')}
       </div>
 
       {!employeesLoading && filteredEmployees.length === 0 && (
         <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-6 text-sm text-slate-400">
-          No accounts matched your filters.
+          <div>No accounts matched your filters.</div>
+          <div className="mt-3 flex gap-3">
+            <button
+              type="button"
+              onClick={() => refreshEmployees().catch(() => {})}
+              className="rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-black"
+            >
+              Retry loading accounts
+            </button>
+            <button
+              type="button"
+              onClick={() => setRoleFilter('All Roles')}
+              className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300"
+            >
+              Clear filters
+            </button>
+          </div>
         </div>
       )}
 

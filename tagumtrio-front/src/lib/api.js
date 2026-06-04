@@ -188,6 +188,13 @@ export async function submitDailyReportApi(payload) {
   })
 }
 
+export async function updateDailyReportApi(reportId, payload) {
+  return apiRequest(`/v1/daily-reports/${encodeURIComponent(reportId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function updateAttendanceApi(recordId, payload) {
   return { id: recordId, ...payload }
 }
@@ -296,27 +303,4 @@ export async function deleteAnnouncementApi(id) {
   })
 }
 
-// Schedules API
-export async function fetchSchedulesApi() {
-  return apiRequest('/v1/schedules')
-}
-
-export async function createScheduleApi(payload) {
-  return apiRequest('/v1/schedules', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-
-export async function updateScheduleApi(id, payload) {
-  return apiRequest(`/v1/schedules/${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    body: JSON.stringify(payload),
-  })
-}
-
-export async function deleteScheduleApi(id) {
-  return apiRequest(`/v1/schedules/${encodeURIComponent(id)}`, {
-    method: 'DELETE',
-  })
-}
+// Schedules API removed (not used). Frontend no longer calls /v1/schedules.

@@ -1,200 +1,227 @@
-import { useState } from 'react'
-import { ChevronDown, Check, X, Image as ImageIcon } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Check, CircleAlert, ChevronDown, Image as ImageIcon } from 'lucide-react'
+import { useAuth } from '../../context/auth-context'
+import { useDialog } from '../../context/dialog-context'
+import { useQr } from '../../context/qr-context'
+
+function formatDateTime(value) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return date.toLocaleString()
+}
+
+function normalizeText(value) {
+  return String(value || '').trim().toLowerCase()
+}
+
+function getStatusLabel(status) {
+  switch (normalizeText(status)) {
+    case 'production_verified':
+      return 'Ready for leadman verify'
+    case 'leadman_verified':
+      return 'Leadman verified'
+    case 'gm_submitted':
+      return 'Forwarded to GM'
+    case 'rejected':
+      return 'Rejected'
+    default:
+      return status || 'Unknown'
+  }
+}
+
+function getStatusClasses(status) {
+  switch (normalizeText(status)) {
+    case 'production_verified':
+      return 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
+    case 'leadman_verified':
+      return 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+    case 'gm_submitted':
+      return 'bg-blue-500/10 text-blue-300 border-blue-500/20'
+    case 'rejected':
+      return 'bg-rose-500/10 text-rose-300 border-rose-500/20'
+    default:
+      return 'bg-slate-500/10 text-slate-300 border-slate-500/20'
+  }
+}
 
 export default function LeadmanIncomingReports() {
+  const { user } = useAuth()
+  const dialog = useDialog()
+  const {
+    selectedLeadmanDepartment,
+    dailyReports = [],
+    refreshDailyReports,
+    updateDailyReportStatus,
+    formatDateTime: formatProviderDateTime,
+  } = useQr()
+
   const [activeTab, setActiveTab] = useState('incoming')
   const [expandedReportId, setExpandedReportId] = useState(null)
   const [showPhotoModal, setShowPhotoModal] = useState(false)
-  const [selectedPhotos, setSelectedPhotos] = useState(null)
+  const [selectedPhotos, setSelectedPhotos] = useState([])
   const [verificationNotes, setVerificationNotes] = useState({})
+  const [actionLoadingId, setActionLoadingId] = useState('')
 
-  // Mock data - will be replaced with QR context data
-  const incomingReports = [
-    {
-      id: 'RPT-001',
-      previousLeadmanName: 'John Doe',
-      previousDepartment: 'Production A',
-      submittedAt: new Date().toISOString(),
-      verifiedAt: new Date(Date.now() - 3600000).toISOString(),
-      productName: 'Component X',
-      thickness: '5mm',
-      pieces: 150,
-      photos: ['photo1.jpg', 'photo2.jpg', 'photo3.jpg', 'photo4.jpg'],
-      notes: 'Quality check completed',
-      status: 'PENDING_VERIFICATION',
-    },
-    {
-      id: 'RPT-002',
-      previousLeadmanName: 'Jane Smith',
-      previousDepartment: 'Production B',
-      submittedAt: new Date(Date.now() - 7200000).toISOString(),
-      verifiedAt: new Date(Date.now() - 3600000).toISOString(),
-      productName: 'Component Y',
-      thickness: '8mm',
-      pieces: 200,
-      photos: ['photo1.jpg', 'photo2.jpg', 'photo3.jpg', 'photo4.jpg'],
-      notes: 'Standard production run',
-      status: 'PENDING_VERIFICATION',
-    },
-  ]
+  const currentDepartment = selectedLeadmanDepartment || user?.department || user?.departments?.[0] || ''
 
-  const verifiedReports = [
-    {
-      id: 'RPT-101',
-      previousLeadmanName: 'John Doe',
-      previousDepartment: 'Production A',
-      submittedAt: new Date(Date.now() - 86400000).toISOString(),
-      verifiedAt: new Date(Date.now() - 43200000).toISOString(),
-      verificationCompletedAt: new Date(Date.now() - 21600000).toISOString(),
-      productName: 'Component X',
-      thickness: '5mm',
-      pieces: 150,
-      photos: ['photo1.jpg', 'photo2.jpg', 'photo3.jpg', 'photo4.jpg'],
-      notes: 'Quality check completed',
-      verificationNotes: 'Photos are clear and authentic. Values match expectations.',
-      status: 'VERIFIED',
-    },
-  ]
+  const incomingReports = useMemo(
+    () => (Array.isArray(dailyReports) ? dailyReports : []).filter((report) => normalizeText(report.status) === 'production_verified'),
+    [dailyReports]
+  )
 
-  function handleReject(reportId) {
-    alert(`Flagged report ${reportId} for rejection`)
-    // TODO: Call backend to update status to FLAGGED_FOR_REJECTION
+  const verifiedReports = useMemo(
+    () => (Array.isArray(dailyReports) ? dailyReports : []).filter((report) => ['leadman_verified', 'gm_submitted'].includes(normalizeText(report.status))),
+    [dailyReports]
+  )
+
+  async function patchReport(report, status, notes = '') {
+    if (!report?.id) return
+
+    const confirmed = await dialog.confirm({
+      title: status === 'rejected' ? 'Flag this report?' : 'Verify this report?',
+      message: status === 'rejected'
+        ? 'Flag this report for correction and send it back to production.'
+        : `Mark report ${report.id} as leadman verified?`,
+      confirmText: status === 'rejected' ? 'Flag' : 'Verify',
+      cancelText: 'Cancel',
+    })
+    if (!confirmed) return
+
+    setActionLoadingId(report.id)
+    try {
+      await updateDailyReportStatus(report.id, {
+        status,
+        verifiedBy: user?.id || null,
+        verifiedByName: user?.name || null,
+        notes,
+      })
+      await refreshDailyReports()
+      dialog.success({
+        title: 'Report updated',
+        message: `Report ${report.id} has been updated to ${getStatusLabel(status)}.`,
+      })
+    } catch (error) {
+      dialog.error({
+        title: 'Verification failed',
+        message: error?.message || 'Unable to update report status.',
+      })
+    } finally {
+      setActionLoadingId('')
+    }
   }
 
-  function handleSubmitVerification(reportId) {
-    const notes = verificationNotes[reportId] || ''
-    alert(`Submitted verification for report ${reportId}\nNotes: ${notes}`)
-    // TODO: Call backend to update status to VERIFIED
-  }
-
-  function formatDateTime(isoString) {
-    const date = new Date(isoString)
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  }
-
-  const ReportCard = ({ report, isVerified = false }) => {
+  const ReportCard = ({ report }) => {
     const isExpanded = expandedReportId === report.id
+    const entries = Array.isArray(report.entries) ? report.entries : []
+    const photos = entries.flatMap((entry) => entry?.photos || entry?.photoUrls || entry?.imageUrls || []).filter(Boolean)
+    const status = normalizeText(report.status)
+    const notes = verificationNotes[report.id] || ''
+
     return (
-      <div className="border border-slate-800 rounded-xl bg-slate-950 overflow-hidden hover:border-slate-700 transition-colors">
+      <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 transition-colors hover:border-slate-700">
         <button
+          type="button"
           onClick={() => setExpandedReportId(isExpanded ? null : report.id)}
-          className="w-full p-4 flex items-center justify-between hover:bg-slate-900 transition-colors"
+          className="flex w-full items-center justify-between gap-4 p-4 text-left hover:bg-slate-900/70"
         >
-          <div className="flex-1 text-left">
-            <div className="flex items-center gap-3 mb-2">
-              <h3 className="text-white font-medium">{report.id}</h3>
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                report.status === 'VERIFIED' ? 'bg-emerald-500/20 text-emerald-300' :
-                report.status === 'PENDING_VERIFICATION' ? 'bg-yellow-500/20 text-yellow-300' :
-                'bg-slate-700 text-slate-300'
-              }`}>
-                {report.status === 'VERIFIED' ? 'VERIFIED' : 'PENDING'}
-              </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="truncate font-semibold text-white">{report.department || 'Unknown Department'}</h3>
+              <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${getStatusClasses(report.status)}`}>{getStatusLabel(report.status)}</span>
             </div>
-            <p className="text-sm text-slate-400">{report.previousLeadmanName} • {report.previousDepartment}</p>
-            <p className="text-sm text-slate-500 mt-1">{report.productName} • {report.pieces} pcs</p>
+            <p className="mt-1 text-sm text-slate-400">
+              {report.submittedByName || report.submitted_by_name || 'Unknown'} • {formatProviderDateTime ? formatProviderDateTime(report.createdAt || report.created_at || report.reportDate) : formatDateTime(report.createdAt || report.created_at || report.reportDate)}
+            </p>
+            <p className="mt-1 text-sm text-slate-500">
+              {entries.length} entr{entries.length === 1 ? 'y' : 'ies'} • {report.summary || 'No summary provided'}
+            </p>
           </div>
-          <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`h-5 w-5 shrink-0 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
         </button>
 
-        {isExpanded && (
-          <div className="border-t border-slate-800 p-4 space-y-4 bg-slate-900/50">
-            {/* Previous Department Info */}
-            <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
-              <p className="text-xs text-slate-400 mb-2">Previous Department</p>
-              <p className="text-sm text-white font-medium">{report.previousDepartment}</p>
-              <p className="text-xs text-slate-400 mt-1">Leadman: {report.previousLeadmanName}</p>
-            </div>
-
-            {/* Details Section */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-slate-500 text-xs">Product Name</p>
-                <p className="text-white font-medium">{report.productName}</p>
+        {isExpanded ? (
+          <div className="border-t border-slate-800 bg-slate-900/40 p-4 space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Department</p>
+                <p className="mt-2 text-lg font-semibold text-white">{report.department || '—'}</p>
               </div>
-              <div>
-                <p className="text-slate-500 text-xs">Thickness</p>
-                <p className="text-white font-medium">{report.thickness}</p>
+              <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Status</p>
+                <p className="mt-2 text-lg font-semibold text-white">{getStatusLabel(report.status)}</p>
               </div>
-              <div>
-                <p className="text-slate-500 text-xs">Pieces</p>
-                <p className="text-white font-medium">{report.pieces}</p>
+              <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Entries</p>
+                <p className="mt-2 text-lg font-semibold text-white">{entries.length}</p>
               </div>
-              <div>
-                <p className="text-slate-500 text-xs">Department</p>
-                <p className="text-white font-medium">{report.previousDepartment}</p>
+              <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Created</p>
+                <p className="mt-2 text-sm font-semibold text-white">{formatProviderDateTime ? formatProviderDateTime(report.createdAt || report.created_at || report.reportDate) : formatDateTime(report.createdAt || report.created_at || report.reportDate)}</p>
               </div>
             </div>
 
-            {/* Original Notes */}
-            <div>
-              <p className="text-slate-500 text-xs mb-1">Original Notes</p>
-              <p className="text-white text-sm bg-slate-950 p-3 rounded-lg">{report.notes}</p>
-            </div>
-
-            {/* Photos */}
-            <div>
-              <p className="text-slate-500 text-xs mb-2">Verification Photos</p>
-              <button
-                onClick={() => {
-                  setSelectedPhotos(report.photos)
-                  setShowPhotoModal(true)
-                }}
-                className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-lg transition-colors"
-              >
-                <ImageIcon className="w-4 h-4" />
-                View 4 Photos
-              </button>
-            </div>
-
-            {isVerified && report.verificationNotes && (
+            {photos.length > 0 ? (
               <div>
-                <p className="text-slate-500 text-xs mb-1">Verification Notes</p>
-                <p className="text-white text-sm bg-slate-950 p-3 rounded-lg">{report.verificationNotes}</p>
-              </div>
-            )}
-
-            {!isVerified && (
-              <div>
-                <p className="text-slate-500 text-xs mb-2">Your Verification Notes</p>
-                <textarea
-                  value={verificationNotes[report.id] || ''}
-                  onChange={(e) => setVerificationNotes({ ...verificationNotes, [report.id]: e.target.value })}
-                  placeholder="Document your verification findings here..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                  rows={3}
-                />
-              </div>
-            )}
-
-            {/* Timestamps */}
-            <div className="text-xs text-slate-500 space-y-1">
-              <p>Submitted by previous dept: {formatDateTime(report.submittedAt)}</p>
-              <p>Production verified: {formatDateTime(report.verifiedAt)}</p>
-              {report.verificationCompletedAt && <p>Your verification: {formatDateTime(report.verificationCompletedAt)}</p>}
-            </div>
-
-            {/* Actions */}
-            {!isVerified && report.status === 'PENDING_VERIFICATION' && (
-              <div className="flex gap-2 pt-4 border-t border-slate-800">
+                <p className="mb-2 text-xs uppercase tracking-[0.2em] text-slate-500">Photos</p>
                 <button
-                  onClick={() => handleReject(report.id)}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 rounded-lg font-medium transition-colors"
+                  type="button"
+                  onClick={() => {
+                    setSelectedPhotos(photos.slice(0, 4))
+                    setShowPhotoModal(true)
+                  }}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-200 transition-colors hover:border-slate-700 hover:bg-slate-900"
                 >
-                  <X className="w-4 h-4" />
-                  Flag Issue
-                </button>
-                <button
-                  onClick={() => handleSubmitVerification(report.id)}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-emerald-500 text-black hover:bg-emerald-400 rounded-lg font-medium transition-colors"
-                >
-                  <Check className="w-4 h-4" />
-                  Submit Verification
+                  <ImageIcon className="h-4 w-4" />
+                  View photos
                 </button>
               </div>
-            )}
+            ) : null}
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Notes</p>
+              <p className="mt-2 text-sm text-slate-200">{report.summary || 'No notes provided.'}</p>
+            </div>
+
+            {status === 'production_verified' ? (
+              <div className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
+                <div>
+                  <label className="text-xs uppercase tracking-[0.2em] text-slate-500">Verification notes</label>
+                  <textarea
+                    value={verificationNotes[report.id] || ''}
+                    onChange={(event) => setVerificationNotes((current) => ({ ...current, [report.id]: event.target.value }))}
+                    placeholder="Add verification notes before approving this report."
+                    className="mt-2 min-h-[96px] w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <div className="flex flex-col gap-2 lg:w-[220px]">
+                  <button
+                    type="button"
+                    disabled={actionLoadingId === report.id}
+                    onClick={() => patchReport(report, 'leadman_verified', verificationNotes[report.id] || '')}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 font-medium text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    <Check className="h-4 w-4" />
+                    {actionLoadingId === report.id ? 'Updating...' : 'Verify report'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={actionLoadingId === report.id}
+                    onClick={() => patchReport(report, 'rejected', verificationNotes[report.id] || '')}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 font-medium text-rose-300 transition-colors hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    <CircleAlert className="h-4 w-4" />
+                    Flag issue
+                  </button>
+                </div>
+              </div>
+            ) : report.status === 'leadman_verified' || report.status === 'gm_submitted' ? (
+              <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-300">
+                This report has already been verified and moved forward.
+              </div>
+            ) : null}
           </div>
-        )}
+        ) : null}
       </div>
     )
   }
@@ -202,83 +229,70 @@ export default function LeadmanIncomingReports() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-white">Incoming Reports</h1>
-        <p className="text-slate-400 mt-1">Review and verify reports from previous departments before starting your process</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Leadman verification</p>
+        <h1 className="mt-2 text-3xl font-bold text-white">Incoming Reports</h1>
+        <p className="mt-1 text-slate-400">Review production-verified reports before starting the next department step.</p>
       </div>
 
-      {/* Tabs */}
+      {currentDepartment ? (
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-slate-300">
+          Active department: <span className="font-semibold text-white">{currentDepartment}</span>
+        </div>
+      ) : null}
+
       <div className="flex gap-2 border-b border-slate-800">
         <button
+          type="button"
           onClick={() => setActiveTab('incoming')}
-          className={`px-4 py-3 font-medium border-b-2 transition-colors ${
-            activeTab === 'incoming'
-              ? 'border-emerald-500 text-white'
-              : 'border-transparent text-slate-400 hover:text-slate-300'
-          }`}
+          className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'incoming' ? 'border-emerald-500 text-white' : 'border-transparent text-slate-400 hover:text-slate-300'}`}
         >
-          Pending Verification ({incomingReports.length})
+          Incoming ({incomingReports.length})
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('verified')}
-          className={`px-4 py-3 font-medium border-b-2 transition-colors ${
-            activeTab === 'verified'
-              ? 'border-emerald-500 text-white'
-              : 'border-transparent text-slate-400 hover:text-slate-300'
-          }`}
+          className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'verified' ? 'border-emerald-500 text-white' : 'border-transparent text-slate-400 hover:text-slate-300'}`}
         >
           Verified ({verifiedReports.length})
         </button>
       </div>
 
-      {/* Content */}
       <div className="space-y-3">
-        {activeTab === 'incoming' && (
+        {activeTab === 'incoming' ? (
           incomingReports.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-slate-400">No incoming reports waiting for verification</p>
+            <div className="rounded-2xl border border-dashed border-slate-800 bg-slate-900 px-4 py-8 text-sm text-slate-400">
+              No incoming reports are ready for leadman verification.
             </div>
           ) : (
-            incomingReports.map((report) => <ReportCard key={report.id} report={report} isVerified={false} />)
+            incomingReports.map((report) => <ReportCard key={report.id} report={report} />)
           )
-        )}
-
-        {activeTab === 'verified' && (
-          verifiedReports.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-slate-400">No verified reports</p>
-            </div>
-          ) : (
-            verifiedReports.map((report) => <ReportCard key={report.id} report={report} isVerified={true} />)
-          )
+        ) : verifiedReports.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-800 bg-slate-900 px-4 py-8 text-sm text-slate-400">
+            No verified reports yet.
+          </div>
+        ) : (
+          verifiedReports.map((report) => <ReportCard key={report.id} report={report} />)
         )}
       </div>
 
-      {/* Photo Modal */}
-      {showPhotoModal && selectedPhotos && (
+      {showPhotoModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 w-full max-w-3xl max-h-[90vh] overflow-auto p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Verification Photos</h3>
-              <button
-                onClick={() => setShowPhotoModal(false)}
-                className="text-slate-400 hover:text-white"
-              >
-                ✕
-              </button>
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">Verification photos</h3>
+              <button type="button" onClick={() => setShowPhotoModal(false)} className="text-slate-400 hover:text-white">Close</button>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              {selectedPhotos.map((photo, idx) => (
-                <div key={idx} className="aspect-square bg-slate-950 rounded-lg border border-slate-800 flex items-center justify-center">
-                  <div className="text-center text-slate-400">
-                    <ImageIcon className="w-8 h-8 mx-auto mb-2" />
-                    <p className="text-sm">{photo}</p>
-                  </div>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              {selectedPhotos.map((photo, index) => (
+                <div key={`${photo}-${index}`} className="aspect-square rounded-xl border border-slate-800 bg-slate-950 p-3 text-center text-sm text-slate-400">
+                  <ImageIcon className="mx-auto mb-2 h-8 w-8" />
+                  <p className="truncate">{photo}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

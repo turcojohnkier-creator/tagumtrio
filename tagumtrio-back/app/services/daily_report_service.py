@@ -6,7 +6,7 @@ import uuid
 from sqlalchemy.orm import Session
 
 from app.models.daily_report import DailyReport
-from app.schemas.daily_report import DailyReportCreate, DailyReportPublic
+from app.schemas.daily_report import DailyReportCreate, DailyReportPublic, DailyReportUpdate
 
 
 def _make_id(prefix: str) -> str:
@@ -62,3 +62,32 @@ def list_daily_reports(db: Session, department: str | list[str] | None = None, r
         "entries": row.entries or [],
         "created_at": row.created_at,
     }) for row in rows]
+
+
+def update_daily_report(db: Session, report_id: str, payload: DailyReportUpdate) -> DailyReportPublic:
+    record = db.query(DailyReport).filter(DailyReport.id == report_id).first()
+    if record is None:
+        raise ValueError("Daily report not found")
+
+    record.status = payload.status
+    if payload.notes:
+        existing_summary = record.summary or ''
+        if existing_summary and payload.notes not in existing_summary:
+            record.summary = f"{existing_summary} • {payload.notes}".strip(' •')
+        elif not existing_summary:
+            record.summary = payload.notes
+
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return DailyReportPublic.model_validate({
+        "id": record.id,
+        "department": record.department,
+        "report_date": record.report_date,
+        "submitted_by": record.submitted_by,
+        "submitted_by_name": record.submitted_by_name,
+        "status": record.status,
+        "summary": record.summary,
+        "entries": record.entries or [],
+        "created_at": record.created_at,
+    })

@@ -29,6 +29,16 @@ class DailyReportCreate(BaseModel):
         extra = Extra.allow
 
 
+class DailyReportUpdate(BaseModel):
+    status: str
+    verifiedBy: int | None = Field(default=None, alias="verifiedBy")
+    verifiedByName: str | None = Field(default=None, alias="verifiedByName")
+    notes: str | None = None
+
+    class Config:
+        extra = Extra.allow
+
+
 class DailyReportPublic(BaseModel):
     id: str
     department: str

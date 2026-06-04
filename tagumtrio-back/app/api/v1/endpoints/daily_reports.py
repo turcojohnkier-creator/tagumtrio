@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status as http_status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.deps import get_current_user
-from app.schemas.daily_report import DailyReportCreate, DailyReportPublic
-from app.services.daily_report_service import create_daily_report, list_daily_reports
+from app.schemas.daily_report import DailyReportCreate, DailyReportPublic, DailyReportUpdate
+from app.services.daily_report_service import create_daily_report, list_daily_reports, update_daily_report
 
 router = APIRouter(prefix="/daily-reports", tags=["daily-reports"])
 
@@ -39,3 +39,15 @@ def get_daily_reports(
         return list_daily_reports(db, department=allowed_departments, report_date=report_date)
 
     raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+
+@router.patch("/{report_id}", response_model=DailyReportPublic)
+def patch_daily_report(report_id: str, payload: DailyReportUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    allowed_roles = {"leadman", "production_incharge", "hr", "finance", "admin"}
+    if current_user.role not in allowed_roles:
+        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+
+    try:
+                return update_daily_report(db, report_id, payload)
+    except ValueError as exc:
+                raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

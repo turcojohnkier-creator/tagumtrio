@@ -3,6 +3,7 @@ import { useAuth } from './auth-context'
 import { QRContext } from './qr-context'
 import { DEPARTMENTS } from '../constants/departments'
 import { buildDepartmentQrSummary } from '../constants/qr-scan-fields'
+
 // Local storage keys and defaults
 const STORAGE_KEY = 'triops-qr-state'
 const LEADMAN_DEPARTMENT_KEY_PREFIX = 'triops-leadman-dept:'
@@ -553,7 +554,8 @@ export function QRProvider({ children }) {
     if (Number.isNaN(employeeId)) employeeId = undefined
     const employeeName = String(record.employeeName || record.name || record.employee_name || record.fullName || record.raw?.employeeName || record.raw?.employee_name || '').trim()
     const department = String(record.department || record.dept || record.raw?.department || '').trim()
-    const id = `ATD-${Date.now()}`
+// New (Robust) Code
+const id = `ATD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     const scannedAt = record.scanCapturedAt || record.scannedAt || new Date().toISOString()
     const qrFields = record.qrFields || {}
     const batchId = String(record.batchId || record.raw?.batchId || id)
@@ -1277,3 +1279,7 @@ export function QRProvider({ children }) {
 }
 
 export default QRProvider
+async function trySyncOnce() {
+  console.warn("Syncing is not currently implemented.");
+  return null;
+}

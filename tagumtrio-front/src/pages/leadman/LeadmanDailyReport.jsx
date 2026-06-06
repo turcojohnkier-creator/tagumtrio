@@ -319,7 +319,7 @@ export default function LeadmanDailyReport() {
                 <div className="pr-12 md:flex md:items-center md:gap-5">
                   <div className="min-w-0 md:flex-1">
                     <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Scanned report</p>
-                    <h4 className="mt-1 truncate text-lg font-semibold text-white">{batch.department || 'Unknown Department'}</h4>
+                  
                     <p className="mt-1 text-sm text-slate-400">{formatReportDate(batch.scannedAt)}</p>
                   </div>
 

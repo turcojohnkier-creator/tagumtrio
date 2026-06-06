@@ -27,8 +27,6 @@ def post_announcement(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ) -> AnnouncementPublic:
-    if current_user.role not in {"hr", "admin"}:
-        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
     if not payload.title.strip():
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail="Title is required")
     return create_announcement(db, payload)
@@ -41,8 +39,6 @@ def patch_announcement(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ) -> AnnouncementPublic:
-    if current_user.role not in {"hr", "admin"}:
-        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
     try:
         return update_announcement(db, announcement_id, payload)
     except ValueError as exc:
@@ -55,8 +51,6 @@ def remove_announcement(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    if current_user.role not in {"hr", "admin"}:
-        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
     try:
         delete_announcement(db, announcement_id)
     except ValueError as exc:

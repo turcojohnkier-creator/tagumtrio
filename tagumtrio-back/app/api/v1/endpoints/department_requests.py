@@ -27,8 +27,6 @@ def get_department_requests(
         allowed_departments = [d for d in (current_user.departments or []) if d] or ([current_user.department] if current_user.department else [])
         if department and department not in allowed_departments:
             department = None
-    elif current_user.role not in {"hr", "admin", "production_incharge", "leadman"}:
-        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
 
     requests = list_department_requests(db, department=department, employee_id=employee_id, status=request_status)
     if current_user.role == "leadman":
@@ -43,8 +41,6 @@ def post_department_request(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ) -> DepartmentRequestPublic:
-    if current_user.role not in {"employee", "hr", "admin"}:
-        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
     return create_department_request(db, payload)
 
 
@@ -55,12 +51,10 @@ def approve_department_request_endpoint(
     leadman_id: int | None = Query(default=None, alias="leadmanId"),
     current_user = Depends(get_current_user),
 ) -> DepartmentRequestPublic:
-    if current_user.role not in {"hr", "admin", "leadman", "production_incharge"}:
-        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
     try:
         return approve_department_request(db, request_id, leadman_id=leadman_id)
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
 @router.patch("/{request_id}/redirect", response_model=DepartmentRequestPublic)
@@ -72,8 +66,13 @@ def redirect_department_request_endpoint(
     current_user = Depends(get_current_user),
 ) -> DepartmentRequestPublic:
     if current_user.role not in {"hr", "admin", "leadman", "production_incharge"}:
-        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN, 
+            detail="Insufficient permissions"
+        )
+    
     try:
+        # Added the missing service call here
         return redirect_department_request(
             db,
             request_id,
@@ -82,4 +81,7 @@ def redirect_department_request_endpoint(
             note=payload.note,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND, 
+            detail=str(exc)
+        ) from exc

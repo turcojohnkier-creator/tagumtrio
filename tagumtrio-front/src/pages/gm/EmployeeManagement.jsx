@@ -68,10 +68,7 @@ export default function EmployeeManagement() {
                     <div className="text-sm font-medium text-white">{name}</div>
                     <div className="text-xs text-slate-400">{id} • {department}</div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button className="p-2 text-slate-400 hover:text-white"><Edit className="w-4 h-4" /></button>
-                    <button className="p-2 text-rose-400 hover:text-white"><Trash2 className="w-4 h-4" /></button>
-                  </div>
+                  
                 </div>
               )
             })

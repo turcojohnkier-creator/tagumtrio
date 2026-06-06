@@ -21,7 +21,7 @@ const allNavItems = [
   { name: 'Finance Home', href: '/app/payroll', icon: LayoutDashboard, roles: ['finance'] },
   { name: 'Daily Production', href: '/app/payroll/production', icon: CalendarDays, roles: ['finance'] },
   { name: 'Department Employees', href: '/app/payroll/employees', icon: Users, roles: ['finance'] },
-  { name: 'Requests', href: '/app/requests', icon: FileSpreadsheet, roles: ['production_incharge', 'gm'] },
+  { name: 'Requests', href: '/app/requests', icon: FileSpreadsheet, roles: ['gm'] },
 ]
 
 export default function MainLayout() {

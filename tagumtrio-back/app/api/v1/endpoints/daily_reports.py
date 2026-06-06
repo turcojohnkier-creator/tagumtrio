@@ -14,7 +14,7 @@ router = APIRouter(prefix="/daily-reports", tags=["daily-reports"])
 @router.post("", response_model=DailyReportPublic)
 def post_daily_report(payload: DailyReportCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     # any authenticated leadman/production/finance/hr can submit
-    if current_user.role not in {"leadman", "production_incharge", "hr", "finance", "admin"}:
+    if current_user.role not in {"leadman", "production_incharge", "hr", "finance", "admin", "gm"}:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     return create_daily_report(db, payload)
 
@@ -27,7 +27,7 @@ def get_daily_reports(
     current_user = Depends(get_current_user),
 ):
     # allow finance/hr/admin/production_incharge to list all; leadman constrained by department(s)
-    if current_user.role in {"finance", "hr", "admin", "production_incharge"}:
+    if current_user.role in {"finance", "hr", "admin", "production_incharge" , "gm"}:
         return list_daily_reports(db, department=department, report_date=report_date)
 
     if current_user.role == 'leadman':
@@ -43,7 +43,7 @@ def get_daily_reports(
 
 @router.patch("/{report_id}", response_model=DailyReportPublic)
 def patch_daily_report(report_id: str, payload: DailyReportUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    allowed_roles = {"leadman", "production_incharge", "hr", "finance", "admin"}
+    allowed_roles = {"leadman", "production_incharge", "hr", "finance", "admin" , "gm"}
     if current_user.role not in allowed_roles:
         raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
 

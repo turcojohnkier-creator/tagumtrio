@@ -37,6 +37,11 @@ function resolveEntryDepartment(entry, fallbackDepartment) {
     || '-'
 }
 
+function getReportPhotos(report) {
+  const entries = Array.isArray(report?.entries) ? report.entries : []
+  return entries.flatMap((entry) => entry?.photos || entry?.photoUrls || entry?.imageUrls || []).filter(Boolean)
+}
+
 function buildReportCards(reports = []) {
   return (Array.isArray(reports) ? reports : []).map((report) => {
     const entries = Array.isArray(report.entries) ? report.entries.filter(hasMeaningfulEntry) : []
@@ -56,6 +61,7 @@ function buildReportCards(reports = []) {
       || '-'
     const scannedAt = report.createdAt || report.created_at || reportDate
     const employeeCount = new Set(entries.map((entry) => String(getEntryIdentifier(entry) || getEntryLabel(entry) || entry.id || ''))).size
+    const photos = getReportPhotos(report)
 
     return {
       id: report.id,
@@ -66,6 +72,7 @@ function buildReportCards(reports = []) {
       thickness,
       cratesPieces,
       entries,
+      photos,
       summary: report.summary || '',
       submittedBy: report.submittedByName || report.submitted_by_name || report.submittedBy || report.submitted_by || 'Unknown',
       totalAmount: entries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0),
@@ -91,24 +98,7 @@ function ReportDetailModal({ report, onClose }) {
         </div>
 
         <div className="max-h-[72vh] overflow-auto px-5 py-4 space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Employees involved</p>
-              <p className="mt-2 text-2xl font-bold text-white">{report.employeeCount}</p>
-            </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Department</p>
-              <p className="mt-2 text-lg font-semibold text-white">{report.department || '-'}</p>
-            </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Thickness</p>
-              <p className="mt-2 text-lg font-semibold text-white">{report.thickness || '-'}</p>
-            </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Crates / Pieces</p>
-              <p className="mt-2 text-lg font-semibold text-white">{report.cratesPieces || '-'}</p>
-            </div>
-          </div>
+          
 
           <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/80">
             <table className="w-full text-left text-sm">
@@ -142,6 +132,29 @@ function ReportDetailModal({ report, onClose }) {
 
           <div className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-4 md:grid-cols-2">
             <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Images</p>
+              <p className="mt-2 text-sm text-slate-200">{report.photos?.length || 0} photo{report.photos?.length === 1 ? '' : 's'}</p>
+            </div>
+            <div className="flex items-end justify-end">
+              {report.photos?.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedPhotos(report.photos)
+                    setShowPhotosModal(true)
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-slate-600 hover:bg-slate-900"
+                >
+                  Preview images
+                </button>
+              ) : (
+                <p className="text-sm text-slate-500">No images submitted</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-4 md:grid-cols-2">
+            <div>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Submitted by</p>
               <p className="mt-2 text-sm text-slate-200">{report.submittedBy || 'Unknown'}</p>
             </div>
@@ -152,6 +165,9 @@ function ReportDetailModal({ report, onClose }) {
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Total employees involved</p>
               <p className="mt-2 text-sm text-slate-200">{report.employeeCount}</p>
+            </div><div>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Status</p>
+              <p className="mt-2 text-sm text-slate-200">-</p>
             </div>
           </div>
         </div>
@@ -177,6 +193,8 @@ export default function ProductionDashboard() {
   const [selectedDepartment, setSelectedDepartment] = useState('All Departments')
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedReportId, setSelectedReportId] = useState('')
+  const [selectedPhotos, setSelectedPhotos] = useState([])
+  const [showPhotosModal, setShowPhotosModal] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -256,7 +274,6 @@ export default function ProductionDashboard() {
       <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-black/10">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-white">Need consolidated totals?</h3>
             <p className="text-sm text-slate-400">Open the consolidated reports page for daily production summary and salary totals.</p>
           </div>
           <Link to="/app/production/consolidated" className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-black hover:bg-emerald-400">
@@ -322,7 +339,7 @@ export default function ProductionDashboard() {
                     <p className="mt-1 text-sm text-slate-400">{formatReportDate(report.scannedAt)}</p>
                   </div>
 
-                  <div className="mt-4 grid gap-3 sm:grid-cols-3 md:mt-0 md:w-[56%] md:grid-cols-3">
+                  <div className="mt-4 grid gap-3 sm:grid-cols-4 md:mt-0 md:w-[56%] md:grid-cols-4">
                     <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2">
                       <p className="text-[11px] text-slate-500">Employees</p>
                       <p className="mt-1 text-sm font-semibold text-white">{report.employeeCount}</p>
@@ -334,6 +351,10 @@ export default function ProductionDashboard() {
                     <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2">
                       <p className="text-[11px] text-slate-500">Crates / Pieces</p>
                       <p className="mt-1 text-sm font-semibold text-white">{report.cratesPieces || '-'}</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2">
+                      <p className="text-[11px] text-slate-500">Status</p>
+                      <p className="mt-1 text-sm font-semibold text-white">{report.status || '-'}</p>
                     </div>
                   </div>
 
@@ -349,6 +370,30 @@ export default function ProductionDashboard() {
       </div>
 
       <ReportDetailModal report={selectedReport} onClose={() => setSelectedReportId('')} />
+
+      {showPhotosModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-3xl overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">Report images</h3>
+              <button
+                type="button"
+                onClick={() => setShowPhotosModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                Close
+              </button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {selectedPhotos.map((photo, index) => (
+                <div key={`${photo}-${index}`} className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950">
+                  <img src={photo} alt={`Report image ${index + 1}`} className="h-64 w-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

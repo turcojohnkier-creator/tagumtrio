@@ -63,7 +63,7 @@ export default function ProductionReports() {
     formatDateTime: formatProviderDateTime,
   } = useQr()
 
-  const [activeTab, setActiveTab] = useState('pending')
+  const [activeTab, setActiveTab] = useState('reviewed')
   const [expandedReportId, setExpandedReportId] = useState(null)
   const [showPhotoModal, setShowPhotoModal] = useState(false)
   const [selectedPhotos, setSelectedPhotos] = useState([])
@@ -171,22 +171,29 @@ export default function ProductionReports() {
               <p className="mt-2 text-sm text-slate-200">{report.summary || 'No summary provided.'}</p>
             </div>
 
-            {photos.length > 0 ? (
-              <div>
-                <p className="mb-2 text-xs uppercase tracking-[0.2em] text-slate-500">Photos</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedPhotos(photos.slice(0, 4))
-                    setShowPhotoModal(true)
-                  }}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-200 transition-colors hover:border-slate-700 hover:bg-slate-900"
-                >
-                  <ImageIcon className="h-4 w-4" />
-                  View photos
-                </button>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Images</p>
+                <p className="mt-2 text-sm text-slate-200">{photos.length || 0} photo{photos.length === 1 ? '' : 's'}</p>
               </div>
-            ) : null}
+              <div className="sm:col-span-3">
+                {photos.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedPhotos(photos.slice(0, 4))
+                      setShowPhotoModal(true)
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-200 transition-colors hover:border-slate-700 hover:bg-slate-900"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                    Preview images
+                  </button>
+                ) : (
+                  <p className="mt-2 text-sm text-slate-500">No images available</p>
+                )}
+              </div>
+            </div>
 
             {normalizeText(report.status) === 'submitted' ? (
               <div className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
@@ -248,17 +255,10 @@ export default function ProductionReports() {
       <div>
         <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Production in-charge</p>
         <h1 className="mt-2 text-3xl font-bold text-white">Production Reports</h1>
-        <p className="mt-1 text-slate-400">Review submitted leadman reports, verify them, and forward approved reports to GM.</p>
       </div>
 
       <div className="flex gap-2 border-b border-slate-800">
-        <button
-          type="button"
-          onClick={() => setActiveTab('pending')}
-          className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'pending' ? 'border-emerald-500 text-white' : 'border-transparent text-slate-400 hover:text-slate-300'}`}
-        >
-          Pending review ({pendingReports.length})
-        </button>
+        
         <button
           type="button"
           onClick={() => setActiveTab('reviewed')}

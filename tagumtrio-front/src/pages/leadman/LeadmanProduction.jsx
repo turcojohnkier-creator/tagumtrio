@@ -254,7 +254,7 @@ export default function LeadmanProduction() {
                   <div key={employee.employeeId} className="bg-slate-950 p-4 rounded-lg border border-slate-800 hover:border-slate-700 transition-colors">
                     <p className="text-white font-medium">{employee.employeeName}</p>
                     <p className="text-sm text-slate-400 mt-1">{employee.employeeId} • {employee.department}</p>
-                    
+                    <p className="text-xs text-slate-500 mt-1">Approved {formatDateTime(employee.approvedAt)}</p>
                     <p className="text-xs text-slate-500 mt-1">Scans waiting for head verification: {employeeAttendance.length}</p>
                   </div>
                 )

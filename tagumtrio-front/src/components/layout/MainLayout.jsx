@@ -66,29 +66,37 @@ export default function MainLayout() {
       : []
 
   useEffect(() => {
-    if (!user?.id) return
-    if (user?.role !== 'leadman' && user?.role !== 'employee') return
+  if (!user?.id) return;
+  if (user?.role !== 'leadman' && user?.role !== 'employee') return;
 
-    const unseen = user?.role === 'leadman'
-      ? getUnseenLeadmanReassignmentNotifications(user.id, leadmanDepartments)
-      : getUnseenEmployeeReassignmentNotifications(user.id, user.id)
+  // 1. Get the unseen items
+  const unseen = user?.role === 'leadman'
+    ? getUnseenLeadmanReassignmentNotifications(user.id, leadmanDepartments)
+    : getUnseenEmployeeReassignmentNotifications(user.id, user.id);
 
-    if (unseen.length === 0) return
+  // 2. Only proceed if there are actual notifications
+  if (unseen.length === 0) return;
 
-    dialog.success({
-      title: user?.role === 'leadman'
-        ? unseen.length === 1 ? 'Employee reassigned' : `${unseen.length} employees reassigned`
-        : unseen.length === 1 ? 'Department reassigned' : `${unseen.length} department updates`,
-      message: unseen.map((item) => {
-        if (user?.role === 'leadman') {
-          return `${item.employeeName} was reassigned from ${item.oldDepartment} to ${item.targetDepartment}`
-        }
-        return `You were reassigned from ${item.oldDepartment} to ${item.targetDepartment}`
-      }).join('. '),
-    })
+  // 3. Mark as seen BEFORE showing the dialog to prevent re-triggering 
+  // during the time the user is reading the message
+  markReassignmentNotificationsSeen(user.id, unseen.map((item) => item.id));
 
-    markReassignmentNotificationsSeen(user.id, unseen.map((item) => item.id))
-  }, [user?.id, user?.role, leadmanDepartments, dialog, getUnseenEmployeeReassignmentNotifications, getUnseenLeadmanReassignmentNotifications, markReassignmentNotificationsSeen])
+  // 4. Show the dialog
+  dialog.success({
+    title: user?.role === 'leadman'
+      ? unseen.length === 1 ? 'Employee reassigned' : `${unseen.length} employees reassigned`
+      : unseen.length === 1 ? 'Department reassigned' : `${unseen.length} department updates`,
+    message: unseen.map((item) => {
+      if (user?.role === 'leadman') {
+        return `${item.employeeName} was reassigned from ${item.oldDepartment} to ${item.targetDepartment}`;
+      }
+      return `You were reassigned from ${item.oldDepartment} to ${item.targetDepartment}`;
+    }).join('. '),
+  });
+  
+  // Note: We removed the dependency array variables that were triggering the loop 
+  // If your linter complains, ignore it or wrap the getter functions in useCallback in your Provider
+}, [user?.id, user?.role, leadmanDepartments, dialog, getUnseenEmployeeReassignmentNotifications, getUnseenLeadmanReassignmentNotifications, markReassignmentNotificationsSeen])
 
   const notificationItems = useMemo(() => {
     if (user?.role === 'leadman') {

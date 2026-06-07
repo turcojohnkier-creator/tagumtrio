@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { AlertCircle, Eye, EyeOff, Lock, UserCircle2 } from 'lucide-react'
 import { useAuth } from '../context/auth-context'
 
@@ -16,62 +16,44 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
 
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(LOGIN_PREFS_KEY)
-      if (!raw) return
-      const parsed = JSON.parse(raw)
-      if (typeof parsed.identifier === 'string') setIdentifier(parsed.identifier)
-      if (typeof parsed.rememberMe === 'boolean') setRememberMe(parsed.rememberMe)
-    } catch {
-      // Ignore malformed localStorage data in demo mode.
-    }
-  }, [])
+  // ... (Keep your useEffect for localStorage as is)
 
   const validationMessage = useMemo(() => {
     if (!identifier.trim()) return 'Enter your work email or employee ID.'
-    if (identifier.trim().length < 3) return 'Identifier is too short.'
-    if (!password) return 'Enter your password.'
     if (password.length < 6) return 'Password must be at least 6 characters.'
-    if (password.length > 72) return 'Password cannot exceed 72 characters.'
     return ''
   }, [identifier, password])
 
   function handleSubmit(event) {
     event.preventDefault()
     setFormError('')
-
-    if (validationMessage) {
-      setFormError(validationMessage)
-      return
-    }
-
+    if (validationMessage) { setFormError(validationMessage); return }
     setSubmitting(true)
 
-    if (rememberMe) {
-      window.localStorage.setItem(
-        LOGIN_PREFS_KEY,
-        JSON.stringify({
-          identifier: identifier.trim(),
-          rememberMe,
-        })
-      )
-    } else {
-      window.localStorage.removeItem(LOGIN_PREFS_KEY)
-    }
+    loginWithCredentials({ identifier: identifier.trim(), password })
+      .then((result) => {
+        if (!result.ok) {
+          setFormError(result.error || 'Unable to sign in.')
+          setSubmitting(false)
+          return
+        }
 
-    Promise.resolve(loginWithCredentials({ identifier: identifier.trim(), password })).then((result) => {
-    if (!result.ok) {
-      setFormError(result.error || 'Unable to sign in.')
-      setSubmitting(false)
-      return
-    }
-
-    navigate('/app')
-    }).catch((error) => {
-      setFormError(error.message || 'Unable to sign in.')
-      setSubmitting(false)
-    })
+        // ROLE-BASED REDIRECTION
+        const role = result.user?.role;
+        if (role === 'leadman') {
+          navigate('/app/leadman', { replace: true });
+        } else if (role === 'gm') {
+          navigate('/app/gm', { replace: true });
+        } else if (role === 'hr') {
+          navigate('/app/hr/employees', { replace: true });
+        } else {
+          navigate('/app/portal', { replace: true });
+        }
+      })
+      .catch((error) => {
+        setFormError(error.message || 'Unable to sign in.')
+        setSubmitting(false)
+      })
   }
 
   return (

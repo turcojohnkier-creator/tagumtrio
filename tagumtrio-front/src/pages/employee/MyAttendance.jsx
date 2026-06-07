@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { ArrowLeft, BadgeCheck, CheckCircle2, FileText, Hourglass, LayoutGrid, XCircle } from 'lucide-react'
+import { useMemo, useState, useCallback } from 'react'
+import { ArrowLeft, CheckCircle2, Hourglass, XCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
@@ -12,6 +12,23 @@ export default function MyAttendance() {
 
   const leaveRequests = getEmployeeLeaveRequests(user?.id)
   const totals = getEmployeeTotals(user?.id)
+
+  const resolveDisplayDepartment = useCallback((user, totals) => {
+    // 1. Prioritize the standard department column first (e.g., "Sorting")
+    if (user?.department) {
+      return user.department;
+    }
+    
+    // 2. If it's a leadman, show the list from the JSON array
+    if (user?.role === 'leadman' && Array.isArray(user?.departments) && user.departments.length > 0) {
+      return user.departments.join(', ');
+    }
+    
+    // 3. Fallback to totals or "Unassigned"
+    return totals?.currentDepartment || 'Unassigned';
+  }, []);
+
+  const displayDept = useMemo(() => resolveDisplayDepartment(user, totals), [user, totals, resolveDisplayDepartment]);
 
   const approvedLeaves = useMemo(() => leaveRequests.filter((request) => String(request.status || '').toLowerCase() === 'approved'), [leaveRequests])
   const pendingLeaves = useMemo(() => leaveRequests.filter((request) => String(request.status || '').toLowerCase() === 'pending'), [leaveRequests])
@@ -33,7 +50,7 @@ export default function MyAttendance() {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
             <p className="text-xs uppercase tracking-wider text-slate-500">Department</p>
-            <p className="mt-2 text-lg font-semibold text-white">{totals.currentDepartment || 'Unassigned'}</p>
+            <p className="mt-2 text-lg font-semibold text-white">{displayDept}</p>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
             <p className="text-xs uppercase tracking-wider text-slate-500">Leave requests</p>
@@ -71,14 +88,12 @@ export default function MyAttendance() {
             >
               <XCircle className="h-4 w-4" /> Rejected Leaves
             </button>
-            
           </div>
         </div>
 
-        {activeTab === 'approved-leaves' ? (
+        {activeTab === 'approved-leaves' && (
           <div className="p-6">
             <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><CheckCircle2 className="w-5 h-5 text-emerald-400" /> Approved Leaves</h3>
-            <p className="mt-1 text-sm text-slate-400">These leave requests have been approved by your approver.</p>
             {approvedLeaves.length === 0 ? (
               <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950 p-6 text-sm text-slate-400">No approved leaves yet.</div>
             ) : (
@@ -95,19 +110,17 @@ export default function MyAttendance() {
                     <div className="mt-4 space-y-2 text-sm text-slate-300">
                       <p><span className="text-slate-500">Date range:</span> {request.startDate || request.start_date || '—'} to {request.endDate || request.end_date || '—'}</p>
                       <p><span className="text-slate-500">Reason:</span> {request.reason || 'No reason provided'}</p>
-                      <p><span className="text-slate-500">Approved by:</span> {request.approvedBy || request.approverId || 'System'}</p>
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        ) : null}
+        )}
 
-        {activeTab === 'pending-leaves' ? (
+        {activeTab === 'pending-leaves' && (
           <div className="p-6">
             <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><Hourglass className="w-5 h-5 text-amber-400" /> Pending Leaves</h3>
-            <p className="mt-1 text-sm text-slate-400">These requests are waiting for approval.</p>
             {pendingLeaves.length === 0 ? (
               <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950 p-6 text-sm text-slate-400">No pending leaves right now.</div>
             ) : (
@@ -115,19 +128,17 @@ export default function MyAttendance() {
                 {pendingLeaves.map((request) => (
                   <div key={request.id} className="rounded-2xl border border-slate-800 bg-slate-950 p-5">
                     <p className="text-sm font-medium text-white">{request.leaveType || 'Leave'}</p>
-                    <p className="mt-1 text-xs text-slate-500">Requested {formatDateTime(request.requestedAt || request.createdAt || Date.now())}</p>
                     <p className="mt-4 text-sm text-slate-300">{request.startDate || request.start_date || '—'} to {request.endDate || request.end_date || '—'}</p>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        ) : null}
+        )}
 
-        {activeTab === 'rejected-leaves' ? (
+        {activeTab === 'rejected-leaves' && (
           <div className="p-6">
             <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><XCircle className="w-5 h-5 text-rose-400" /> Rejected Leaves</h3>
-            <p className="mt-1 text-sm text-slate-400">These leave requests were declined.</p>
             {rejectedLeaves.length === 0 ? (
               <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950 p-6 text-sm text-slate-400">No rejected leaves yet.</div>
             ) : (
@@ -137,30 +148,19 @@ export default function MyAttendance() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-medium text-white">{request.leaveType || 'Leave'}</p>
-                        <p className="mt-1 text-xs text-slate-400">Requested {formatDateTime(request.requestedAt || request.createdAt || Date.now())}</p>
                       </div>
                       <span className="rounded-full bg-rose-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-rose-300">Rejected</span>
                     </div>
                     <div className="mt-4 space-y-2 text-sm text-slate-300">
                       <p><span className="text-slate-500">Date range:</span> {request.startDate || request.start_date || '—'} to {request.endDate || request.end_date || '—'}</p>
-                      <p><span className="text-slate-500">Reason:</span> {request.reason || 'No reason provided'}</p>
-                      {request.approvedBy || request.approverId ? (
-                        <p><span className="text-slate-500">Reviewed by:</span> {request.approvedBy || request.approverId}</p>
-                      ) : null}
-                      {request.note ? (
-                        <p><span className="text-slate-500">Note:</span> {request.note}</p>
-                      ) : null}
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        ) : null}
-
-        
+        )}
       </div>
     </div>
   )
 }
-

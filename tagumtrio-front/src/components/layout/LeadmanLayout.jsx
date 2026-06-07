@@ -8,7 +8,7 @@ import ErrorBoundary from '../ui/ErrorBoundary'
 import LeadmanSidebar from './LeadmanSidebar'
 
 export default function LeadmanLayout() {
-  const { user, logout } = useAuth()
+  const { user, logout, t } = useAuth()
   const { selectedLeadmanDepartment } = useQr()
   const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -28,11 +28,11 @@ export default function LeadmanLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-900 text-slate-200">
-      {mobileMenuOpen && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setMobileMenuOpen(false)} />}
+      {mobileMenuOpen && <div className="fixed inset-0 z-40 bg-black/50 md:hidden pointer-events-auto" onClick={() => setMobileMenuOpen(false)} />}
 
       <LeadmanSidebar user={user} onLogout={handleLogout} onNavigate={() => setMobileMenuOpen(false)} mobileOpen={mobileMenuOpen} />
 
-      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <main className="flex min-w-0 flex-1 flex-col overflow-hidden relative z-0">
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800 bg-slate-950 px-4 md:px-6">
           <button onClick={() => setMobileMenuOpen((open) => !open)} className="inline-flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900 p-2 text-slate-300 md:hidden" aria-label="Toggle leadman navigation">
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -45,7 +45,7 @@ export default function LeadmanLayout() {
             
             <div className="text-right">
               <p className="text-sm font-medium text-white">{user.name}</p>
-              <p className="text-xs text-slate-500">{selectedLeadmanDepartment || user.department || 'Assigned leadman departments'}</p>
+              <p className="text-xs text-slate-500">{selectedLeadmanDepartment || user.department || t('leadman.assigned', 'Assigned leadman departments')}</p>
             </div>
             <div className="h-10 w-10 rounded-full bg-emerald-500/10 text-emerald-300 flex items-center justify-center text-sm font-semibold ring-1 ring-emerald-500/20">
               {user.name.split(' ').map((part) => part[0]).join('').substring(0, 2)}
@@ -54,7 +54,7 @@ export default function LeadmanLayout() {
 
           <button onClick={handleLogout} className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-sm text-slate-300 hover:text-rose-300 md:hidden">
             <X className="h-4 w-4" />
-            Exit
+            {t('ui.exit', 'Exit')}
           </button>
         </header>
 

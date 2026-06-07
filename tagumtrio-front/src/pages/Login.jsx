@@ -8,6 +8,7 @@ const LOGIN_PREFS_KEY = 'triops-login-prefs'
 export default function Login() {
   const { loginWithCredentials } = useAuth()
   const navigate = useNavigate()
+  const { language, setLanguage, t } = useAuth()
 
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
@@ -76,15 +77,29 @@ export default function Login() {
           </section>
 
           <section className="p-6 sm:p-8 md:p-10">
+            <div className="flex justify-end">
+              <div className="inline-flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setLanguage('en')}
+                  className={`px-2 py-1 rounded ${language === 'en' ? 'bg-emerald-500 text-black' : 'bg-slate-800 text-slate-300'}`}
+                >EN</button>
+                <button
+                  type="button"
+                  onClick={() => setLanguage('zh')}
+                  className={`px-2 py-1 rounded ${language === 'zh' ? 'bg-emerald-500 text-black' : 'bg-slate-800 text-slate-300'}`}
+                >中文</button>
+              </div>
+            </div>
             <div className="mb-6">
               <p className="text-xs uppercase tracking-widest text-emerald-300 font-semibold">TriOPS</p>
-              <h2 className="text-2xl font-bold text-white mt-1">Welcome back</h2>
-              <p className="mt-2 text-sm text-slate-400">Log in with your registered email or employee ID.</p>
+              <h2 className="text-2xl font-bold text-white mt-1">{t('login.welcome')}</h2>
+              <p className="mt-2 text-sm text-slate-400">{t('login.description')}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="text-sm text-slate-300">Email or Employee ID</label>
+                <label className="text-sm text-slate-300">{t('login.identifier')}</label>
                 <div className="mt-1.5 relative">
                   <UserCircle2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                   <input
@@ -99,7 +114,7 @@ export default function Login() {
               </div>
 
               <div>
-                <label className="text-sm text-slate-300">Password</label>
+                <label className="text-sm text-slate-300">{t('login.password')}</label>
                 <div className="mt-1.5 relative">
                   <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                   <input
@@ -129,9 +144,9 @@ export default function Login() {
                     onChange={(event) => setRememberMe(event.target.checked)}
                     className="rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500"
                   />
-                  Remember me
+                  {t('login.remember')}
                 </label>
-                <button type="button" className="text-cyan-300 hover:text-cyan-200" onClick={() => setFormError('Password reset will be connected to backend email flow.')}>Forgot password?</button>
+                <button type="button" className="text-cyan-300 hover:text-cyan-200" onClick={() => setFormError(t('login.forgot') + ' Password reset will be connected to backend email flow.')}>{t('login.forgot')}</button>
               </div>
 
               {(formError || validationMessage) && (
@@ -146,7 +161,7 @@ export default function Login() {
                 disabled={submitting || Boolean(validationMessage)}
                 className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
               >
-                {submitting ? 'Signing in...' : 'Sign in'}
+                {submitting ? (language === 'zh' ? '登录中…' : 'Signing in...') : t('login.signin')}
               </button>
 
               <p className="text-center text-sm text-slate-400">

@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Search, Edit, Trash2 } from 'lucide-react'
 import { useQr } from '../../context/qr-context'
+import { useAuth } from '../../context/auth-context'
 import { DEPARTMENTS } from '../../constants/departments'
 
 export default function EmployeeManagement() {
+  const { t } = useAuth()
   const { employees = [] } = useQr()
   const [searchText, setSearchText] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('All Departments')
@@ -24,8 +26,8 @@ export default function EmployeeManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Employee Management</h2>
-          <p className="text-slate-400 mt-1">View and manage employee records backed by the database.</p>
+          <h2 className="text-2xl font-bold text-white">{t('gm.employee.title')}</h2>
+          <p className="text-slate-400 mt-1">{t('gm.employee.desc')}</p>
         </div>
       </div>
 
@@ -35,7 +37,7 @@ export default function EmployeeManagement() {
           <input
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            placeholder="Search employees..."
+            placeholder={t('gm.employee.search')}
             className="w-full bg-slate-950 border border-slate-800 text-white text-sm rounded-lg pl-10 pr-4 py-2.5"
           />
         </div>
@@ -45,7 +47,8 @@ export default function EmployeeManagement() {
           onChange={(e) => setDepartmentFilter(e.target.value)}
           className="bg-slate-950 border border-slate-800 text-slate-300 text-sm rounded-lg px-4 py-2.5"
         >
-          {['All Departments', ...DEPARTMENTS].map((d) => (
+          <option value="All Departments">{t('gm.employee.all_depts')}</option>
+          {DEPARTMENTS.map((d) => (
             <option key={d} value={d}>{d}</option>
           ))}
         </select>
@@ -55,7 +58,7 @@ export default function EmployeeManagement() {
         <div className="grid grid-cols-1 gap-3">
           {filtered.length === 0 ? (
             <div className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-6 text-sm text-slate-400">
-              No employees matched your filters.
+              {t('gm.employee.no_match')}
             </div>
           ) : (
             filtered.map((emp) => {

@@ -4,9 +4,11 @@ import DepartmentCard from '../../components/gm/DepartmentCard'
 import EmployeeListModal from '../../components/gm/EmployeeListModal'
 import { DEPARTMENTS } from '../../constants/departments'
 import { useQr } from '../../context/qr-context'
+import { useAuth } from '../../context/auth-context'
 import { fetchEmployeesByDepartmentApi, fetchEmployeesApi } from '../../lib/api'
 
 export default function GMOverview() {
+  const { t } = useAuth()
   const { employees = [], employeesLoading, addReassignmentNotification, updateEmployeeRecord } = useQr()
   const [selectedDept, setSelectedDept] = useState(null)
   const [showModal, setShowModal] = useState(false)
@@ -94,13 +96,13 @@ export default function GMOverview() {
         <div className="rounded-3xl border border-slate-800 bg-slate-900 p-5 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-white">Department cards</p>
-              <p className="text-sm text-slate-400">Tap a card to open the active employee roster and reassign team members.</p>
+              <p className="text-sm font-semibold text-white">{t('gm.overview.title')}</p>
+              <p className="text-sm text-slate-400">{t('gm.overview.desc')}</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <div className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm text-slate-300">
                 <ChevronRight className="h-4 w-4 text-emerald-400" />
-                {departments.length} departments
+                {departments.length} {t('gm.overview.departments')}
               </div>
               <div className="inline-flex gap-2 rounded-full border border-slate-800 bg-slate-950 p-1">
                 <button
@@ -108,14 +110,14 @@ export default function GMOverview() {
                   onClick={() => setSortOption('most')}
                   className={`rounded-full px-3 py-2 text-sm font-medium transition ${sortOption === 'most' ? 'bg-emerald-500 text-slate-950' : 'text-slate-300 hover:bg-slate-800'}`}
                 >
-                  Most staffed
+                  {t('gm.overview.most')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setSortOption('least')}
                   className={`rounded-full px-3 py-2 text-sm font-medium transition ${sortOption === 'least' ? 'bg-emerald-500 text-slate-950' : 'text-slate-300 hover:bg-slate-800'}`}
                 >
-                  Least staffed
+                  {t('gm.overview.least')}
                 </button>
               </div>
             </div>

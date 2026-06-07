@@ -78,6 +78,127 @@ function loadSession() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => loadSession())
   const [users] = useState([])
+  const [language, setLanguage] = useState(() => {
+    if (typeof window === 'undefined') return 'en'
+    return window.localStorage.getItem('triops-lang') || 'en'
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.setItem('triops-lang', language)
+    } catch (e) {
+      // ignore
+    }
+  }, [language])
+
+  const translations = {
+    en: {
+      'login.welcome': 'Welcome back',
+      'login.description': 'Log in with your registered email or employee ID.',
+      'login.identifier': 'Email or Employee ID',
+      'login.password': 'Password',
+      'login.remember': 'Remember me',
+      'login.forgot': 'Forgot password?',
+      'login.signin': 'Sign in',
+      'leadman.portal': 'Leadman Portal',
+      'leadman.create_report': 'Create Report',
+      'leadman.incoming_reports': 'Incoming Reports',
+      'leadman.deployed_workers': 'Deployed Workers',
+      'leadman.daily_report': 'Daily Report',
+      'leadman.history': 'History',
+      'leadman.assigned': 'Assigned leadman departments',
+      'ui.exit': 'Exit',
+      'ui.navigation': 'Navigation',
+      'ui.signed_in': 'Signed in as',
+      'ui.sign_out': 'Sign out',
+      'gm.overview.title': 'Department cards',
+      'gm.overview.desc': 'Tap a card to open the active employee roster and reassign team members.',
+      'gm.overview.departments': 'departments',
+      'gm.overview.most': 'Most staffed',
+      'gm.overview.least': 'Least staffed',
+      'gm.employee.title': 'Employee Management',
+      'gm.employee.desc': 'View and manage employee records backed by the database.',
+      'gm.employee.search': 'Search employees...',
+      'gm.employee.all_depts': 'All Departments',
+      'gm.employee.no_match': 'No employees matched your filters.',
+      'gm.announce.title': 'Announcements',
+      'gm.announce.desc': 'Broadcast Facebook-style posts to all employees.',
+      'gm.announce.create': 'Create broadcast',
+      'gm.announce.post': 'Post to all employees',
+      'gm.announce.what': "What's the announcement?",
+      'gm.announce.body': 'Write the post body...',
+      'gm.announce.pin': 'Pin to top of employee feeds',
+      'gm.announce.broadcast': 'Broadcasted to all employees',
+      'gm.announce.posting': 'Posting...',
+      'gm.announce.publish': 'Publish Post',
+      'gm.announce.recent': 'Recent announcements',
+      'gm.announce.no': 'No announcements yet.',
+      'gm.announce.ann_title': 'Announcement title',
+      'gm.announce.ann_body': 'Announcement body',
+      'gm.announce.pin_top': 'Pin to top',
+      'gm.announce.cancel': 'Cancel',
+      'gm.announce.saving': 'Saving...',
+      'gm.announce.save': 'Save changes',
+      'gm.announce.edit': 'Edit post',
+      'gm.announce.delete': 'Delete post',
+    },
+    zh: {
+      'login.welcome': '欢迎回来',
+      'login.description': '使用您注册的邮箱或员工编号登录。',
+      'login.identifier': '邮箱或员工编号',
+      'login.password': '密码',
+      'login.remember': '记住我',
+      'login.forgot': '忘记密码？',
+      'login.signin': '登录',
+      'leadman.portal': '领班门户',
+      'leadman.create_report': '创建报表',
+      'leadman.incoming_reports': '待处理报表',
+      'leadman.deployed_workers': '在岗员工',
+      'leadman.daily_report': '日报',
+      'leadman.history': '历史记录',
+      'leadman.assigned': '分配的领班部门',
+      'ui.exit': '退出',
+      'ui.navigation': '导航',
+      'ui.signed_in': '登录用户',
+      'ui.sign_out': '登出',
+      'gm.overview.title': '部门卡片',
+      'gm.overview.desc': '点击卡片查看在职员工名单并重新分配团队成员。',
+      'gm.overview.departments': '个部门',
+      'gm.overview.most': '人数最多',
+      'gm.overview.least': '人数最少',
+      'gm.employee.title': '员工管理',
+      'gm.employee.desc': '查看和管理数据库中的员工记录。',
+      'gm.employee.search': '搜索员工...',
+      'gm.employee.all_depts': '所有部门',
+      'gm.employee.no_match': '没有符合筛选条件的员工。',
+      'gm.announce.title': '公告',
+      'gm.announce.desc': '向所有员工广播类似Facebook的帖子。',
+      'gm.announce.create': '创建广播',
+      'gm.announce.post': '发布给所有员工',
+      'gm.announce.what': '公告标题是什么？',
+      'gm.announce.body': '编写帖子内容...',
+      'gm.announce.pin': '置顶到员工源',
+      'gm.announce.broadcast': '已发布给所有员工',
+      'gm.announce.posting': '发布中...',
+      'gm.announce.publish': '发布帖子',
+      'gm.announce.recent': '最近公告',
+      'gm.announce.no': '还没有公告。',
+      'gm.announce.ann_title': '公告标题',
+      'gm.announce.ann_body': '公告内容',
+      'gm.announce.pin_top': '置顶',
+      'gm.announce.cancel': '取消',
+      'gm.announce.saving': '保存中...',
+      'gm.announce.save': '保存更改',
+      'gm.announce.edit': '编辑帖子',
+      'gm.announce.delete': '删除帖子',
+    },
+  }
+
+  function t(key, fallback) {
+    const val = (translations[language] && translations[language][key]) || translations.en[key]
+    return val || fallback || key
+  }
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -193,5 +314,7 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
-  return <AuthContext.Provider value={{ user, users, login, loginWithCredentials, registerUser, logout }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ user, users, login, loginWithCredentials, registerUser, logout, language, setLanguage, t }}>{children}</AuthContext.Provider>
+  )
 }

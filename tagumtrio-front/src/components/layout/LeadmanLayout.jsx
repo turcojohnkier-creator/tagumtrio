@@ -4,6 +4,7 @@ import { Menu, X } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import PageTransition from '../ui/PageTransition'
+import ErrorBoundary from '../ui/ErrorBoundary'
 import LeadmanSidebar from './LeadmanSidebar'
 
 export default function LeadmanLayout() {
@@ -59,9 +60,11 @@ export default function LeadmanLayout() {
 
         <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
           <div className="mx-auto max-w-7xl pb-12">
-            <PageTransition>
-              <Outlet />
-            </PageTransition>
+            <ErrorBoundary>
+              <PageTransition>
+                <Outlet />
+              </PageTransition>
+            </ErrorBoundary>
           </div>
         </div>
       </main>

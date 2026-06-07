@@ -11,21 +11,25 @@ function normalizeIdentifier(value) {
 
 function normalizeRole(role) {
   if (!role) return role
-  if (role === 'production_head') return 'production_incharge'
-  if (role === 'admin') return 'hr'
-  return role
+  const normalized = String(role).trim().toLowerCase()
+  if (normalized === 'production_head') return 'production_incharge'
+  if (['admin', 'hr', 'human_resources', 'human-resource', 'human resources'].includes(normalized)) return 'hr'
+  if (['general_manager', 'general manager', 'general-manager', 'gm'].includes(normalized)) return 'gm'
+  if (['leadman', 'lead man', 'lead_man', 'lead-man'].includes(normalized)) return 'leadman'
+  return normalized
 }
 
 function buildSessionUser(record) {
   if (!record) return null
+  const normalizedRole = normalizeRole(record.role)
   const base = {
     id: record.id,
     name: record.name,
-    role: normalizeRole(record.role),
+    role: normalizedRole,
     created_at: record.created_at || record.createdAt,
   }
 
-  if (record.role === 'leadman') {
+  if (normalizedRole === 'leadman') {
     const leadmanDepartments = Array.isArray(record.departments) && record.departments.length > 0
       ? record.departments.filter((department) => DEPARTMENTS.includes(department))
       : record.department && DEPARTMENTS.includes(record.department)

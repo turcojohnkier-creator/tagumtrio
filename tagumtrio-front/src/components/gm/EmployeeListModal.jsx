@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, X } from 'lucide-react'
+import { X } from 'lucide-react'
+import { useDialog } from '../../context/dialog-context'
 import { updateEmployeeApi } from '../../lib/api'
 import { DEPARTMENTS } from '../../constants/departments'
 
-export default function EmployeeListModal({ department, onClose, employees = [] }) {
+export default function EmployeeListModal({ department, onClose, employees = [], onReassigned }) {
+  const dialog = useDialog()
   const [localEmployees, setLocalEmployees] = useState([])
   const [targetDept, setTargetDept] = useState('')
   const [reassigningId, setReassigningId] = useState(null)
@@ -20,19 +22,40 @@ export default function EmployeeListModal({ department, onClose, employees = [] 
 
   async function reassign(empId) {
     if (!targetDept) {
-      return window.alert('Select a department to reassign this employee.')
+      dialog.error({
+        title: 'Select target department',
+        message: 'Please select a department before reassigning this employee.',
+      })
+      return
     }
+
+    const employee = localEmployees.find((e) => String(e.employeeId) === String(empId) || String(e.id) === String(empId))
+    const oldDepartment = employee?.department || employee?.dept || 'Unassigned'
 
     try {
       setReassigningId(empId)
       await updateEmployeeApi(empId, { department: targetDept })
-      setLocalEmployees((cur) => cur.filter((e) => String(e.id) !== String(empId)))
+      setLocalEmployees((cur) => cur.filter((e) => String(e.id) !== String(empId) && String(e.employeeId) !== String(empId)))
       setReassigningId(null)
-      window.alert('Employee reassigned successfully.')
+      onReassigned?.({
+        employeeId: employee?.employeeId || empId,
+        employeeName: employee?.employeeName || employee?.name || employee?.fullName || `Employee ${empId}`,
+        oldDepartment,
+        targetDepartment: targetDept,
+        createdAt: new Date().toISOString(),
+        source: 'gm',
+      })
+      dialog.success({
+        title: 'Employee reassigned',
+        message: `${employee?.employeeName || `Employee ${empId}`} was reassigned from ${oldDepartment} to ${targetDept}.`,
+      })
     } catch (err) {
       console.error(err)
       setReassigningId(null)
-      window.alert('Failed to reassign employee. Please try again.')
+      dialog.error({
+        title: 'Reassignment failed',
+        message: err?.message || 'Unable to reassign employee. Please try again.',
+      })
     }
   }
 

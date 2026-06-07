@@ -18,6 +18,7 @@ const LeadmanDailyReport = lazy(() => import('./pages/leadman/LeadmanDailyReport
 const LeadmanHistory = lazy(() => import('./pages/leadman/LeadmanHistory'))
 const ProductionDashboard = lazy(() => import('./pages/production/ProductionDashboard'))
 const ProductionReports = lazy(() => import('./pages/production/ProductionReports'))
+const ProductionCompiledReports = lazy(() => import('./pages/production/ProductionCompiledReports'))
 const ProductionConsolidatedReports = lazy(() => import('./pages/production/ProductionConsolidatedReports'))
 const FinanceHome = lazy(() => import('./pages/finance/FinanceHome'))
 const FinanceProductionReports = lazy(() => import('./pages/finance/FinanceProductionReports'))
@@ -66,6 +67,7 @@ export default function App() {
 
                   <Route path="production" element={<ProductionDashboard />} />
                   <Route path="production/reports" element={<ProductionReports />} />
+                  <Route path="production/compiled" element={<ProductionCompiledReports />} />
                   <Route path="production/consolidated" element={<ProductionConsolidatedReports />} />
 
                   <Route path="payroll" element={<FinanceHome />} />

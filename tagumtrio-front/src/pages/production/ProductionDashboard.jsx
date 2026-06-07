@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ClipboardList, Filter, Search, X } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/auth-context'
+import { useDialog } from '../../context/dialog-context'
+import { useQr } from '../../context/qr-context'
 import { fetchDailyReportsApi } from '../../lib/api'
 import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from '../../components/reports/report-entry-utils'
 
@@ -42,6 +45,11 @@ function getReportPhotos(report) {
   return entries.flatMap((entry) => entry?.photos || entry?.photoUrls || entry?.imageUrls || []).filter(Boolean)
 }
 
+function isVerifiedReportStatus(status) {
+  const normalized = String(status || '').trim().toLowerCase()
+  return ['production_verified', 'leadman_verified', 'gm_submitted', 'compiled', 'verified'].includes(normalized)
+}
+
 function buildReportCards(reports = []) {
   return (Array.isArray(reports) ? reports : []).map((report) => {
     const entries = Array.isArray(report.entries) ? report.entries.filter(hasMeaningfulEntry) : []
@@ -62,6 +70,8 @@ function buildReportCards(reports = []) {
     const scannedAt = report.createdAt || report.created_at || reportDate
     const employeeCount = new Set(entries.map((entry) => String(getEntryIdentifier(entry) || getEntryLabel(entry) || entry.id || ''))).size
     const photos = getReportPhotos(report)
+    const isVerified = isVerifiedReportStatus(report.status)
+    const verificationLabel = isVerified ? 'Verified' : 'Not verified'
 
     return {
       id: report.id,
@@ -73,6 +83,9 @@ function buildReportCards(reports = []) {
       cratesPieces,
       entries,
       photos,
+      status: report.status || '',
+      isVerified,
+      verificationLabel,
       summary: report.summary || '',
       submittedBy: report.submittedByName || report.submitted_by_name || report.submittedBy || report.submitted_by || 'Unknown',
       totalAmount: entries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0),
@@ -80,7 +93,7 @@ function buildReportCards(reports = []) {
   }).sort((a, b) => new Date(b.scannedAt || 0) - new Date(a.scannedAt || 0))
 }
 
-function ReportDetailModal({ report, onClose }) {
+function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compilingReportId }) {
   if (!report) return null
 
   return (
@@ -139,10 +152,7 @@ function ReportDetailModal({ report, onClose }) {
               {report.photos?.length > 0 ? (
                 <button
                   type="button"
-                  onClick={() => {
-                    setSelectedPhotos(report.photos)
-                    setShowPhotosModal(true)
-                  }}
+                  onClick={() => onPreviewPhotos?.(report.photos)}
                   className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-slate-600 hover:bg-slate-900"
                 >
                   Preview images
@@ -166,8 +176,8 @@ function ReportDetailModal({ report, onClose }) {
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Total employees involved</p>
               <p className="mt-2 text-sm text-slate-200">{report.employeeCount}</p>
             </div><div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Status</p>
-              <p className="mt-2 text-sm text-slate-200">-</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Verification</p>
+              <p className={`mt-2 text-sm ${report.isVerified ? 'text-emerald-300' : 'text-rose-300'}`}>{report.verificationLabel}</p>
             </div>
           </div>
         </div>
@@ -176,8 +186,13 @@ function ReportDetailModal({ report, onClose }) {
           <button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2.5 text-slate-200 transition-colors hover:bg-slate-700">
             Cancel
           </button>
-          <button type="button" onClick={() => {}} className="rounded-xl bg-emerald-500 px-4 py-2.5 text-black transition-colors hover:bg-emerald-400">
-            Submit
+          <button
+            type="button"
+            onClick={() => onCompile(report)}
+            disabled={!report.isVerified || compilingReportId === report.id}
+            className="rounded-xl bg-emerald-500 px-4 py-2.5 text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {compilingReportId === report.id ? 'Compiling...' : report.isVerified ? 'Compile' : 'Cannot compile until verified'}
           </button>
         </div>
       </div>
@@ -186,6 +201,10 @@ function ReportDetailModal({ report, onClose }) {
 }
 
 export default function ProductionDashboard() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const dialog = useDialog()
+  const { updateDailyReportStatus } = useQr()
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -195,33 +214,73 @@ export default function ProductionDashboard() {
   const [selectedReportId, setSelectedReportId] = useState('')
   const [selectedPhotos, setSelectedPhotos] = useState([])
   const [showPhotosModal, setShowPhotosModal] = useState(false)
+  const [compilingReportId, setCompilingReportId] = useState('')
+
+  if (user?.role === 'gm') {
+    return <Navigate to="/app/production/consolidated" replace />
+  }
+
+  async function loadReports(mountedRef = { current: true }) {
+    setLoading(true)
+    setError('')
+    try {
+      const remoteReports = await fetchDailyReportsApi()
+      if (mountedRef.current) {
+        setReports(Array.isArray(remoteReports) ? remoteReports : [])
+      }
+    } catch (loadError) {
+      if (mountedRef.current) {
+        setError(loadError?.message || 'Failed to load submitted reports.')
+        setReports([])
+      }
+    } finally {
+      if (mountedRef.current) setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    let mounted = true
-
-    async function loadReports() {
-      setLoading(true)
-      setError('')
-      try {
-        const remoteReports = await fetchDailyReportsApi()
-        if (mounted) {
-          setReports(Array.isArray(remoteReports) ? remoteReports : [])
-        }
-      } catch (loadError) {
-        if (mounted) {
-          setError(loadError?.message || 'Failed to load submitted reports.')
-          setReports([])
-        }
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    }
-
-    loadReports()
+    const mountedRef = { current: true }
+    loadReports(mountedRef)
     return () => {
-      mounted = false
+      mountedRef.current = false
     }
   }, [])
+
+  async function handleCompile(report) {
+    if (!report?.id) return
+
+    const confirmed = await dialog.confirm({
+      title: 'Compile report',
+      message: `Move report ${report.id} into compiled reports and send it for GM review?`,
+      confirmText: 'Compile',
+      cancelText: 'Cancel',
+    })
+
+    if (!confirmed) return
+
+    setCompilingReportId(report.id)
+    try {
+      await updateDailyReportStatus(report.id, {
+        status: 'compiled',
+        verifiedBy: user?.id,
+        verifiedByName: user?.name || user?.fullName || user?.username,
+      })
+      await loadReports()
+      dialog.success({
+        title: 'Compiled successfully',
+        message: 'The report has been moved to compiled reports and is ready for submission to GM.',
+      })
+      setSelectedReportId('')
+      navigate('/app/production/compiled')
+    } catch (compileError) {
+      dialog.error({
+        title: 'Compile failed',
+        message: compileError?.message || 'Unable to compile the report at this time.',
+      })
+    } finally {
+      setCompilingReportId('')
+    }
+  }
 
   const reportCards = useMemo(() => buildReportCards(reports), [reports])
   const departments = useMemo(() => {
@@ -268,26 +327,24 @@ export default function ProductionDashboard() {
           <h2 className="text-2xl font-bold text-white">Daily Production Reports</h2>
           <p className="mt-1 text-slate-400">Read and review submitted reports from leadman and the employee workflow.</p>
         </div>
-        <div className="text-sm text-slate-400">Production In-Charge can view all submitted reports, inspect the employee table, and confirm report details.</div>
-      </div>
-
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-black/10">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-slate-400">Open the consolidated reports page for daily production summary and salary totals.</p>
-          </div>
-          <Link to="/app/production/consolidated" className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-black hover:bg-emerald-400">
-            <ClipboardList className="h-4 w-4" /> Open consolidated page
-          </Link>
+        <div className="flex flex-wrap gap-3">
+          {user?.role === 'production_incharge' ? (
+            <Link
+              to="/app/production/compiled"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-800 bg-slate-950 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:border-slate-700 hover:bg-slate-900"
+            >
+              View compiled reports
+            </Link>
+          ) : null}
+          
         </div>
       </div>
 
+
+
       <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-          <div>
-            <h3 className="flex items-center gap-2 text-lg font-semibold text-white">Submitted Daily Reports</h3>
-            <p className="mt-1 text-sm text-slate-400">Click any report card to open the full employee table and report details.</p>
-          </div>
+
           <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -354,7 +411,9 @@ export default function ProductionDashboard() {
                     </div>
                     <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2">
                       <p className="text-[11px] text-slate-500">Status</p>
-                      <p className="mt-1 text-sm font-semibold text-white">{report.status || '-'}</p>
+                      <p className={`mt-1 text-sm font-semibold ${report.isVerified ? 'text-emerald-300' : 'text-rose-300'}`}>
+                        {report.verificationLabel}
+                      </p>
                     </div>
                   </div>
 
@@ -369,7 +428,16 @@ export default function ProductionDashboard() {
         ) : null}
       </div>
 
-      <ReportDetailModal report={selectedReport} onClose={() => setSelectedReportId('')} />
+      <ReportDetailModal
+        report={selectedReport}
+        onClose={() => setSelectedReportId('')}
+        onPreviewPhotos={(photos) => {
+          setSelectedPhotos(Array.isArray(photos) ? photos : [])
+          setShowPhotosModal(true)
+        }}
+        onCompile={handleCompile}
+        compilingReportId={compilingReportId}
+      />
 
       {showPhotosModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">

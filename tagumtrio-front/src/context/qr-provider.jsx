@@ -96,6 +96,9 @@ const DEFAULT_STATE = {
   schedules: [],
 }
 
+const REASSIGNMENT_STORAGE_KEY = 'triops-reassignment-notifications'
+const REASSIGNMENT_SEEN_KEY_PREFIX = 'triops-reassignment-seen:'
+
 function loadState() {
   if (typeof window === 'undefined') return DEFAULT_STATE
   try {
@@ -112,6 +115,39 @@ function loadState() {
     }
   } catch {
     return DEFAULT_STATE
+  }
+}
+
+function loadReassignmentNotifications() {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage.getItem(REASSIGNMENT_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function loadReassignmentSeenIds(userId) {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage.getItem(`${REASSIGNMENT_SEEN_KEY_PREFIX}${String(userId)}`)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function saveReassignmentSeenIds(userId, ids = []) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(`${REASSIGNMENT_SEEN_KEY_PREFIX}${String(userId)}`, JSON.stringify(Array.from(new Set(ids))))
+  } catch {
+    // ignore localStorage failures
   }
 }
 
@@ -157,6 +193,7 @@ export function QRProvider({ children }) {
   const [dailyReportDrafts, setDailyReportDrafts] = useState({})
   const [payments, setPayments] = useState(initialState.payments || [])
   const [announcements, setAnnouncements] = useState(initialState.announcements || [])
+  const [reassignmentNotifications, setReassignmentNotifications] = useState(loadReassignmentNotifications)
   // schedules feature removed; keep empty state to avoid breaking callers
   const [schedules, setSchedules] = useState([])
   const [leaveRequests, setLeaveRequests] = useState(initialState.leaveRequests || [])
@@ -177,6 +214,11 @@ export function QRProvider({ children }) {
       window.localStorage.setItem('tagum_device_id', did)
     }
   }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(REASSIGNMENT_STORAGE_KEY, JSON.stringify(reassignmentNotifications))
+  }, [reassignmentNotifications])
 
   useEffect(() => {
     if (!user) return
@@ -505,23 +547,26 @@ export function QRProvider({ children }) {
   }
 
   async function approveDepartmentRequest(id, leadmanId) {
-    try {
-      const approvedRequest = await approveDepartmentRequestApi(id, leadmanId)
-      setDepartmentRequests((current) => current.map((request) => (
-        request.id === id
-          ? { ...request, ...approvedRequest, status: 'approved', leadmanId, leadmanAt: approvedRequest.leadmanAt || new Date().toISOString() }
-          : request
-      )))
-      setEmployees((currentEmployees) => currentEmployees.map((employee) => (
-        employee.employeeId === approvedRequest.employeeId
-          ? { ...employee, department: approvedRequest.requestedDepartment }
-          : employee
-      )))
-      return approvedRequest
-    } catch (error) {
-      throw error
-    }
+  try {
+    const approvedRequest = await approveDepartmentRequestApi(id, leadmanId);
+    
+    // Update the request status
+    setDepartmentRequests((current) => current.map((request) => (
+      request.id === id ? { ...request, ...approvedRequest, status: 'approved' } : request
+    )));
+
+    // IMPORTANT: Update the employees list directly so the UI refreshes
+    setEmployees((currentEmployees) => currentEmployees.map((employee) => (
+      String(employee.employeeId) === String(approvedRequest.employeeId)
+        ? { ...employee, department: approvedRequest.requestedDepartment }
+        : employee
+    )));
+    
+    return approvedRequest;
+  } catch (error) {
+    throw error;
   }
+}
 
   async function redirectDepartmentRequest(id, targetDepartment, leadmanId, note) {
     try {
@@ -670,6 +715,56 @@ const id = `ATD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     approveAttendanceByHead(id, headId)
   }
 
+  function updateEmployeeRecord(employeeId, updates = {}) {
+    setEmployees((currentEmployees) => currentEmployees.map((employee) => (
+      String(employee.employeeId) === String(employeeId)
+        ? { ...employee, ...updates }
+        : employee
+    )))
+  }
+
+  function addReassignmentNotification(notification) {
+    if (!notification || !notification.employeeId || !notification.targetDepartment) return
+    const id = notification.id || `${notification.employeeId}:${notification.targetDepartment}:${notification.createdAt || new Date().toISOString()}`
+    setReassignmentNotifications((current) => {
+      if (current.some((item) => String(item.id) === String(id))) return current
+      return [{ ...notification, id, createdAt: notification.createdAt || new Date().toISOString() }, ...current]
+    })
+  }
+
+  function getReassignmentNotifications() {
+    return dedupeBy(
+      reassignmentNotifications,
+      (notification) => String(notification.id),
+      (left, right) => new Date(right.createdAt || 0) - new Date(left.createdAt || 0)
+    )
+  }
+
+  function getEmployeeReassignmentNotifications(employeeId) {
+    return getReassignmentNotifications().filter((notification) => String(notification.employeeId) === String(employeeId))
+  }
+
+  function getUnseenLeadmanReassignmentNotifications(departments = []) {
+    const departmentSet = new Set((Array.isArray(departments) ? departments : [departments]).map((value) => String(value || '').trim()))
+    return getReassignmentNotifications().filter((notification) => departmentSet.has(String(notification.targetDepartment || '').trim()))
+  }
+
+  function getUnseenEmployeeReassignmentNotifications(userId, employeeId) {
+    const seenIds = loadReassignmentSeenIds(userId)
+    return getEmployeeReassignmentNotifications(employeeId).filter((notification) => !seenIds.includes(String(notification.id)))
+  }
+
+  function getUnseenLeadmanReassignmentNotifications(userId, departments = []) {
+    const seenIds = loadReassignmentSeenIds(userId)
+    return getUnseenLeadmanReassignmentNotifications(departments).filter((notification) => !seenIds.includes(String(notification.id)))
+  }
+
+  function markReassignmentNotificationsSeen(userId, notificationIds = []) {
+    if (!userId) return
+    const currentSeen = loadReassignmentSeenIds(userId)
+    saveReassignmentSeenIds(userId, [...currentSeen, ...notificationIds])
+  }
+
   function clearAll() {
     setDepartmentRequests([])
     setAttendanceRecords([])
@@ -678,17 +773,21 @@ const id = `ATD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   }
 
   function getEmployeeDepartment(employeeId) {
-    const approvedRequests = departmentRequests
-      .filter((request) => request.employeeId === employeeId && request.status === 'approved')
-      .sort((a, b) => new Date(b.leadmanAt || b.requestedAt) - new Date(a.leadmanAt || a.requestedAt))
+  // Filter for approved requests for this specific employee
+  const approvedRequests = departmentRequests
+    .filter((request) => String(request.employeeId) === String(employeeId) && request.status === 'approved')
+    // Sort by the date they were approved/assigned
+    .sort((a, b) => new Date(b.leadmanAt || b.requestedAt) - new Date(a.leadmanAt || a.requestedAt));
 
-    if (approvedRequests.length > 0) {
-      return approvedRequests[0].requestedDepartment
-    }
-
-    const employee = employees.find((item) => String(item.employeeId) === String(employeeId))
-    return employee?.department || null
+  // If a recent approved request exists, return that department
+  if (approvedRequests.length > 0) {
+    return approvedRequests[0].requestedDepartment;
   }
+
+  // Otherwise, fallback to the base employee profile
+  const employee = employees.find((item) => String(item.employeeId) === String(employeeId));
+  return employee?.department || null;
+}
 
   function getEmployeeDepartmentRequests(employeeId) {
     return dedupeBy(
@@ -1218,6 +1317,14 @@ const id = `ATD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         getLeadmanDeployedEmployees,
         getLeadmanAttendance,
         getHeadPendingAttendance,
+        addReassignmentNotification,
+        getReassignmentNotifications,
+        getEmployeeReassignmentNotifications,
+        getUnseenLeadmanReassignmentNotifications,
+        getUnseenEmployeeReassignmentNotifications,
+        getUnseenLeadmanReassignmentNotifications,
+        markReassignmentNotificationsSeen,
+        updateEmployeeRecord,
         getFinanceAttendance,
         getFinanceRecords,
         getFinanceEmployees,

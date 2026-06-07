@@ -2,8 +2,9 @@ import { Outlet, NavLink, Navigate, useNavigate } from 'react-router-dom'
 import PageTransition from '../ui/PageTransition'
 import { Bell, LogOut, Menu, QrCode, X, Users, Factory, FileSpreadsheet, LayoutDashboard, CalendarDays, BarChart3, Megaphone } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
+import { useDialog } from '../../context/dialog-context'
 import { useQr } from '../../context/qr-context'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { DEPARTMENTS } from '../../constants/departments'
 
 function cn(...inputs) {
@@ -26,7 +27,8 @@ const allNavItems = [
 
 export default function MainLayout() {
   const { user, logout } = useAuth()
-  const { getEmployeeDepartmentRequests, getEmployeeAttendance, getLeadmanDepartmentRequests, getLeadmanAttendance, getHeadPendingAttendance, getFinancePayrollCycles, getFinancePayments } = useQr()
+  const { getEmployeeDepartmentRequests, getEmployeeAttendance, getLeadmanDepartmentRequests, getLeadmanAttendance, getHeadPendingAttendance, getFinancePayrollCycles, getFinancePayments, getUnseenEmployeeReassignmentNotifications, getUnseenLeadmanReassignmentNotifications, markReassignmentNotificationsSeen } = useQr()
+  const dialog = useDialog()
   const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
@@ -63,6 +65,31 @@ export default function MainLayout() {
         ]
       : []
 
+  useEffect(() => {
+    if (!user?.id) return
+    if (user?.role !== 'leadman' && user?.role !== 'employee') return
+
+    const unseen = user?.role === 'leadman'
+      ? getUnseenLeadmanReassignmentNotifications(user.id, leadmanDepartments)
+      : getUnseenEmployeeReassignmentNotifications(user.id, user.id)
+
+    if (unseen.length === 0) return
+
+    dialog.success({
+      title: user?.role === 'leadman'
+        ? unseen.length === 1 ? 'Employee reassigned' : `${unseen.length} employees reassigned`
+        : unseen.length === 1 ? 'Department reassigned' : `${unseen.length} department updates`,
+      message: unseen.map((item) => {
+        if (user?.role === 'leadman') {
+          return `${item.employeeName} was reassigned from ${item.oldDepartment} to ${item.targetDepartment}`
+        }
+        return `You were reassigned from ${item.oldDepartment} to ${item.targetDepartment}`
+      }).join('. '),
+    })
+
+    markReassignmentNotificationsSeen(user.id, unseen.map((item) => item.id))
+  }, [user?.id, user?.role, leadmanDepartments, dialog, getUnseenEmployeeReassignmentNotifications, getUnseenLeadmanReassignmentNotifications, markReassignmentNotificationsSeen])
+
   const notificationItems = useMemo(() => {
     if (user?.role === 'leadman') {
       return [
@@ -81,7 +108,20 @@ export default function MainLayout() {
             detail: record.department,
             meta: record.scannedAt,
           })),
+        ...getUnseenLeadmanReassignmentNotifications(user.id, leadmanDepartments).slice(0, 3).map((notification) => ({
+          title: `${notification.employeeName} reassigned`,
+          detail: `${notification.oldDepartment} → ${notification.targetDepartment}`,
+          meta: notification.createdAt,
+        })),
       ]
+    }
+
+    if (user?.role === 'employee') {
+      return getUnseenEmployeeReassignmentNotifications(user.id, user.id).slice(0, 5).map((notification) => ({
+        title: `Department reassigned`,
+        detail: `${notification.oldDepartment} → ${notification.targetDepartment}`,
+        meta: notification.createdAt,
+      }))
     }
 
     if (user?.role === 'production_incharge' || user?.role === 'hr' || user?.role === 'admin') {
@@ -117,6 +157,8 @@ export default function MainLayout() {
     getFinancePayrollCycles,
     getLeadmanAttendance,
     getLeadmanDepartmentRequests,
+    getUnseenLeadmanReassignmentNotifications,
+    getUnseenEmployeeReassignmentNotifications,
     leadmanDepartments,
     user?.id,
     user?.role,

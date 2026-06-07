@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { BadgeCheck, ClipboardList, ScanLine, Search } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
@@ -102,24 +102,14 @@ export default function LeadmanDashboard() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-500">Deployed workers</p>
-            <p className="mt-2 text-2xl font-bold text-white">{stats.deployed}</p>
-          </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-500">Reports</p>
-            <p className="mt-2 text-2xl font-bold text-white">{stats.scans}</p>
-          </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-500">Pending transfers</p>
-            <p className="mt-2 text-2xl font-bold text-white">{stats.pending}</p>
-          </div>
+          
         </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            
             <div>
               <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><ScanLine className="h-5 w-5 text-emerald-400" /> Create Report</h3>
               <p className="mt-1 text-sm text-slate-400">Open the report form and select the deployed worker to include in this report.</p>
@@ -147,7 +137,7 @@ export default function LeadmanDashboard() {
                         employeeName: employee.employeeName,
                         role: employee.role || 'Worker',
                         department: employee.department,
-                        status: employee.approvedAt ? `Approved` : 'Deployed',
+                        
                       }}
                       showActions={false}
                     />
@@ -159,26 +149,9 @@ export default function LeadmanDashboard() {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><BadgeCheck className="h-5 w-5 text-cyan-400" /> Recent Reports</h3>
-            <div className="mt-4 space-y-3">
-              {currentScans.length === 0 ? (
-                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">No scans recorded yet.</div>
-              ) : (
-                currentScans.slice(0, 4).map((record) => (
-                  <div key={record.id} className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-                    <p className="font-medium text-white">{record.employeeName}</p>
-                    <p className="mt-1 text-sm text-slate-400">{record.department} • {formatDateTime(record.scannedAt)}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><ClipboardList className="h-5 w-5 text-amber-400" /> What moves out</h3>
-            <p className="mt-3 text-sm text-slate-400">Transfer approvals, deployed workers, and daily reports are now on their own pages in the left menu.</p>
-          </div>
+        
         </div>
       </div>
 

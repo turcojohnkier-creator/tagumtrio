@@ -351,9 +351,7 @@ export default function ProductionConsolidatedReports() {
             <h2 className="mt-2 text-2xl font-bold text-white">Consolidated production report cards</h2>
             <p className="mt-1 text-sm text-slate-400">Each card shows the day total. Opening a card reveals the full table for that report.</p>
           </div>
-          <Link to="/app/production" className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-sm text-slate-200 hover:border-slate-700">
-            <ArrowLeft className="h-4 w-4" /> Back to daily reports
-          </Link>
+          
         </div>
       </div>
 
@@ -367,7 +365,7 @@ export default function ProductionConsolidatedReports() {
                 key={report.id}
                 type="button"
                 onClick={() => setSelectedReportId(report.id)}
-                className={`group relative block w-full rounded-2xl border border-slate-800 bg-slate-950 p-4 text-left transition-all hover:border-emerald-500/30 hover:bg-slate-900 ${selectedReportId === report.id ? 'border-emerald-500/40 bg-emerald-500/10' : ''}`}
+                className={`group relative block w-full rounded-2xl border border-slate-800 bg-slate-950 p-4 text-left transition-all hover:border-emerald-500/30 hover:bg-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30 active:translate-y-[1px] active:bg-slate-900 ${selectedReportId === report.id ? 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20' : ''}`}
               >
                 <div className="pr-12 md:flex md:items-center md:gap-5">
                   <div className="min-w-0 md:flex-1">

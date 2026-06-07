@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Briefcase, Calendar as CalendarIcon, FileText, Megaphone, TimerReset, ChevronRight } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
@@ -107,8 +107,23 @@ export default function EmployeeDashboard() {
     getEmployeeTotals,
     getEmployeeAttendance,
     submitLeaveRequest,
+    getUnseenEmployeeReassignmentNotifications,
+    markReassignmentNotificationsSeen,
   } = useQr()
   const dialog = useDialog()
+
+  useEffect(() => {
+    if (!user?.id) return
+
+    const unseen = getUnseenEmployeeReassignmentNotifications(user.id, user.id)
+    if (unseen.length === 0) return
+
+    dialog.success({
+      title: unseen.length === 1 ? 'Department reassigned' : `${unseen.length} department updates`,
+      message: unseen.map((item) => `You were reassigned from ${item.oldDepartment} to ${item.targetDepartment}`).join('. '),
+    })
+    markReassignmentNotificationsSeen(user.id, unseen.map((item) => item.id))
+  }, [user?.id, dialog, getUnseenEmployeeReassignmentNotifications, markReassignmentNotificationsSeen])
 
   const currentDepartment = getEmployeeDepartment(user?.id)
   const totals = getEmployeeTotals(user?.id)

@@ -348,12 +348,7 @@ export default function LeadmanDailyReport() {
           </div>
         )}
 
-        <div className="flex flex-col gap-3 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-          <p>{reportBatches.length > 0 ? `${reportBatches.length} scanned report${reportBatches.length === 1 ? '' : 's'} loaded.` : 'No scanned entries yet.'}</p>
-          <button disabled={isSubmitting || reportEntries.length === 0} onClick={submitReport} className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 font-medium text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-70">
-            <Send className="h-4 w-4" /> {isSubmitting ? 'Submitting...' : 'Submit Consolidated Report'}
-          </button>
-        </div>
+        
         {submitMessage ? <p className="text-sm text-emerald-400">{submitMessage}</p> : null}
         {submitError ? <p className="text-sm text-rose-400">{submitError}</p> : null}
       </div>

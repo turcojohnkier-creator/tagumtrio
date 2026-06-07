@@ -7,7 +7,7 @@ import { useQr } from '../../context/qr-context'
 import { fetchEmployeesByDepartmentApi, fetchEmployeesApi } from '../../lib/api'
 
 export default function GMOverview() {
-  const { employees = [], employeesLoading } = useQr()
+  const { employees = [], employeesLoading, addReassignmentNotification, updateEmployeeRecord } = useQr()
   const [selectedDept, setSelectedDept] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [sortOption, setSortOption] = useState('most')
@@ -57,6 +57,13 @@ export default function GMOverview() {
   function openDept(dept) {
     setSelectedDept(dept)
     setShowModal(true)
+  }
+
+  function handleEmployeeReassigned(notification) {
+    addReassignmentNotification(notification)
+    if (notification?.employeeId) {
+      updateEmployeeRecord(notification.employeeId, { department: notification.targetDepartment })
+    }
   }
 
   // load employees for selected department when modal opens
@@ -127,7 +134,13 @@ export default function GMOverview() {
       </div>
 
       {showModal && selectedDept && (
-        <EmployeeListModal department={selectedDept} onClose={() => setShowModal(false)} employees={deptEmployees.length > 0 ? deptEmployees : employees} loading={deptLoading} />
+        <EmployeeListModal
+          department={selectedDept}
+          onClose={() => setShowModal(false)}
+          employees={deptEmployees.length > 0 ? deptEmployees : employees}
+          loading={deptLoading}
+          onReassigned={handleEmployeeReassigned}
+        />
       )}
     </div>
   )

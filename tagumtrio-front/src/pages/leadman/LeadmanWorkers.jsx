@@ -73,7 +73,7 @@ export default function LeadmanWorkers() {
                     employeeName: employee.employeeName,
                     department: employee.department,
                     role: employee.role || 'Worker',
-                    status: employeeAttendance.length > 0 ? `${employeeAttendance.length} scans` : 'No scans',
+                    
                   }}
                   showActions={false}
                 />

@@ -3,38 +3,38 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { DialogProvider } from './context/dialog-context'
 import QRProvider from './context/qr-provider'
-import LeadmanLayout from './components/layout/LeadmanLayout'
-import MainLayout from './components/layout/MainLayout'
-import EmployeeLayout from './components/layout/EmployeeLayout'
+import LeadmanLayout from './roles/leadman/layout/LeadmanLayout'
+import MainLayout from './shared/layout/MainLayout'
+import EmployeeLayout from './roles/employee/layout/EmployeeLayout'
 
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
 const Landing = lazy(() => import('./pages/Landing'))
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard'))
-const LeadmanDashboard = lazy(() => import('./pages/leadman/LeadmanDashboard'))
-const LeadmanIncomingReports = lazy(() => import('./pages/leadman/LeadmanIncomingReports'))
-const LeadmanWorkers = lazy(() => import('./pages/leadman/LeadmanWorkers'))
-const LeadmanDailyReport = lazy(() => import('./pages/leadman/LeadmanDailyReport'))
-const LeadmanHistory = lazy(() => import('./pages/leadman/LeadmanHistory'))
-const ProductionDashboard = lazy(() => import('./pages/production/ProductionDashboard'))
-const ProductionReports = lazy(() => import('./pages/production/ProductionReports'))
-const ProductionCompiledReports = lazy(() => import('./pages/production/ProductionCompiledReports'))
-const ProductionConsolidatedReports = lazy(() => import('./pages/production/ProductionConsolidatedReports'))
-const FinanceHome = lazy(() => import('./pages/finance/FinanceHome'))
-const FinanceProductionReports = lazy(() => import('./pages/finance/FinanceProductionReports'))
-const FinanceDepartmentEmployees = lazy(() => import('./pages/finance/FinanceDepartmentEmployees'))
+const LeadmanDashboard = lazy(() => import('./roles/leadman/pages/LeadmanDashboard'))
+const LeadmanIncomingReports = lazy(() => import('./roles/leadman/pages/LeadmanIncomingReports'))
+const LeadmanWorkers = lazy(() => import('./roles/leadman/pages/LeadmanWorkers'))
+const LeadmanDailyReport = lazy(() => import('./roles/leadman/pages/LeadmanDailyReport'))
+const LeadmanHistory = lazy(() => import('./roles/leadman/pages/LeadmanHistory'))
+const ProductionDashboard = lazy(() => import('./roles/production/pages/ProductionDashboard'))
+const ProductionReports = lazy(() => import('./roles/production/pages/ProductionReports'))
+const ProductionCompiledReports = lazy(() => import('./roles/production/pages/ProductionCompiledReports'))
+const ProductionConsolidatedReports = lazy(() => import('./roles/production/pages/ProductionConsolidatedReports'))
+const FinanceHome = lazy(() => import('./roles/finance/pages/FinanceHome'))
+const FinanceProductionReports = lazy(() => import('./roles/finance/pages/FinanceProductionReports'))
+const FinanceDepartmentEmployees = lazy(() => import('./roles/finance/pages/FinanceDepartmentEmployees'))
 // GMOversight removed — GMOverview will be the main GM entry
-const HRCreateAccount = lazy(() => import('./pages/HR/HRCreateAccount'))
-const HREmployeeDirectory = lazy(() => import('./pages/HR/EmployeeDirectory'))
-const GMEmployeeManagement = lazy(() => import('./pages/gm/EmployeeManagement'))
-const GMAnnouncements = lazy(() => import('./pages/gm/Announcements'))
-const GMOverview = lazy(() => import('./pages/gm/GMOverview'))
-const EmployeeDashboard = lazy(() => import('./pages/employee/EmployeeDashboard'))
-const EmployeeAnnouncements = lazy(() => import('./pages/employee/Announcements'))
-const MyAttendance = lazy(() => import('./pages/employee/MyAttendance'))
-const MyPayslips = lazy(() => import('./pages/employee/MyPayslips'))
-const ViewPayslip = lazy(() => import('./pages/employee/ViewPayslip'))
-const Requests = lazy(() => import('./pages/converted/Requests'))
+const HRCreateAccount = lazy(() => import('./roles/hr/pages/HRCreateAccount'))
+const HREmployeeDirectory = lazy(() => import('./roles/hr/pages/EmployeeDirectory'))
+const GMEmployeeManagement = lazy(() => import('./roles/gm/pages/EmployeeManagement'))
+const GMAnnouncements = lazy(() => import('./roles/gm/pages/Announcements'))
+const GMOverview = lazy(() => import('./roles/gm/pages/GMOverview'))
+const EmployeeDashboard = lazy(() => import('./roles/employee/pages/EmployeeDashboard'))
+const EmployeeAnnouncements = lazy(() => import('./roles/employee/pages/Announcements'))
+const MyAttendance = lazy(() => import('./roles/employee/pages/MyAttendance'))
+const MyPayslips = lazy(() => import('./roles/employee/pages/MyPayslips'))
+const ViewPayslip = lazy(() => import('./roles/employee/pages/ViewPayslip'))
+const Requests = lazy(() => import('./shared/pages/Requests'))
 
 function RouteLoadingFallback() {
   return <div className="p-6 text-sm text-slate-400">Loading...</div>

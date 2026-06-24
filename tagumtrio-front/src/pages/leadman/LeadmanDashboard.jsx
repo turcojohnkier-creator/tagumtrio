@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { BadgeCheck, ClipboardList, ScanLine, Search } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
-import DepartmentScanModal from '../../components/leadman/DepartmentScanModal'
+import DepartmentScanModal from '../../roles/leadman/components/DepartmentScanModal'
 import { useDialog } from '../../context/dialog-context'
 import EmployeeCard from '../../roles/leadman/components/EmployeeCard'
 

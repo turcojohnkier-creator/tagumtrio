@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { X } from 'lucide-react'
-import { useDialog } from '../../context/dialog-context'
-import { updateEmployeeApi } from '../../lib/api'
-import { DEPARTMENTS } from '../../constants/departments'
+import { useDialog } from '../../../context/dialog-context'
+import { updateEmployeeApi } from '../../../lib/api'
+import { DEPARTMENTS } from '../../../constants/departments'
 
 export default function EmployeeListModal({ department, onClose, employees = [], onReassigned }) {
   const dialog = useDialog()

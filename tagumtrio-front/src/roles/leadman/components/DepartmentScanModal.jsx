@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { X } from 'lucide-react'
-import Portal from '../../shared/ui/Portal'
-import { buildDepartmentQrSummary, getDepartmentQrScanSpec } from '../../constants/qr-scan-fields'
+import Portal from '../../../shared/ui/Portal'
+import { buildDepartmentQrSummary, getDepartmentQrScanSpec } from '../../../constants/qr-scan-fields'
 
 function normalizeEmployeeId(employee) {
   return String(employee.employeeId || employee.id || employee.identifier || '').trim()

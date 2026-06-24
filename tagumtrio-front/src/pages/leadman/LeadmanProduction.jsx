@@ -3,7 +3,7 @@ import { BadgeCheck, ClipboardList, Clock3, MessageSquareWarning, Save, ScanLine
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import { DEPARTMENTS } from '../../constants/departments'
-import DepartmentScanModal from '../../components/leadman/DepartmentScanModal'
+import DepartmentScanModal from '../../roles/leadman/components/DepartmentScanModal'
 import { useDialog } from '../../context/dialog-context'
 
 function asText(value) {

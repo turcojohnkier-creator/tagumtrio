@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { MessageSquareWarning, Send, Trash2, X } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
-import DailyReportTable from '../../components/reports/DailyReportTable'
+import DailyReportTable from '../../shared/reports/DailyReportTable'
 import { useDialog } from '../../context/dialog-context'
-import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from '../../components/reports/report-entry-utils'
+import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from '../../shared/reports/report-entry-utils'
 
 function formatReportDate(value) {
   if (!value) return '-'

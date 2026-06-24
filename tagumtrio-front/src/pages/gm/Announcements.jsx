@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQr } from '../../context/qr-context'
 import { useAuth } from '../../context/auth-context'
-import AnnouncementPost from '../../components/ui/AnnouncementPost'
+import AnnouncementPost from '../../shared/ui/AnnouncementPost'
 
 export default function Announcements() {
   const { announcements = [], createAnnouncement, updateAnnouncement, removeAnnouncement } = useQr()

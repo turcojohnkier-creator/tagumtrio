@@ -5,7 +5,7 @@ import { useAuth } from '../../context/auth-context'
 import { useDialog } from '../../context/dialog-context'
 import { useQr } from '../../context/qr-context'
 import { fetchDailyReportsApi } from '../../lib/api'
-import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from '../../components/reports/report-entry-utils'
+import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from '../../shared/reports/report-entry-utils'
 
 function formatReportDate(value) {
   if (!value) return '-'

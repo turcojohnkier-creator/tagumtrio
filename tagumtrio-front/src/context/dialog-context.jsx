@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState } from 'react'
 import { CheckCircle2, AlertTriangle, X } from 'lucide-react'
-import Portal from '../components/ui/Portal'
+import Portal from '../shared/ui/Portal'
 
 const DialogContext = createContext(undefined)
 

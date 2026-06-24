@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Navigate, Outlet, useNavigate } from 'react-router-dom'
 import { Menu, X, QrCode } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
-import PageTransition from '../ui/PageTransition'
+import PageTransition from '../../shared/ui/PageTransition'
 import EmployeeSidebar from './EmployeeSidebar'
 
 export default function EmployeeLayout() {

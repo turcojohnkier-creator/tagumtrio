@@ -1,6 +1,6 @@
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
-import AnnouncementPost from '../../components/ui/AnnouncementPost'
+import AnnouncementPost from '../../shared/ui/AnnouncementPost'
 
 export default function EmployeeAnnouncements() {
   const { user } = useAuth()

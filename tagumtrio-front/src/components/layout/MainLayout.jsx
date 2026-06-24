@@ -1,5 +1,5 @@
 import { Outlet, NavLink, Navigate, useNavigate } from 'react-router-dom'
-import PageTransition from '../ui/PageTransition'
+import PageTransition from '../../shared/ui/PageTransition'
 import { Bell, LogOut, Menu, QrCode, X, Users, Factory, FileSpreadsheet, LayoutDashboard, CalendarDays, BarChart3, Megaphone } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useDialog } from '../../context/dialog-context'

@@ -3,8 +3,8 @@ import { Navigate, Outlet, useNavigate } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
-import PageTransition from '../ui/PageTransition'
-import ErrorBoundary from '../ui/ErrorBoundary'
+import PageTransition from '../../shared/ui/PageTransition'
+import ErrorBoundary from '../../shared/ui/ErrorBoundary'
 import LeadmanSidebar from './LeadmanSidebar'
 
 export default function LeadmanLayout() {

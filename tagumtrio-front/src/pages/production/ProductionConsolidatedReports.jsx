@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, BarChart3, CalendarDays, ClipboardList, Search, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { fetchDailyReportsApi } from '../../lib/api'
-import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from '../../components/reports/report-entry-utils'
+import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from '../../shared/reports/report-entry-utils'
 
 function formatDate(value) {
   return new Date(value).toLocaleString('en-US', {

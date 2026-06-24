@@ -3,7 +3,7 @@ import { Briefcase, Calendar as CalendarIcon, FileText, Megaphone, TimerReset, C
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import { useDialog } from '../../context/dialog-context'
-import AnnouncementPost from '../../components/ui/AnnouncementPost'
+import AnnouncementPost from '../../shared/ui/AnnouncementPost'
 
 function FileLeaveButton({ user, onSubmit }) {
   const dialog = useDialog()

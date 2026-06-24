@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
-import DailyReportTable from '../../components/reports/DailyReportTable'
+import DailyReportTable from '../../shared/reports/DailyReportTable'
 import { fetchDailyReportsApi } from '../../lib/api'
 
 function asText(v) { return String(v || '').toLowerCase() }

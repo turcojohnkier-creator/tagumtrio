@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Search, Users } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
-import EmployeeCard from '../../components/employee/EmployeeCard'
+import EmployeeCard from '../../roles/leadman/components/EmployeeCard'
 
 export default function LeadmanWorkers() {
   const { user } = useAuth()

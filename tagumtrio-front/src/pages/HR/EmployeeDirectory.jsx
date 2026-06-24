@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { useQr } from '../../context/qr-context'
 import { updateEmployeeApi } from '../../lib/api'
-import EmployeeCard from '../../components/employee/EmployeeCard'
-import EmployeeDetailModal from '../../components/employee/EmployeeDetailModal'
+import EmployeeCard from '../../roles/hr/components/EmployeeCard'
+import EmployeeDetailModal from '../../roles/hr/components/EmployeeDetailModal'
 
 export default function EmployeeDirectory() {
   const { employees = [], employeesLoading, refreshEmployees } = useQr()

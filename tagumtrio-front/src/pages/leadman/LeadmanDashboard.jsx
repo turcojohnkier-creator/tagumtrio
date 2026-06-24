@@ -4,7 +4,7 @@ import { useAuth } from '../../context/auth-context'
 import { useQr } from '../../context/qr-context'
 import DepartmentScanModal from '../../components/leadman/DepartmentScanModal'
 import { useDialog } from '../../context/dialog-context'
-import EmployeeCard from '../../components/employee/EmployeeCard'
+import EmployeeCard from '../../roles/leadman/components/EmployeeCard'
 
 function asText(value) {
   return String(value || '').toLowerCase()

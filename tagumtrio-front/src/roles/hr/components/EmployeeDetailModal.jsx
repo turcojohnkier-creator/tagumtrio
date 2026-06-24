@@ -1,5 +1,5 @@
 import { X, File, Info } from 'lucide-react'
-import { DEPARTMENTS } from '../../constants/departments'
+import { DEPARTMENTS } from '../../../constants/departments'
 
 export default function EmployeeDetailModal({ employee, onClose, onToggleActive, actionLoading = false }) {
   if (!employee) return null

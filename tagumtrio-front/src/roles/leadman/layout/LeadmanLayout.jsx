@@ -33,33 +33,25 @@ export default function LeadmanLayout() {
       <LeadmanSidebar user={user} onLogout={handleLogout} onNavigate={() => setMobileMenuOpen(false)} mobileOpen={mobileMenuOpen} />
 
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50 px-4 md:px-6">
-          <button onClick={() => setMobileMenuOpen((open) => !open)} className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-700 md:hidden" aria-label="Toggle leadman navigation">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6">
+          <button onClick={() => setMobileMenuOpen((open) => !open)} className="inline-flex items-center justify-center rounded-md border border-slate-200 p-1.5 text-slate-600 md:hidden" aria-label="Toggle leadman navigation">
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-<div className="hidden items-center gap-3 md:flex">
 
-          </div>
-          <div className="hidden items-center gap-3 md:flex">
-            
-            
-            <div className="text-right">
-              <p className="text-sm font-medium text-slate-900">{user.name}</p>
-              <p className="text-xs text-slate-400">{selectedLeadmanDepartment || user.department || t('leadman.assigned', 'Assigned leadman departments')}</p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-emerald-500/10 text-emerald-700 flex items-center justify-center text-sm font-semibold ring-1 ring-emerald-500/20">
-              {user.name.split(' ').map((part) => part[0]).join('').substring(0, 2)}
-            </div>
+          <div className="hidden items-center gap-2 sm:flex">
+            <p className="text-sm font-medium text-slate-900">{user.name}</p>
+            <span className="text-slate-300">·</span>
+            <p className="text-sm text-slate-500">{selectedLeadmanDepartment || user.department || t('leadman.assigned', 'Assigned leadman departments')}</p>
           </div>
 
-          <button onClick={handleLogout} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:text-rose-700 md:hidden">
+          <button onClick={handleLogout} className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-2.5 py-1.5 text-sm text-slate-600 hover:text-rose-700 md:hidden">
             <X className="h-4 w-4" />
             {t('ui.exit', 'Exit')}
           </button>
         </header>
 
         <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl pb-12">
+          <div className="mx-auto max-w-6xl pb-12">
             <ErrorBoundary>
               <PageTransition>
                 <Outlet />

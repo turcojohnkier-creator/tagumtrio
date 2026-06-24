@@ -30,28 +30,22 @@ export default function EmployeeLayout() {
       <EmployeeSidebar user={user} onLogout={handleLogout} onNavigate={() => setMobileMenuOpen(false)} mobileOpen={mobileMenuOpen} />
 
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50 px-4 md:px-6">
-          <button onClick={() => setMobileMenuOpen((open) => !open)} className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-700 md:hidden" aria-label="Toggle employee navigation">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6">
+          <button onClick={() => setMobileMenuOpen((open) => !open)} className="inline-flex items-center justify-center rounded-md border border-slate-200 p-1.5 text-slate-600 md:hidden" aria-label="Toggle employee navigation">
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
 
-          <div className="hidden items-center gap-3 md:flex">
+          <div />
 
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-medium text-slate-900">{user.name}</p>
-              <p className="text-xs text-slate-400">{user.department || 'Department pending'}</p>
-            </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-900 ring-1 ring-slate-300">
-              {user.name.split(' ').map((part) => part[0]).join('').substring(0, 2)}
-            </div>
+          <div className="hidden items-center gap-2 sm:flex">
+            <p className="text-sm font-medium text-slate-900">{user.name}</p>
+            <span className="text-slate-300">·</span>
+            <p className="text-sm text-slate-500">{user.department || 'Department pending'}</p>
           </div>
         </header>
 
         <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl pb-12">
+          <div className="mx-auto max-w-6xl pb-12">
             <PageTransition>
               <Outlet />
             </PageTransition>

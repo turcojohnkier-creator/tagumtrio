@@ -4,10 +4,8 @@
 
 :root {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #e2e8f0;
-  background:
-    radial-gradient(circle at top, rgba(34, 211, 238, 0.16), transparent 30%),
-    linear-gradient(180deg, #020617 0%, #030712 100%);
+  color: #0f172a;
+  background: #f8fafc;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -32,22 +30,22 @@ a {
 }
 
 ::selection {
-  background: rgba(34, 211, 238, 0.35);
-  color: #fff;
+  background: rgba(16, 185, 129, 0.25);
+  color: #0f172a;
 }
 
 /* Fix select and option visibility */
 select {
-  color: #ffffff;
-  background-color: #0f172a;
+  color: #0f172a;
+  background-color: #ffffff;
 }
 
 select option {
-  color: #ffffff;
-  background-color: #1e293b;
+  color: #0f172a;
+  background-color: #ffffff;
 }
 
 select option:checked {
-  background: linear-gradient(#065f46, #065f46);
-  color: #ffffff;
+  background: linear-gradient(#d1fae5, #d1fae5);
+  color: #0f172a;
 }

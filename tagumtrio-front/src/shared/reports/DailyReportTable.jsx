@@ -14,13 +14,13 @@ export default function DailyReportTable({ entries = [], fallbackDepartment = ''
   const safeEntries = Array.isArray(entries) ? entries.filter((entry) => getEntryLabel(entry) || getEntryIdentifier(entry) || entry.department || entry.raw?.department || entry.raw?.qrFields?.department || entry.qrFields?.department || entry.thickness || entry.crates || entry.pieces || entry.date || entry.dateIn || entry.raw?.qrFields?.date || entry.raw?.qrFields?.dateIn) : []
 
   if (safeEntries.length === 0) {
-    return <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">No report entries yet.</div>
+    return <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">No report entries yet.</div>
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/80">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white/80">
       <table className="w-full text-left text-sm">
-        <thead className="bg-slate-950 text-slate-400">
+        <thead className="bg-slate-50 text-slate-500">
           <tr>
             <th className="px-4 py-3 font-medium">Employee</th>
             <th className="px-4 py-3 font-medium">Department</th>
@@ -30,18 +30,18 @@ export default function DailyReportTable({ entries = [], fallbackDepartment = ''
             <th className="px-4 py-3 font-medium">Amount</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-800/70 bg-slate-900/50">
+        <tbody className="divide-y divide-slate-200/70 bg-white/50">
           {safeEntries.map((entry) => (
-            <tr key={entry.id || `${getEntryIdentifier(entry)}-${getEntryLabel(entry)}-${entry.scannedAt || entry.raw?.batchCapturedAt || ''}`} className="text-slate-300 hover:bg-slate-900/80">
+            <tr key={entry.id || `${getEntryIdentifier(entry)}-${getEntryLabel(entry)}-${entry.scannedAt || entry.raw?.batchCapturedAt || ''}`} className="text-slate-700 hover:bg-white/80">
               <td className="px-4 py-4">
-                <div className="font-medium text-white">{getEntryLabel(entry) || 'emp'}</div>
-                <div className="text-xs text-slate-500">{getEntryIdentifier(entry) || '-'}</div>
+                <div className="font-medium text-slate-900">{getEntryLabel(entry) || 'emp'}</div>
+                <div className="text-xs text-slate-400">{getEntryIdentifier(entry) || '-'}</div>
               </td>
-              <td className="px-4 py-4 text-slate-300">{resolveEntryDepartment(entry, fallbackDepartment)}</td>
-              <td className="px-4 py-4 text-slate-300">{entry.thickness || entry.raw?.qrFields?.thickness || entry.qrFields?.thickness || '-'}</td>
-              <td className="px-4 py-4 text-slate-300">{getEntryPieces(entry) || entry.crates || entry.pieces || entry.raw?.pieces || entry.raw?.crates || entry.raw?.qrFields?.pieces || entry.raw?.qrFields?.crates || '-'}</td>
-              <td className="px-4 py-4 text-slate-300">{entry.date || entry.dateIn || entry.raw?.qrFields?.date || entry.qrFields?.date || entry.raw?.qrFields?.dateIn || entry.qrFields?.dateIn || '-'}</td>
-              <td className="px-4 py-4 font-semibold text-emerald-400">₱{Number(entry.amount || 0).toLocaleString()}</td>
+              <td className="px-4 py-4 text-slate-700">{resolveEntryDepartment(entry, fallbackDepartment)}</td>
+              <td className="px-4 py-4 text-slate-700">{entry.thickness || entry.raw?.qrFields?.thickness || entry.qrFields?.thickness || '-'}</td>
+              <td className="px-4 py-4 text-slate-700">{getEntryPieces(entry) || entry.crates || entry.pieces || entry.raw?.pieces || entry.raw?.crates || entry.raw?.qrFields?.pieces || entry.raw?.qrFields?.crates || '-'}</td>
+              <td className="px-4 py-4 text-slate-700">{entry.date || entry.dateIn || entry.raw?.qrFields?.date || entry.qrFields?.date || entry.raw?.qrFields?.dateIn || entry.qrFields?.dateIn || '-'}</td>
+              <td className="px-4 py-4 font-semibold text-emerald-700">₱{Number(entry.amount || 0).toLocaleString()}</td>
             </tr>
           ))}
         </tbody>

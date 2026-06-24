@@ -57,45 +57,45 @@ export default function LeadmanHistory() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">History</p>
-          <h2 className="mt-2 text-2xl font-bold text-white">Submitted Reports</h2>
-          <p className="mt-1 text-sm text-slate-400">View recent submitted reports and send a consolidated daily report.</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">History</p>
+          <h2 className="mt-2 text-2xl font-bold text-slate-900">Submitted Reports</h2>
+          <p className="mt-1 text-sm text-slate-500">View recent submitted reports and send a consolidated daily report.</p>
         </div>
 
         <div className="flex gap-3 flex-wrap">
-          <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3 min-w-[220px] select-none pointer-events-none">
-            <p className="text-xs text-slate-500">Department</p>
-            <p className="mt-2 text-white">{currentDepartment || 'Assigned department'}</p>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 min-w-[220px] select-none pointer-events-none">
+            <p className="text-xs text-slate-400">Department</p>
+            <p className="mt-2 text-slate-900">{currentDepartment || 'Assigned department'}</p>
           </div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
-            <p className="text-xs text-slate-500">Date</p>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-2 bg-transparent text-white outline-none" />
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs text-slate-400">Date</p>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-2 bg-transparent text-slate-900 outline-none" />
           </div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
-            <p className="text-xs text-slate-500">Search</p>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs text-slate-400">Search</p>
             <div className="relative mt-2">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search reports..." className="pl-10 bg-transparent text-white outline-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search reports..." className="pl-10 bg-transparent text-slate-900 outline-none" />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-        {loading ? <div className="text-slate-400">Loading...</div> : null}
-        {!loading && filtered.length === 0 ? <div className="text-slate-400">No reports found for selected filters.</div> : null}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+        {loading ? <div className="text-slate-500">Loading...</div> : null}
+        {!loading && filtered.length === 0 ? <div className="text-slate-500">No reports found for selected filters.</div> : null}
         <div className="space-y-3">
           {filtered.map((report) => (
-            <div key={report.id} className="rounded-xl border border-slate-800 bg-slate-950 py-2 px-3 flex items-center justify-between">
+            <div key={report.id} className="rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 flex items-center justify-between">
               <div>
-                <div className="font-medium text-white">{report.department} • {report.reportDate}</div>
-                <div className="text-xs text-slate-400 mt-1">Submitted by {report.submittedByName || report.submittedBy || 'Unknown'} • {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</div>
-                <div className="text-sm text-slate-300 mt-1">Entries: {Array.isArray(report.entries) ? report.entries.length : 0}</div>
+                <div className="font-medium text-slate-900">{report.department} • {report.reportDate}</div>
+                <div className="text-xs text-slate-500 mt-1">Submitted by {report.submittedByName || report.submittedBy || 'Unknown'} • {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</div>
+                <div className="text-sm text-slate-700 mt-1">Entries: {Array.isArray(report.entries) ? report.entries.length : 0}</div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setSelected(report)} className="rounded-xl bg-slate-800 px-3 py-1.5 text-slate-200">Open</button>
+                <button onClick={() => setSelected(report)} className="rounded-xl bg-slate-100 px-3 py-1.5 text-slate-800">Open</button>
               </div>
             </div>
           ))}
@@ -104,34 +104,34 @@ export default function LeadmanHistory() {
 
       {selected ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-4xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
-            <div className="flex items-start justify-between gap-4 border-b border-slate-800 px-5 py-4">
+          <div className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Submitted daily report</p>
-                <h3 className="mt-1 text-lg font-semibold text-white">{selected.department} • {selected.reportDate}</h3>
-                <p className="mt-1 text-sm text-slate-400">Submitted by {selected.submittedByName || selected.submittedBy || 'Unknown'}</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Submitted daily report</p>
+                <h3 className="mt-1 text-lg font-semibold text-slate-900">{selected.department} • {selected.reportDate}</h3>
+                <p className="mt-1 text-sm text-slate-500">Submitted by {selected.submittedByName || selected.submittedBy || 'Unknown'}</p>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => setSelected(null)} className="rounded-full border border-slate-700 bg-slate-950 p-2 text-slate-300">Close</button>
+                <button onClick={() => setSelected(null)} className="rounded-full border border-slate-300 bg-slate-50 p-2 text-slate-700">Close</button>
               </div>
             </div>
             <div className="max-h-[72vh] overflow-auto px-5 py-4">
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 mb-4">
-                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Employees involved</p>
-                  <p className="mt-2 text-2xl font-bold text-white">{new Set((selected.entries || []).map((e) => String(e.employeeId || e.employeeName || ''))).size}</p>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Employees involved</p>
+                  <p className="mt-2 text-2xl font-bold text-slate-900">{new Set((selected.entries || []).map((e) => String(e.employeeId || e.employeeName || ''))).size}</p>
                 </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Total entries</p>
-                  <p className="mt-2 text-2xl font-bold text-white">{(selected.entries || []).length}</p>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total entries</p>
+                  <p className="mt-2 text-2xl font-bold text-slate-900">{(selected.entries || []).length}</p>
                 </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Total pieces</p>
-                  <p className="mt-2 text-2xl font-bold text-white">{aggregateReport([selected]).totalPieces}</p>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total pieces</p>
+                  <p className="mt-2 text-2xl font-bold text-slate-900">{aggregateReport([selected]).totalPieces}</p>
                 </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Total amount</p>
-                  <p className="mt-2 text-2xl font-bold text-emerald-400">₱{aggregateReport([selected]).totalAmount.toLocaleString()}</p>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total amount</p>
+                  <p className="mt-2 text-2xl font-bold text-emerald-700">₱{aggregateReport([selected]).totalAmount.toLocaleString()}</p>
                 </div>
               </div>
               <DailyReportTable entries={selected.entries || []} fallbackDepartment={selected.department || currentDepartment} />

@@ -93,29 +93,29 @@ export default function GMOverview() {
   return (
     <div className="space-y-6 pb-8">
       <div className="space-y-5">
-        <div className="rounded-3xl border border-slate-800 bg-slate-900 p-5 shadow-sm">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-white">{t('gm.overview.title')}</p>
-              <p className="text-sm text-slate-400">{t('gm.overview.desc')}</p>
+              <p className="text-sm font-semibold text-slate-900">{t('gm.overview.title')}</p>
+              <p className="text-sm text-slate-500">{t('gm.overview.desc')}</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm text-slate-300">
-                <ChevronRight className="h-4 w-4 text-emerald-400" />
+              <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-4 py-2 text-sm text-slate-700">
+                <ChevronRight className="h-4 w-4 text-emerald-700" />
                 {departments.length} {t('gm.overview.departments')}
               </div>
-              <div className="inline-flex gap-2 rounded-full border border-slate-800 bg-slate-950 p-1">
+              <div className="inline-flex gap-2 rounded-full border border-slate-200 bg-slate-50 p-1">
                 <button
                   type="button"
                   onClick={() => setSortOption('most')}
-                  className={`rounded-full px-3 py-2 text-sm font-medium transition ${sortOption === 'most' ? 'bg-emerald-500 text-slate-950' : 'text-slate-300 hover:bg-slate-800'}`}
+                  className={`rounded-full px-3 py-2 text-sm font-medium transition ${sortOption === 'most' ? 'bg-emerald-500 text-slate-900' : 'text-slate-700 hover:bg-slate-100'}`}
                 >
                   {t('gm.overview.most')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setSortOption('least')}
-                  className={`rounded-full px-3 py-2 text-sm font-medium transition ${sortOption === 'least' ? 'bg-emerald-500 text-slate-950' : 'text-slate-300 hover:bg-slate-800'}`}
+                  className={`rounded-full px-3 py-2 text-sm font-medium transition ${sortOption === 'least' ? 'bg-emerald-500 text-slate-900' : 'text-slate-700 hover:bg-slate-100'}`}
                 >
                   {t('gm.overview.least')}
                 </button>
@@ -127,7 +127,7 @@ export default function GMOverview() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-2">
           {employeesLoading
             ? Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="h-40 animate-pulse rounded-3xl bg-slate-900" />
+                <div key={index} className="h-40 animate-pulse rounded-3xl bg-white" />
               ))
             : sortedDepartments.map((d) => (
                 <DepartmentCard key={d.name} department={d} onOpen={() => openDept(d)} />

@@ -24,14 +24,14 @@ export default function EmployeeLayout() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-900 text-slate-200">
+    <div className="flex h-screen overflow-hidden bg-white text-slate-800">
       {mobileMenuOpen && <div className="fixed inset-0 z-40 bg-black/50 md:hidden pointer-events-auto" onClick={() => setMobileMenuOpen(false)} />}
 
       <EmployeeSidebar user={user} onLogout={handleLogout} onNavigate={() => setMobileMenuOpen(false)} mobileOpen={mobileMenuOpen} />
 
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800 bg-slate-950 px-4 md:px-6">
-          <button onClick={() => setMobileMenuOpen((open) => !open)} className="inline-flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900 p-2 text-slate-300 md:hidden" aria-label="Toggle employee navigation">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50 px-4 md:px-6">
+          <button onClick={() => setMobileMenuOpen((open) => !open)} className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-700 md:hidden" aria-label="Toggle employee navigation">
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
 
@@ -41,10 +41,10 @@ export default function EmployeeLayout() {
 
           <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">
-              <p className="text-sm font-medium text-white">{user.name}</p>
-              <p className="text-xs text-slate-500">{user.department || 'Department pending'}</p>
+              <p className="text-sm font-medium text-slate-900">{user.name}</p>
+              <p className="text-xs text-slate-400">{user.department || 'Department pending'}</p>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-sm font-semibold text-white ring-1 ring-slate-700">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-900 ring-1 ring-slate-300">
               {user.name.split(' ').map((part) => part[0]).join('').substring(0, 2)}
             </div>
           </div>

@@ -68,18 +68,18 @@ function ReportDetailModal({ batch, onClose, onSubmit, onDelete, isSubmitting })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-5xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-800 px-5 py-4">
+      <div className="w-full max-w-5xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Daily report</p>
-            <h3 className="mt-1 text-lg font-semibold text-white">{batch.department || 'Unknown Department'}</h3>
-            <p className="mt-1 text-sm text-slate-400">Scanned {formatReportDate(batch.scannedAt)}</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Daily report</p>
+            <h3 className="mt-1 text-lg font-semibold text-slate-900">{batch.department || 'Unknown Department'}</h3>
+            <p className="mt-1 text-sm text-slate-500">Scanned {formatReportDate(batch.scannedAt)}</p>
           </div>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={onDelete} className="inline-flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-300 transition-colors hover:bg-rose-500/20">
+            <button type="button" onClick={onDelete} className="inline-flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-500/20">
               <Trash2 className="h-4 w-4" /> Delete
             </button>
-            <button type="button" onClick={onClose} className="rounded-full border border-slate-700 bg-slate-950 p-2 text-slate-300 transition-colors hover:bg-slate-800">
+            <button type="button" onClick={onClose} className="rounded-full border border-slate-300 bg-slate-50 p-2 text-slate-700 transition-colors hover:bg-slate-100">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -87,40 +87,40 @@ function ReportDetailModal({ batch, onClose, onSubmit, onDelete, isSubmitting })
 
         <div className="max-h-[72vh] overflow-auto px-5 py-4 space-y-4">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Employees involved</p>
-              <p className="mt-2 text-2xl font-bold text-white">{batch.employeeCount}</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Employees involved</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">{batch.employeeCount}</p>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Department</p>
-              <p className="mt-2 text-lg font-semibold text-white">{batch.department || '-'}</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Department</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">{batch.department || '-'}</p>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Thickness</p>
-              <p className="mt-2 text-lg font-semibold text-white">{batch.thickness || '-'}</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Thickness</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">{batch.thickness || '-'}</p>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Crates / Pieces</p>
-              <p className="mt-2 text-lg font-semibold text-white">{batch.cratesPieces || '-'}</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Crates / Pieces</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">{batch.cratesPieces || '-'}</p>
             </div>
           </div>
 
           <DailyReportTable entries={batch.entries} />
 
-          <div className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-4 md:grid-cols-2">
+          <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Date and time scanned</p>
-              <p className="mt-2 text-sm text-slate-200">{formatReportDate(batch.scannedAt)}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Date and time scanned</p>
+              <p className="mt-2 text-sm text-slate-800">{formatReportDate(batch.scannedAt)}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Total entries</p>
-              <p className="mt-2 text-sm text-slate-200">{batch.entries.length}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total entries</p>
+              <p className="mt-2 text-sm text-slate-800">{batch.entries.length}</p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-800 px-5 py-4">
-          <button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2.5 text-slate-200 transition-colors hover:bg-slate-700">
+        <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
+          <button type="button" onClick={onClose} className="rounded-xl bg-slate-100 px-4 py-2.5 text-slate-800 transition-colors hover:bg-slate-200">
             Cancel
           </button>
           <button type="button" disabled={isSubmitting} onClick={onSubmit} className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 font-medium text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-70">
@@ -262,16 +262,16 @@ export default function LeadmanDailyReport() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Leadman daily log</p>
-            <h2 className="mt-2 text-2xl font-bold text-white">Daily Production Report</h2>
-            <p className="mt-1 text-sm text-slate-400">Write and save the end-of-day production report for the selected department.</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Leadman daily log</p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900">Daily Production Report</h2>
+            <p className="mt-1 text-sm text-slate-500">Write and save the end-of-day production report for the selected department.</p>
           </div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-500">Department</p>
-            <select value={selectedDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-2 min-w-[220px] rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-wider text-slate-400">Department</p>
+            <select value={selectedDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-2 min-w-[220px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 focus:border-emerald-500 focus:outline-none">
               {assignedDepartments.map((department) => (
                 <option key={department} value={department}>{department}</option>
               ))}
@@ -280,12 +280,12 @@ export default function LeadmanDailyReport() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4">
-        <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><MessageSquareWarning className="h-5 w-5 text-cyan-400" /> Daily Production Report</h3>
-        <p className="text-sm text-slate-400">Each scanned report becomes a small card. Open a card for the full report and submit it individually, or submit all cards in one batch.</p>
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
+        <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900"><MessageSquareWarning className="h-5 w-5 text-cyan-700" /> Daily Production Report</h3>
+        <p className="text-sm text-slate-500">Each scanned report becomes a small card. Open a card for the full report and submit it individually, or submit all cards in one batch.</p>
 
         {reportBatches.length === 0 ? (
-          <div className="rounded-2xl border border-slate-800 bg-slate-950 p-6 text-sm text-slate-400">No scanned reports yet.</div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">No scanned reports yet.</div>
         ) : (
           <div className="grid gap-4">
             {reportBatches.map((batch) => (
@@ -300,7 +300,7 @@ export default function LeadmanDailyReport() {
                     setSelectedBatchId(batch.id)
                   }
                 }}
-                className="group relative rounded-2xl border border-slate-800 bg-slate-950 p-4 text-left transition-all hover:border-emerald-500/30 hover:bg-slate-900"
+                className="group relative rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition-all hover:border-emerald-500/30 hover:bg-white"
               >
                 <div className="absolute right-3 top-3">
                   <button
@@ -309,7 +309,7 @@ export default function LeadmanDailyReport() {
                       event.stopPropagation()
                       deleteBatch(batch)
                     }}
-                    className="rounded-full border border-rose-500/20 bg-rose-500/10 p-2 text-rose-300 transition-colors hover:bg-rose-500/20"
+                    className="rounded-full border border-rose-500/20 bg-rose-500/10 p-2 text-rose-700 transition-colors hover:bg-rose-500/20"
                     aria-label="Delete report"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -318,29 +318,29 @@ export default function LeadmanDailyReport() {
 
                 <div className="pr-12 md:flex md:items-center md:gap-5">
                   <div className="min-w-0 md:flex-1">
-                    <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Scanned report</p>
+                    <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Scanned report</p>
                   
-                    <p className="mt-1 text-sm text-slate-400">{formatReportDate(batch.scannedAt)}</p>
+                    <p className="mt-1 text-sm text-slate-500">{formatReportDate(batch.scannedAt)}</p>
                   </div>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-3 md:mt-0 md:w-[56%] md:grid-cols-3">
-                    <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2">
-                      <p className="text-[11px] text-slate-500">Employees</p>
-                      <p className="mt-1 text-sm font-semibold text-white">{batch.employeeCount}</p>
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <p className="text-[11px] text-slate-400">Employees</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">{batch.employeeCount}</p>
                     </div>
-                    <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2">
-                      <p className="text-[11px] text-slate-500">Thickness</p>
-                      <p className="mt-1 text-sm font-semibold text-white">{batch.thickness || '-'}</p>
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <p className="text-[11px] text-slate-400">Thickness</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">{batch.thickness || '-'}</p>
                     </div>
-                    <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2">
-                      <p className="text-[11px] text-slate-500">Crates / Pieces</p>
-                      <p className="mt-1 text-sm font-semibold text-white">{batch.cratesPieces || '-'}</p>
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <p className="text-[11px] text-slate-400">Crates / Pieces</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">{batch.cratesPieces || '-'}</p>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between text-xs text-slate-500 md:mt-0 md:min-w-[120px] md:flex-col md:items-end md:justify-center">
+                  <div className="mt-4 flex items-center justify-between text-xs text-slate-400 md:mt-0 md:min-w-[120px] md:flex-col md:items-end md:justify-center">
                     <span>{batch.entries.length} row{batch.entries.length === 1 ? '' : 's'}</span>
-                    <span className="text-emerald-400 group-hover:text-emerald-300">Open report</span>
+                    <span className="text-emerald-700 group-hover:text-emerald-700">Open report</span>
                   </div>
                 </div>
               </div>
@@ -349,8 +349,8 @@ export default function LeadmanDailyReport() {
         )}
 
         
-        {submitMessage ? <p className="text-sm text-emerald-400">{submitMessage}</p> : null}
-        {submitError ? <p className="text-sm text-rose-400">{submitError}</p> : null}
+        {submitMessage ? <p className="text-sm text-emerald-700">{submitMessage}</p> : null}
+        {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
       </div>
 
       <ReportDetailModal

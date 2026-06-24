@@ -37,7 +37,7 @@ const ViewPayslip = lazy(() => import('./roles/employee/pages/ViewPayslip'))
 const Requests = lazy(() => import('./shared/pages/Requests'))
 
 function RouteLoadingFallback() {
-  return <div className="p-6 text-sm text-slate-400">Loading...</div>
+  return <div className="p-6 text-sm text-slate-500">Loading...</div>
 }
 
 export default function App() {

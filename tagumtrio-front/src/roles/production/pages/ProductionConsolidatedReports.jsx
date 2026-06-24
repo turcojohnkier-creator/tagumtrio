@@ -48,21 +48,21 @@ function EmployeePopup({ open, entries, onClose, onSelectEntry }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-4xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
-        <div className="flex items-center justify-between gap-4 border-b border-slate-800 px-5 py-4">
+      <div className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Employees involved</p>
-            <h3 className="mt-1 text-lg font-semibold text-white">Included employees</h3>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Employees involved</p>
+            <h3 className="mt-1 text-lg font-semibold text-slate-900">Included employees</h3>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full border border-slate-700 bg-slate-950 p-2 text-slate-300 transition-colors hover:bg-slate-800">
+          <button type="button" onClick={onClose} className="rounded-full border border-slate-300 bg-slate-50 p-2 text-slate-700 transition-colors hover:bg-slate-100">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <div className="max-h-[70vh] overflow-auto px-5 py-4">
-          <div className="overflow-x-auto rounded-2xl border border-slate-800">
+          <div className="overflow-x-auto rounded-2xl border border-slate-200">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-950 text-slate-400">
+              <thead className="bg-slate-50 text-slate-500">
                 <tr>
                   <th className="px-4 py-3 font-medium">#</th>
                   <th className="px-4 py-3 font-medium">Employee No.</th>
@@ -72,10 +72,10 @@ function EmployeePopup({ open, entries, onClose, onSelectEntry }) {
                   <th className="px-4 py-3 font-medium text-right">Open</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/70 bg-slate-900/50">
+              <tbody className="divide-y divide-slate-200/70 bg-white/50">
                 {safeEntries.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400">No employee rows available.</td>
+                    <td colSpan={6} className="px-4 py-8 text-center text-slate-500">No employee rows available.</td>
                   </tr>
                 ) : (
                   safeEntries.map((entry, index) => (
@@ -90,16 +90,16 @@ function EmployeePopup({ open, entries, onClose, onSelectEntry }) {
                           onSelectEntry?.(entry)
                         }
                       }}
-                      className="cursor-pointer select-none text-slate-300 transition-colors hover:bg-emerald-500/10 active:bg-emerald-500/20"
+                      className="cursor-pointer select-none text-slate-700 transition-colors hover:bg-emerald-500/10 active:bg-emerald-500/20"
                     >
-                      <td className="px-4 py-4 font-semibold text-white">{index + 1}</td>
+                      <td className="px-4 py-4 font-semibold text-slate-900">{index + 1}</td>
                       <td className="px-4 py-4">
-                        <div className="font-medium text-white">{getEntryIdentifier(entry) || '-'}</div>
+                        <div className="font-medium text-slate-900">{getEntryIdentifier(entry) || '-'}</div>
                       </td>
                       <td className="px-4 py-4">{resolveEntryDepartment(entry, '')}</td>
                       <td className="px-4 py-4">{getEntryPieces(entry) || '-'}</td>
                       <td className="px-4 py-4">{getFieldValue(entry, 'date') || getFieldValue(entry, 'dateIn') || formatDate(entry.scannedAt || entry.batchCapturedAt || new Date().toISOString())}</td>
-                      <td className="px-4 py-4 text-right text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400">Open full report</td>
+                      <td className="px-4 py-4 text-right text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Open full report</td>
                     </tr>
                   ))
                 )}
@@ -108,8 +108,8 @@ function EmployeePopup({ open, entries, onClose, onSelectEntry }) {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-800 px-5 py-4">
-          <button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2.5 text-slate-200 transition-colors hover:bg-slate-700">
+        <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
+          <button type="button" onClick={onClose} className="rounded-xl bg-slate-100 px-4 py-2.5 text-slate-800 transition-colors hover:bg-slate-200">
             Close
           </button>
         </div>
@@ -126,40 +126,40 @@ function ScanEntryModal({ entry, report, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-3xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-800 px-5 py-4">
+      <div className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Scan entry</p>
-            <h3 className="mt-1 text-lg font-semibold text-white">{getEntryLabel(entry) || 'Untitled item'}</h3>
-            <p className="mt-1 text-sm text-slate-400">{resolveEntryDepartment(entry, report?.department)}</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Scan entry</p>
+            <h3 className="mt-1 text-lg font-semibold text-slate-900">{getEntryLabel(entry) || 'Untitled item'}</h3>
+            <p className="mt-1 text-sm text-slate-500">{resolveEntryDepartment(entry, report?.department)}</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full border border-slate-700 bg-slate-950 p-2 text-slate-300 transition-colors hover:bg-slate-800">
+          <button type="button" onClick={onClose} className="rounded-full border border-slate-300 bg-slate-50 p-2 text-slate-700 transition-colors hover:bg-slate-100">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <div className="grid gap-3 px-5 py-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Employee / Item</p>
-            <p className="mt-2 text-sm font-semibold text-white">{getEntryLabel(entry) || 'Untitled item'}</p>
-            <p className="text-xs text-slate-500">{getEntryIdentifier(entry) || '-'}</p>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Employee / Item</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">{getEntryLabel(entry) || 'Untitled item'}</p>
+            <p className="text-xs text-slate-400">{getEntryIdentifier(entry) || '-'}</p>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Crates / Pieces</p>
-            <p className="mt-2 text-lg font-semibold text-white">{totalPieces}</p>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Crates / Pieces</p>
+            <p className="mt-2 text-lg font-semibold text-slate-900">{totalPieces}</p>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Date</p>
-            <p className="mt-2 text-lg font-semibold text-white">{getFieldValue(entry, 'date') || getFieldValue(entry, 'dateIn') || formatDate(entry.scannedAt || report?.scannedAt)}</p>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Date</p>
+            <p className="mt-2 text-lg font-semibold text-slate-900">{getFieldValue(entry, 'date') || getFieldValue(entry, 'dateIn') || formatDate(entry.scannedAt || report?.scannedAt)}</p>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Amount</p>
-            <p className="mt-2 text-lg font-semibold text-emerald-400">₱{amount.toLocaleString()}</p>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Amount</p>
+            <p className="mt-2 text-lg font-semibold text-emerald-700">₱{amount.toLocaleString()}</p>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-800 px-5 py-4">
-          <button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2.5 text-slate-200 transition-colors hover:bg-slate-700">Close</button>
+        <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
+          <button type="button" onClick={onClose} className="rounded-xl bg-slate-100 px-4 py-2.5 text-slate-800 transition-colors hover:bg-slate-200">Close</button>
         </div>
       </div>
     </div>
@@ -207,46 +207,46 @@ function ReportDetailModal({ report, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-5xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-800 px-5 py-4">
+      <div className="w-full max-w-5xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Consolidated report</p>
-            <h3 className="mt-1 text-lg font-semibold text-white">{report.department}</h3>
-            <p className="mt-1 text-sm text-slate-400">Submitted {formatDate(report.scannedAt)}</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Consolidated report</p>
+            <h3 className="mt-1 text-lg font-semibold text-slate-900">{report.department}</h3>
+            <p className="mt-1 text-sm text-slate-500">Submitted {formatDate(report.scannedAt)}</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full border border-slate-700 bg-slate-950 p-2 text-slate-300 transition-colors hover:bg-slate-800">
+          <button type="button" onClick={onClose} className="rounded-full border border-slate-300 bg-slate-50 p-2 text-slate-700 transition-colors hover:bg-slate-100">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <div className="max-h-[72vh] overflow-auto px-5 py-4 space-y-4">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Employees involved</p>
-              <p className="mt-2 text-2xl font-bold text-white">{report.employeeCount}</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Employees involved</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">{report.employeeCount}</p>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Department</p>
-              <p className="mt-2 text-lg font-semibold text-white">{report.department || '-'}</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Department</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">{report.department || '-'}</p>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Thickness</p>
-              <p className="mt-2 text-lg font-semibold text-white">{report.thickness || '-'}</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Thickness</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">{report.thickness || '-'}</p>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Crates / Pieces</p>
-              <p className="mt-2 text-lg font-semibold text-white">{report.cratesPieces || '-'}</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Crates / Pieces</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">{report.cratesPieces || '-'}</p>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Included employees</p>
-            <p className="mt-1 text-sm text-slate-300">{safeEntries.length} row{safeEntries.length === 1 ? '' : 's'} in this consolidated report</p>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Included employees</p>
+            <p className="mt-1 text-sm text-slate-700">{safeEntries.length} row{safeEntries.length === 1 ? '' : 's'} in this consolidated report</p>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/80">
+          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white/80">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-950 text-slate-400">
+              <thead className="bg-slate-50 text-slate-500">
                 <tr>
                   <th className="px-4 py-3 font-medium">#</th>
                   <th className="px-4 py-3 font-medium">Employee</th>
@@ -257,47 +257,47 @@ function ReportDetailModal({ report, onClose }) {
                   <th className="px-4 py-3 font-medium">Amount</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/70 bg-slate-900/50">
+              <tbody className="divide-y divide-slate-200/70 bg-white/50">
                 {safeEntries.map((entry, index) => (
-                  <tr key={entryRowKey(entry, index)} className="text-slate-300 hover:bg-slate-900/80">
-                    <td className="px-4 py-4 font-semibold text-white">{index + 1}</td>
+                  <tr key={entryRowKey(entry, index)} className="text-slate-700 hover:bg-white/80">
+                    <td className="px-4 py-4 font-semibold text-slate-900">{index + 1}</td>
                     <td className="px-4 py-4">
-                      <div className="font-medium text-white">{getEntryLabel(entry) || 'Untitled item'}</div>
-                      <div className="text-xs text-slate-500">{getEntryIdentifier(entry) || '-'}</div>
+                      <div className="font-medium text-slate-900">{getEntryLabel(entry) || 'Untitled item'}</div>
+                      <div className="text-xs text-slate-400">{getEntryIdentifier(entry) || '-'}</div>
                     </td>
-                    <td className="px-4 py-4 text-slate-300">{resolveEntryDepartment(entry, report.department)}</td>
-                    <td className="px-4 py-4 text-slate-300">{getFieldValue(entry, 'thickness') || report.thickness || '-'}</td>
-                    <td className="px-4 py-4 text-slate-300">{getEntryPieces(entry) || report.cratesPieces || '-'}</td>
-                    <td className="px-4 py-4 text-slate-300">{getFieldValue(entry, 'date') || getFieldValue(entry, 'dateIn') || formatDate(entry.scannedAt || report.scannedAt)}</td>
-                    <td className="px-4 py-4 font-semibold text-white">₱{Number(entry.amount || 0).toLocaleString()}</td>
+                    <td className="px-4 py-4 text-slate-700">{resolveEntryDepartment(entry, report.department)}</td>
+                    <td className="px-4 py-4 text-slate-700">{getFieldValue(entry, 'thickness') || report.thickness || '-'}</td>
+                    <td className="px-4 py-4 text-slate-700">{getEntryPieces(entry) || report.cratesPieces || '-'}</td>
+                    <td className="px-4 py-4 text-slate-700">{getFieldValue(entry, 'date') || getFieldValue(entry, 'dateIn') || formatDate(entry.scannedAt || report.scannedAt)}</td>
+                    <td className="px-4 py-4 font-semibold text-slate-900">₱{Number(entry.amount || 0).toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <div className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2 lg:grid-cols-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Submitted by</p>
-              <p className="mt-2 text-sm text-slate-200">{report.submittedBy || 'Unknown'}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Submitted by</p>
+              <p className="mt-2 text-sm text-slate-800">{report.submittedBy || 'Unknown'}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Date and time scanned</p>
-              <p className="mt-2 text-sm text-slate-200">{formatDate(report.scannedAt)}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Date and time scanned</p>
+              <p className="mt-2 text-sm text-slate-800">{formatDate(report.scannedAt)}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Total crates / pieces</p>
-              <p className="mt-2 text-sm text-slate-200">{totalPieces}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total crates / pieces</p>
+              <p className="mt-2 text-sm text-slate-800">{totalPieces}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Total amount</p>
-              <p className="mt-2 text-sm font-semibold text-emerald-400">₱{totalAmount.toLocaleString()}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total amount</p>
+              <p className="mt-2 text-sm font-semibold text-emerald-700">₱{totalAmount.toLocaleString()}</p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-800 px-5 py-4">
-          <button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2.5 text-slate-200 transition-colors hover:bg-slate-700">
+        <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
+          <button type="button" onClick={onClose} className="rounded-xl bg-slate-100 px-4 py-2.5 text-slate-800 transition-colors hover:bg-slate-200">
             Close
           </button>
         </div>
@@ -344,20 +344,20 @@ export default function ProductionConsolidatedReports() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Production consolidated</p>
-            <h2 className="mt-2 text-2xl font-bold text-white">Consolidated production report cards</h2>
-            <p className="mt-1 text-sm text-slate-400">Each card shows the day total. Opening a card reveals the full table for that report.</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Production consolidated</p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900">Consolidated production report cards</h2>
+            <p className="mt-1 text-sm text-slate-500">Each card shows the day total. Opening a card reveals the full table for that report.</p>
           </div>
           
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
         {reportCards.length === 0 ? (
-          <div className="rounded-2xl border border-slate-800 bg-slate-950 p-6 text-sm text-slate-400">No submitted reports yet.</div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">No submitted reports yet.</div>
         ) : (
           <div className="space-y-3">
             {reportCards.map((report) => (
@@ -365,33 +365,33 @@ export default function ProductionConsolidatedReports() {
                 key={report.id}
                 type="button"
                 onClick={() => setSelectedReportId(report.id)}
-                className={`group relative block w-full rounded-2xl border border-slate-800 bg-slate-950 p-4 text-left transition-all hover:border-emerald-500/30 hover:bg-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30 active:translate-y-[1px] active:bg-slate-900 ${selectedReportId === report.id ? 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20' : ''}`}
+                className={`group relative block w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition-all hover:border-emerald-500/30 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30 active:translate-y-[1px] active:bg-white ${selectedReportId === report.id ? 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20' : ''}`}
               >
                 <div className="pr-12 md:flex md:items-center md:gap-5">
                   <div className="min-w-0 md:flex-1">
-                    <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Consolidated report</p>
-                    <h4 className="mt-1 truncate text-lg font-semibold text-white">{report.department || 'Unknown Department'}</h4>
-                    <p className="mt-1 text-sm text-slate-400">{formatDate(report.scannedAt)}</p>
+                    <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Consolidated report</p>
+                    <h4 className="mt-1 truncate text-lg font-semibold text-slate-900">{report.department || 'Unknown Department'}</h4>
+                    <p className="mt-1 text-sm text-slate-500">{formatDate(report.scannedAt)}</p>
                   </div>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-3 md:mt-0 md:w-[56%] md:grid-cols-3">
-                    <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2">
-                      <p className="text-[11px] text-slate-500">Employees</p>
-                      <p className="mt-1 text-sm font-semibold text-white">{report.employeeCount}</p>
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <p className="text-[11px] text-slate-400">Employees</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">{report.employeeCount}</p>
                     </div>
-                    <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2">
-                      <p className="text-[11px] text-slate-500">Crates / Pieces</p>
-                      <p className="mt-1 text-sm font-semibold text-white">{report.cratesPieces || '-'}</p>
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <p className="text-[11px] text-slate-400">Crates / Pieces</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">{report.cratesPieces || '-'}</p>
                     </div>
-                    <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2">
-                      <p className="text-[11px] text-slate-500">Total amount</p>
-                      <p className="mt-1 text-sm font-semibold text-emerald-400">₱{Number(report.totalAmount || 0).toLocaleString()}</p>
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <p className="text-[11px] text-slate-400">Total amount</p>
+                      <p className="mt-1 text-sm font-semibold text-emerald-700">₱{Number(report.totalAmount || 0).toLocaleString()}</p>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between text-xs text-slate-500 md:mt-0 md:min-w-[140px] md:flex-col md:items-end md:justify-center">
+                  <div className="mt-4 flex items-center justify-between text-xs text-slate-400 md:mt-0 md:min-w-[140px] md:flex-col md:items-end md:justify-center">
                     <span>{report.entries.length} row{report.entries.length === 1 ? '' : 's'}</span>
-                    <span className="text-slate-300 group-hover:text-white">Open report</span>
+                    <span className="text-slate-700 group-hover:text-slate-900">Open report</span>
                   </div>
                 </div>
               </button>

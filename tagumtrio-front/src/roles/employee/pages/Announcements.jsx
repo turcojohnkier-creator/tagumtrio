@@ -9,12 +9,12 @@ export default function EmployeeAnnouncements() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Employee Portal</p>
-        <h2 className="mt-2 text-2xl font-bold text-white">Announcements</h2>
-        <p className="mt-1 text-sm text-slate-400">Company updates and notices for employees.</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Employee Portal</p>
+        <h2 className="mt-2 text-2xl font-bold text-slate-900">Announcements</h2>
+        <p className="mt-1 text-sm text-slate-500">Company updates and notices for employees.</p>
       </div>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6">
         {Array.isArray(announcements) && announcements.length > 0 ? (
           <div className="space-y-4">
             {announcements.map((announcement) => (
@@ -22,7 +22,7 @@ export default function EmployeeAnnouncements() {
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-slate-800 bg-slate-950 p-6 text-sm text-slate-400">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
             No announcements yet for {user?.department || 'your department'}.
           </div>
         )}

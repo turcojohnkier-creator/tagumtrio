@@ -89,10 +89,10 @@ export default function EmployeeDirectory() {
     return (
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">
+          <h3 className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
             {title}
           </h3>
-          <span className="rounded-full border border-slate-800 bg-slate-950 px-2.5 py-1 text-xs text-slate-400">
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-500">
             {employeesList.length}
           </span>
         </div>
@@ -115,7 +115,7 @@ export default function EmployeeDirectory() {
         </div>
 
         {employeesList.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-800 bg-slate-900 px-4 py-5 text-sm text-slate-500">
+          <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-5 text-sm text-slate-400">
             {emptyMessage}
           </div>
         ) : null}
@@ -128,27 +128,27 @@ export default function EmployeeDirectory() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">HR Accounts</h2>
-          <p className="text-slate-400 mt-1">View all created accounts, inspect details, and archive or restore inactive users.</p>
+          <h2 className="text-2xl font-bold text-slate-900">HR Accounts</h2>
+          <p className="text-slate-500 mt-1">View all created accounts, inspect details, and archive or restore inactive users.</p>
         </div>
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6 grid gap-4 xl:grid-cols-[1.9fr_1fr] xl:items-center">
+      <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6 grid gap-4 xl:grid-cols-[1.9fr_1fr] xl:items-center">
         <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
             placeholder="Search accounts by name, ID, or role..."
-            className="w-full bg-slate-950 border border-slate-800 text-white text-sm rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
           />
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-2">
           <select
             value={roleFilter}
             onChange={(event) => setRoleFilter(event.target.value)}
-            className="bg-slate-950 border border-slate-800 text-slate-300 text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
           >
             {roleOptions.map((role) => (
               <option key={role} value={role}>{role}</option>
@@ -158,14 +158,14 @@ export default function EmployeeDirectory() {
           <button
             type="button"
             onClick={() => setSortByRole((current) => !current)}
-            className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${sortByRole ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300' : 'border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-950'}`}
+            className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${sortByRole ? 'border-emerald-500 bg-emerald-500/10 text-emerald-700' : 'border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'}`}
           >
             {sortByRole ? 'Sorted by role' : 'Sort by role'}
           </button>
         </div>
       </div>
 
-      {employeesLoading && <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-6 text-sm text-slate-400">Loading accounts from the database...</div>}
+      {employeesLoading && <div className="rounded-xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-500">Loading accounts from the database...</div>}
 
       <div className="space-y-6">
         {renderEmployeeSection('Active Accounts', activeEmployees, 'No active accounts match your filters.')}
@@ -173,7 +173,7 @@ export default function EmployeeDirectory() {
       </div>
 
       {!employeesLoading && filteredEmployees.length === 0 && (
-        <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-6 text-sm text-slate-400">
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-500">
           <div>No accounts matched your filters.</div>
           <div className="mt-3 flex gap-3">
             <button
@@ -186,7 +186,7 @@ export default function EmployeeDirectory() {
             <button
               type="button"
               onClick={() => setRoleFilter('All Roles')}
-              className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300"
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700"
             >
               Clear filters
             </button>

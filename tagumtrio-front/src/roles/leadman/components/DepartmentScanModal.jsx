@@ -37,20 +37,20 @@ function EmployeePickerModal({ open, department, employeeOptions, selectedEmploy
   return (
     <Portal>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-        <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl max-h-[90vh] overflow-auto">
-          <div className="flex items-center justify-between gap-4 border-b border-slate-800 px-5 py-4">
+        <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl rounded-2xl border border-slate-200 bg-white shadow-2xl max-h-[90vh] overflow-auto">
+          <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
             <div>
-              <h4 className="text-base font-semibold text-white">Employees Included</h4>
-              <p className="text-sm text-slate-400">Select the employees that belong in this scan.</p>
+              <h4 className="text-base font-semibold text-slate-900">Employees Included</h4>
+              <p className="text-sm text-slate-500">Select the employees that belong in this scan.</p>
             </div>
-            <button type="button" onClick={onClose} className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-200 transition-colors hover:bg-slate-800">
+            <button type="button" onClick={onClose} className="rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm text-slate-800 transition-colors hover:bg-slate-100">
               Close
             </button>
           </div>
 
           <div className="max-h-[70vh] overflow-auto">
-            <table className="min-w-full divide-y divide-slate-800 text-sm">
-              <thead className="sticky top-0 bg-slate-950 text-slate-400">
+            <table className="min-w-full divide-y divide-slate-200 text-sm">
+              <thead className="sticky top-0 bg-slate-50 text-slate-500">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">Select</th>
                   <th className="px-4 py-3 text-left font-medium">Employee No.</th>
@@ -58,7 +58,7 @@ function EmployeePickerModal({ open, department, employeeOptions, selectedEmploy
                   <th className="px-4 py-3 text-left font-medium">Department</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800 text-slate-200">
+              <tbody className="divide-y divide-slate-200 text-slate-800">
                 {employeeOptions.map((employee) => {
                   const employeeId = normalizeEmployeeId(employee)
                   const isSelected = selectedEmployeeIds.includes(employeeId)
@@ -70,12 +70,12 @@ function EmployeePickerModal({ open, department, employeeOptions, selectedEmploy
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => onToggleEmployee(employeeId)}
-                          className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500"
+                          className="h-4 w-4 rounded border-slate-300 bg-white text-emerald-500 focus:ring-emerald-500"
                         />
                       </td>
-                      <td className="px-4 py-3 align-middle font-medium text-white">{employeeId}</td>
+                      <td className="px-4 py-3 align-middle font-medium text-slate-900">{employeeId}</td>
                       <td className="px-4 py-3 align-middle">{employee.employeeName || employee.name || employee.fullName}</td>
-                      <td className="px-4 py-3 align-middle text-slate-300">{employee.department || department || employee.dept}</td>
+                      <td className="px-4 py-3 align-middle text-slate-700">{employee.department || department || employee.dept}</td>
                     </tr>
                   )
                 })}
@@ -267,52 +267,52 @@ export default function DepartmentScanModal({
   return (
     <Portal>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <form onSubmit={handleSubmit} className="relative w-full max-w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl max-h-[90vh] overflow-auto">
-          <button type="button" onClick={onClose} className="absolute right-5 top-5 text-slate-400 hover:text-white">
+        <form onSubmit={handleSubmit} className="relative w-full max-w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl max-h-[90vh] overflow-auto">
+          <button type="button" onClick={onClose} className="absolute right-5 top-5 text-slate-500 hover:text-slate-900">
             <X className="h-5 w-5" />
           </button>
 
-          <h3 className="text-lg font-bold text-white">{title}</h3>
-          <p className="mt-1 text-sm text-slate-400">{description}</p>
+          <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+          <p className="mt-1 text-sm text-slate-500">{description}</p>
 
           <div className="mt-5 space-y-4">
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-6 flex flex-col items-center gap-3">
-              <p className="text-sm text-slate-300">View employees deployed to this department to check who is involved in the report.</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 flex flex-col items-center gap-3">
+              <p className="text-sm text-slate-700">View employees deployed to this department to check who is involved in the report.</p>
               <div className="flex items-center gap-3">
-                <button type="button" onClick={() => setShowEmployeeTable(true)} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20">
+                <button type="button" onClick={() => setShowEmployeeTable(true)} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-500/20">
                   View employees in department
                 </button>
-                <div className="text-sm text-slate-300">Employee/s: <span className="font-semibold text-emerald-300">{selectedEmployeeIds.length}</span></div>
+                <div className="text-sm text-slate-700">Employee/s: <span className="font-semibold text-emerald-700">{selectedEmployeeIds.length}</span></div>
               </div>
             </div>
 
             {submissionError ? (
-              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">{submissionError}</div>
+              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-700">{submissionError}</div>
             ) : null}
 
             {spec.fields
               .filter((field) => !field.auto && field.key !== 'department')
               .map((field) => (
                 <div key={field.key}>
-                  <label className="text-sm text-slate-300">{field.label}</label>
+                  <label className="text-sm text-slate-700">{field.label}</label>
                   <input
                     value={values[field.key] || ''}
                     onChange={(e) => handleChange(field.key, e.target.value)}
                     placeholder={field.placeholder || ''}
                     readOnly={field.type === 'date' || field.key === 'date'}
-                    className={`mt-2 w-full rounded-xl border border-slate-800 ${field.type === 'date' || field.key === 'date' ? 'bg-slate-950 cursor-not-allowed' : 'bg-slate-900'} px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none`}
+                    className={`mt-2 w-full rounded-xl border border-slate-200 ${field.type === 'date' || field.key === 'date' ? 'bg-slate-50 cursor-not-allowed' : 'bg-white'} px-3 py-2.5 text-slate-900 focus:border-emerald-500 focus:outline-none`}
                   />
                 </div>
               ))}
 
-            <div className="border-t border-slate-800 pt-4">
-              <h4 className="text-sm font-semibold text-white mb-4">Work Verification Photos (Required)</h4>
+            <div className="border-t border-slate-200 pt-4">
+              <h4 className="text-sm font-semibold text-slate-900 mb-4">Work Verification Photos (Required)</h4>
               <div className="grid grid-cols-2 gap-4">
                 {[1, 2, 3, 4].map((num) => {
                   const photoKey = `photo${num}`
                   return (
                     <div key={photoKey} className="flex flex-col">
-                      <label className="text-xs text-slate-400 mb-2">Photo {num}</label>
+                      <label className="text-xs text-slate-500 mb-2">Photo {num}</label>
                       <input
                         type="file"
                         accept="image/*"
@@ -320,7 +320,7 @@ export default function DepartmentScanModal({
                         className="hidden"
                         id={`photo-${num}`}
                       />
-                      <label htmlFor={`photo-${num}`} className="flex-1 flex items-center justify-center rounded-xl border-2 border-dashed border-slate-700 bg-slate-950 p-3 cursor-pointer hover:border-emerald-500/50 hover:bg-slate-900 transition-colors">
+                      <label htmlFor={`photo-${num}`} className="flex-1 flex items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-3 cursor-pointer hover:border-emerald-500/50 hover:bg-white transition-colors">
                         {photoPreview[photoKey] ? (
                           <div className="relative w-full h-24 rounded">
                             <img src={photoPreview[photoKey]} alt={`Preview ${num}`} className="w-full h-full object-cover rounded" />
@@ -331,7 +331,7 @@ export default function DepartmentScanModal({
                                 e.stopPropagation()
                                 handlePhotoChange(photoKey, null)
                               }}
-                              className="absolute top-1 right-1 bg-rose-500 rounded-full p-1 text-white hover:bg-rose-600"
+                              className="absolute top-1 right-1 bg-rose-500 rounded-full p-1 text-slate-900 hover:bg-rose-600"
                             >
                               <X className="w-3 h-3" />
                             </button>
@@ -339,7 +339,7 @@ export default function DepartmentScanModal({
                         ) : (
                           <div className="text-center">
                             <div className="text-2xl mb-1">📷</div>
-                            <div className="text-xs text-slate-400">Upload photo</div>
+                            <div className="text-xs text-slate-500">Upload photo</div>
                           </div>
                         )}
                       </label>
@@ -353,7 +353,7 @@ export default function DepartmentScanModal({
           </div>
 
           <div className="mt-5 flex items-center justify-end gap-3">
-            <button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2.5 text-slate-200 transition-colors hover:bg-slate-700">
+            <button type="button" onClick={onClose} className="rounded-xl bg-slate-100 px-4 py-2.5 text-slate-800 transition-colors hover:bg-slate-200">
               Cancel
             </button>
             <button type="submit" disabled={submissionEmployees.length === 0 || isSubmitting} className="rounded-xl bg-emerald-500 px-4 py-2.5 font-medium text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50">

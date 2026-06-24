@@ -98,14 +98,14 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl max-h-[90vh] overflow-auto">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-800 px-5 py-4">
+      <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl rounded-2xl border border-slate-200 bg-white shadow-2xl max-h-[90vh] overflow-auto">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Submitted daily report</p>
-            <h3 className="mt-1 text-lg font-semibold text-white">{report.department}</h3>
-            <p className="mt-1 text-sm text-slate-400">Submitted {formatReportDate(report.scannedAt)}</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Submitted daily report</p>
+            <h3 className="mt-1 text-lg font-semibold text-slate-900">{report.department}</h3>
+            <p className="mt-1 text-sm text-slate-500">Submitted {formatReportDate(report.scannedAt)}</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full border border-slate-700 bg-slate-950 p-2 text-slate-300 transition-colors hover:bg-slate-800">
+          <button type="button" onClick={onClose} className="rounded-full border border-slate-300 bg-slate-50 p-2 text-slate-700 transition-colors hover:bg-slate-100">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -113,9 +113,9 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
         <div className="max-h-[72vh] overflow-auto px-5 py-4 space-y-4">
           
 
-          <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/80">
+          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white/80">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-950 text-slate-400">
+              <thead className="bg-slate-50 text-slate-500">
                 <tr>
                   <th className="px-4 py-3 font-medium">Employee</th>
                   <th className="px-4 py-3 font-medium">Department</th>
@@ -125,65 +125,65 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
                   <th className="px-4 py-3 font-medium">Amount</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/70 bg-slate-900/50">
+              <tbody className="divide-y divide-slate-200/70 bg-white/50">
                 {report.entries.map((entry) => (
-                  <tr key={entry.id || `${getEntryIdentifier(entry)}-${getEntryLabel(entry)}-${entry.scannedAt || ''}`} className="text-slate-300 hover:bg-slate-900/80">
+                  <tr key={entry.id || `${getEntryIdentifier(entry)}-${getEntryLabel(entry)}-${entry.scannedAt || ''}`} className="text-slate-700 hover:bg-white/80">
                     <td className="px-4 py-4">
-                      <div className="font-medium text-white">{getEntryLabel(entry) || 'Untitled item'}</div>
-                      <div className="text-xs text-slate-500">{getEntryIdentifier(entry) || '-'}</div>
+                      <div className="font-medium text-slate-900">{getEntryLabel(entry) || 'Untitled item'}</div>
+                      <div className="text-xs text-slate-400">{getEntryIdentifier(entry) || '-'}</div>
                     </td>
-                    <td className="px-4 py-4 text-slate-300">{resolveEntryDepartment(entry, report.department)}</td>
-                    <td className="px-4 py-4 text-slate-300">{getFieldValue(entry, 'thickness') || report.thickness || '-'}</td>
-                    <td className="px-4 py-4 text-slate-300">{getEntryPieces(entry) || report.cratesPieces || '-'}</td>
-                    <td className="px-4 py-4 text-slate-300">{getFieldValue(entry, 'date') || getFieldValue(entry, 'dateIn') || formatReportDate(entry.scannedAt || report.scannedAt)}</td>
-                    <td className="px-4 py-4 font-semibold text-white">₱{Number(entry.amount || 0).toLocaleString()}</td>
+                    <td className="px-4 py-4 text-slate-700">{resolveEntryDepartment(entry, report.department)}</td>
+                    <td className="px-4 py-4 text-slate-700">{getFieldValue(entry, 'thickness') || report.thickness || '-'}</td>
+                    <td className="px-4 py-4 text-slate-700">{getEntryPieces(entry) || report.cratesPieces || '-'}</td>
+                    <td className="px-4 py-4 text-slate-700">{getFieldValue(entry, 'date') || getFieldValue(entry, 'dateIn') || formatReportDate(entry.scannedAt || report.scannedAt)}</td>
+                    <td className="px-4 py-4 font-semibold text-slate-900">₱{Number(entry.amount || 0).toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <div className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-4 md:grid-cols-2">
+          <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Images</p>
-              <p className="mt-2 text-sm text-slate-200">{report.photos?.length || 0} photo{report.photos?.length === 1 ? '' : 's'}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Images</p>
+              <p className="mt-2 text-sm text-slate-800">{report.photos?.length || 0} photo{report.photos?.length === 1 ? '' : 's'}</p>
             </div>
             <div className="flex items-end justify-end">
               {report.photos?.length > 0 ? (
                 <button
                   type="button"
                   onClick={() => onPreviewPhotos?.(report.photos)}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-slate-600 hover:bg-slate-900"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-900 transition-colors hover:border-slate-300 hover:bg-white"
                 >
                   Preview images
                 </button>
               ) : (
-                <p className="text-sm text-slate-500">No images submitted</p>
+                <p className="text-sm text-slate-400">No images submitted</p>
               )}
             </div>
           </div>
 
-          <div className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-4 md:grid-cols-2">
+          <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Submitted by</p>
-              <p className="mt-2 text-sm text-slate-200">{report.submittedBy || 'Unknown'}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Submitted by</p>
+              <p className="mt-2 text-sm text-slate-800">{report.submittedBy || 'Unknown'}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Date and time scanned</p>
-              <p className="mt-2 text-sm text-slate-200">{formatReportDate(report.scannedAt)}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Date and time scanned</p>
+              <p className="mt-2 text-sm text-slate-800">{formatReportDate(report.scannedAt)}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Total employees involved</p>
-              <p className="mt-2 text-sm text-slate-200">{report.employeeCount}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total employees involved</p>
+              <p className="mt-2 text-sm text-slate-800">{report.employeeCount}</p>
             </div><div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Verification</p>
-              <p className={`mt-2 text-sm ${report.isVerified ? 'text-emerald-300' : 'text-rose-300'}`}>{report.verificationLabel}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Verification</p>
+              <p className={`mt-2 text-sm ${report.isVerified ? 'text-emerald-700' : 'text-rose-700'}`}>{report.verificationLabel}</p>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-800 px-5 py-4 sm:flex-row sm:justify-end sm:items-center">
-          <button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2.5 text-slate-200 transition-colors hover:bg-slate-700">
+        <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:justify-end sm:items-center">
+          <button type="button" onClick={onClose} className="rounded-xl bg-slate-100 px-4 py-2.5 text-slate-800 transition-colors hover:bg-slate-200">
             Cancel
           </button>
           <button
@@ -324,14 +324,14 @@ export default function ProductionDashboard() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">Daily Production Reports</h2>
-          <p className="mt-1 text-slate-400">Read and review submitted reports from leadman and the employee workflow.</p>
+          <h2 className="text-2xl font-bold text-slate-900">Daily Production Reports</h2>
+          <p className="mt-1 text-slate-500">Read and review submitted reports from leadman and the employee workflow.</p>
         </div>
         <div className="flex flex-wrap gap-3">
           {user?.role === 'production_incharge' ? (
             <Link
               to="/app/production/compiled"
-              className="inline-flex items-center justify-center rounded-xl border border-slate-800 bg-slate-950 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:border-slate-700 hover:bg-slate-900"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-800 transition-colors hover:border-slate-300 hover:bg-white"
             >
               View compiled reports
             </Link>
@@ -342,24 +342,24 @@ export default function ProductionDashboard() {
 
 
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
 
           <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 value={searchText}
                 onChange={(event) => setSearchText(event.target.value)}
                 placeholder="Search department, thickness, or submitted by..."
-                className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-slate-500/40"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300/40"
               />
             </div>
             <select
               value={selectedDepartment}
               onChange={(event) => setSelectedDepartment(event.target.value)}
-              className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-slate-500/40"
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300/40"
             >
               {departments.map((department) => (
                 <option key={department} value={department}>{department}</option>
@@ -369,15 +369,15 @@ export default function ProductionDashboard() {
               type="date"
               value={selectedDate}
               onChange={(event) => setSelectedDate(event.target.value)}
-              className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-slate-500/40"
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300/40"
             />
           </div>
         </div>
 
-        {error ? <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div> : null}
-        {loading ? <div className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-6 text-sm text-slate-400">Loading submitted reports...</div> : null}
+        {error ? <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        {loading ? <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">Loading submitted reports...</div> : null}
         {!loading && filteredReports.length === 0 ? (
-          <div className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-6 text-sm text-slate-400">No submitted reports yet.</div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">No submitted reports yet.</div>
         ) : null}
 
         {!loading && filteredReports.length > 0 ? (
@@ -387,39 +387,39 @@ export default function ProductionDashboard() {
                 key={report.id}
                 type="button"
                 onClick={() => setSelectedReportId(report.id)}
-                className="group relative block w-full rounded-2xl border border-slate-800 bg-slate-950 p-4 text-left transition-all hover:border-slate-700 hover:bg-slate-900"
+                className="group relative block w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition-all hover:border-slate-300 hover:bg-white"
               >
                 <div className="pr-12 md:flex md:items-center md:gap-5">
                   <div className="min-w-0 md:flex-1">
-                    <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Submitted report</p>
-                    <h4 className="mt-1 truncate text-lg font-semibold text-white">{report.department || 'Unknown Department'}</h4>
-                    <p className="mt-1 text-sm text-slate-400">{formatReportDate(report.scannedAt)}</p>
+                    <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Submitted report</p>
+                    <h4 className="mt-1 truncate text-lg font-semibold text-slate-900">{report.department || 'Unknown Department'}</h4>
+                    <p className="mt-1 text-sm text-slate-500">{formatReportDate(report.scannedAt)}</p>
                   </div>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-4 md:mt-0 md:w-[56%] md:grid-cols-4">
-                    <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2">
-                      <p className="text-[11px] text-slate-500">Employees</p>
-                      <p className="mt-1 text-sm font-semibold text-white">{report.employeeCount}</p>
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <p className="text-[11px] text-slate-400">Employees</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">{report.employeeCount}</p>
                     </div>
-                    <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2">
-                      <p className="text-[11px] text-slate-500">Thickness</p>
-                      <p className="mt-1 text-sm font-semibold text-white">{report.thickness || '-'}</p>
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <p className="text-[11px] text-slate-400">Thickness</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">{report.thickness || '-'}</p>
                     </div>
-                    <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2">
-                      <p className="text-[11px] text-slate-500">Crates / Pieces</p>
-                      <p className="mt-1 text-sm font-semibold text-white">{report.cratesPieces || '-'}</p>
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <p className="text-[11px] text-slate-400">Crates / Pieces</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">{report.cratesPieces || '-'}</p>
                     </div>
-                    <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2">
-                      <p className="text-[11px] text-slate-500">Status</p>
-                      <p className={`mt-1 text-sm font-semibold ${report.isVerified ? 'text-emerald-300' : 'text-rose-300'}`}>
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <p className="text-[11px] text-slate-400">Status</p>
+                      <p className={`mt-1 text-sm font-semibold ${report.isVerified ? 'text-emerald-700' : 'text-rose-700'}`}>
                         {report.verificationLabel}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between text-xs text-slate-500 md:mt-0 md:min-w-[140px] md:flex-col md:items-end md:justify-center">
+                  <div className="mt-4 flex items-center justify-between text-xs text-slate-400 md:mt-0 md:min-w-[140px] md:flex-col md:items-end md:justify-center">
                     <span>{report.entries.length} row{report.entries.length === 1 ? '' : 's'}</span>
-                    <span className="text-slate-300 group-hover:text-white">Open report</span>
+                    <span className="text-slate-700 group-hover:text-slate-900">Open report</span>
                   </div>
                 </div>
               </button>
@@ -441,20 +441,20 @@ export default function ProductionDashboard() {
 
       {showPhotosModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-3xl overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
+          <div className="w-full max-w-3xl overflow-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Report images</h3>
+              <h3 className="text-lg font-semibold text-slate-900">Report images</h3>
               <button
                 type="button"
                 onClick={() => setShowPhotosModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-500 hover:text-slate-900"
               >
                 Close
               </button>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {selectedPhotos.map((photo, index) => (
-                <div key={`${photo}-${index}`} className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950">
+                <div key={`${photo}-${index}`} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                   <img src={photo} alt={`Report image ${index + 1}`} className="h-64 w-full object-cover" />
                 </div>
               ))}

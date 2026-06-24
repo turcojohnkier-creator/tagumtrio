@@ -83,17 +83,17 @@ export default function LeadmanDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-6">
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Leadman reporting</p>
-            <h2 className="mt-2 text-2xl font-bold text-white">Report Dashboard</h2>
-            <p className="mt-1 max-w-2xl text-sm text-slate-400">Use this page to create reports for deployed workers. Transfer approvals, deployed workers, and the daily report live on separate pages.</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Leadman reporting</p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900">Report Dashboard</h2>
+            <p className="mt-1 max-w-2xl text-sm text-slate-500">Use this page to create reports for deployed workers. Transfer approvals, deployed workers, and the daily report live on separate pages.</p>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-500">Department</p>
-            <select value={selectedDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-2 w-full min-w-[220px] rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-wider text-slate-400">Department</p>
+            <select value={selectedDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-2 w-full min-w-[220px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 focus:border-emerald-500 focus:outline-none">
               {assignedDepartments.map((department) => (
                 <option key={department} value={department}>{department}</option>
               ))}
@@ -107,12 +107,12 @@ export default function LeadmanDashboard() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             
             <div>
-              <h3 className="flex items-center gap-2 text-lg font-semibold text-white"><ScanLine className="h-5 w-5 text-emerald-400" /> Create Report</h3>
-              <p className="mt-1 text-sm text-slate-400">Open the report form and select the deployed worker to include in this report.</p>
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900"><ScanLine className="h-5 w-5 text-emerald-700" /> Create Report</h3>
+              <p className="mt-1 text-sm text-slate-500">Open the report form and select the deployed worker to include in this report.</p>
             </div>
             <button onClick={() => setScanModalOpen(true)} disabled={scanCandidates.length === 0} className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 font-medium text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50">
               <ScanLine className="h-4 w-4" /> Create Report
@@ -120,13 +120,13 @@ export default function LeadmanDashboard() {
           </div>
 
           <div className="mt-5 relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} type="text" placeholder="Search deployed workers..." className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2.5 pl-10 pr-4 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} type="text" placeholder="Search deployed workers..." className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none" />
           </div>
 
           <div className="mt-5 space-y-3">
             {scanCandidates.length === 0 ? (
-              <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">No employees found in {selectedDepartment} yet.</div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">No employees found in {selectedDepartment} yet.</div>
             ) : (
               <div className="grid grid-cols-1 gap-3">
                 {scanCandidates.map((employee) => (

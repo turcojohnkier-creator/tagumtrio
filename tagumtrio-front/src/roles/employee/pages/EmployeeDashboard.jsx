@@ -135,13 +135,13 @@ export default function EmployeeDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 relative overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-lg p-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-transparent to-cyan-500/10 pointer-events-none"></div>
         <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-2xl font-bold text-slate-700 border-4 border-slate-200 shadow-xl">JD</div>
+            <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-2xl font-semibold text-slate-700 border-4 border-slate-200 shadow-xl">JD</div>
             <div>
-              <h2 className="text-3xl font-bold text-slate-900">{user?.name || 'Employee'}</h2>
+              <h2 className="text-xl font-semibold text-slate-900">{user?.name || 'Employee'}</h2>
               <p className="text-emerald-700 font-medium mt-1">{currentDepartment ? `${currentDepartment} Department` : 'Department not yet assigned'}</p>
               <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-slate-500">
                 <span className="flex items-center gap-1"><Briefcase className="w-4 h-4" /> ID: {user?.id || '—'}</span>

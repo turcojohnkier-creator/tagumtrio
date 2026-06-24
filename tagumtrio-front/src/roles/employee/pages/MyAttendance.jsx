@@ -36,13 +36,13 @@ export default function MyAttendance() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-6">
+      <div className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-white p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <button onClick={() => navigate('/app/portal')} className="mb-3 inline-flex items-center gap-2 text-sm text-slate-700 hover:text-slate-900">
               <ArrowLeft className="w-4 h-4" /> Back to overview
             </button>
-            <h2 className="text-2xl font-bold text-slate-900">Leaves & Requests</h2>
+            <h2 className="text-2xl font-semibold text-slate-900">Leaves & Requests</h2>
             <p className="mt-1 text-sm text-slate-500">Track your leave requests, approved leaves, and department changes in one place.</p>
           </div>
         </div>
@@ -64,7 +64,7 @@ export default function MyAttendance() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+      <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
         <div className="border-b border-slate-200 px-4 py-4 sm:px-6">
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -99,13 +99,13 @@ export default function MyAttendance() {
             ) : (
               <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {approvedLeaves.map((request) => (
-                  <div key={request.id} className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+                  <div key={request.id} className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-medium text-slate-900">{request.leaveType || 'Leave'}</p>
                         <p className="mt-1 text-xs text-slate-500">{formatDateTime(request.requestedAt || request.createdAt || Date.now())}</p>
                       </div>
-                      <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-700">Approved</span>
+                      <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Approved</span>
                     </div>
                     <div className="mt-4 space-y-2 text-sm text-slate-700">
                       <p><span className="text-slate-400">Date range:</span> {request.startDate || request.start_date || '—'} to {request.endDate || request.end_date || '—'}</p>
@@ -126,7 +126,7 @@ export default function MyAttendance() {
             ) : (
               <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {pendingLeaves.map((request) => (
-                  <div key={request.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <div key={request.id} className="rounded-lg border border-slate-200 bg-slate-50 p-5">
                     <p className="text-sm font-medium text-slate-900">{request.leaveType || 'Leave'}</p>
                     <p className="mt-4 text-sm text-slate-700">{request.startDate || request.start_date || '—'} to {request.endDate || request.end_date || '—'}</p>
                   </div>
@@ -144,12 +144,12 @@ export default function MyAttendance() {
             ) : (
               <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {rejectedLeaves.map((request) => (
-                  <div key={request.id} className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-5">
+                  <div key={request.id} className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-medium text-slate-900">{request.leaveType || 'Leave'}</p>
                       </div>
-                      <span className="rounded-full bg-rose-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-rose-700">Rejected</span>
+                      <span className="rounded-full bg-rose-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-rose-700">Rejected</span>
                     </div>
                     <div className="mt-4 space-y-2 text-sm text-slate-700">
                       <p><span className="text-slate-400">Date range:</span> {request.startDate || request.start_date || '—'} to {request.endDate || request.end_date || '—'}</p>

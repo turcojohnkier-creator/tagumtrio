@@ -89,7 +89,7 @@ export default function EmployeeDirectory() {
     return (
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
             {title}
           </h3>
           <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-500">
@@ -128,7 +128,7 @@ export default function EmployeeDirectory() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">HR Accounts</h2>
+          <h2 className="text-2xl font-semibold text-slate-900">HR Accounts</h2>
           <p className="text-slate-500 mt-1">View all created accounts, inspect details, and archive or restore inactive users.</p>
         </div>
       </div>

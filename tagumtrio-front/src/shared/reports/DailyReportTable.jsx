@@ -18,7 +18,7 @@ export default function DailyReportTable({ entries = [], fallbackDepartment = ''
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white/80">
+    <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white/80">
       <table className="w-full text-left text-sm">
         <thead className="bg-slate-50 text-slate-500">
           <tr>

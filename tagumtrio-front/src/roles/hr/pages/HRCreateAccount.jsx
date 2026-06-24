@@ -69,7 +69,7 @@ export default function HRCreateAccount() {
 
   if (user?.role !== 'hr') {
     return (
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-slate-900">Access denied</h2>
         <p className="mt-2 text-sm text-slate-500">This page is restricted to HR administrators only.</p>
       </div>
@@ -121,13 +121,13 @@ export default function HRCreateAccount() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">HR Account Provisioning</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">HR Account Provisioning</h2>
         <p className="text-slate-500 mt-1">Create user accounts manually for employees, leadman, and production incharge.</p>
       </div>
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-6">
-          <p className="text-xs uppercase tracking-widest text-emerald-700 font-semibold">Manual user creation</p>
+          <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">Manual user creation</p>
           <h3 className="mt-1 text-xl font-semibold text-slate-900">Provision a new account</h3>
           <p className="mt-2 text-sm text-slate-500">The account fields match the public registration form, but only HR may create them.</p>
         </div>

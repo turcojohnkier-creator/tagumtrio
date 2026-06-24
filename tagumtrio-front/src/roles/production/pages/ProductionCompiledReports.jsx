@@ -75,7 +75,7 @@ export default function ProductionCompiledReports() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Compiled Production Reports</h2>
+          <h2 className="text-2xl font-semibold text-slate-900">Compiled Production Reports</h2>
           <p className="mt-1 text-slate-500">These compiled reports are ready to be submitted to GM consolidated review.</p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -89,18 +89,18 @@ export default function ProductionCompiledReports() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
+      <div className="rounded-lg border border-slate-200 bg-white p-6 space-y-4">
         {compiledReports.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
             No compiled reports available. Use the production dashboard to compile a submitted report.
           </div>
         ) : (
           <div className="space-y-4">
             {compiledReports.map((report) => (
-              <div key={report.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div key={report.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Compiled report</p>
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Compiled report</p>
                     <h3 className="mt-1 text-lg font-semibold text-slate-900">{report.department || 'Unknown department'}</h3>
                     <p className="mt-1 text-sm text-slate-500">Submitted {formatReportDate(report.createdAt || report.created_at || report.reportDate)}</p>
                   </div>
@@ -110,16 +110,16 @@ export default function ProductionCompiledReports() {
                   </div>
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Thickness</p>
+                  <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Thickness</p>
                     <p className="mt-2 text-sm text-slate-900">{report.thickness || '-'}</p>
                   </div>
-                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Crates / pieces</p>
+                  <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Crates / pieces</p>
                     <p className="mt-2 text-sm text-slate-900">{report.cratesPieces || '-'}</p>
                   </div>
-                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Submitted by</p>
+                  <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Submitted by</p>
                     <p className="mt-2 text-sm text-slate-900">{report.submittedBy || 'Unknown'}</p>
                   </div>
                 </div>

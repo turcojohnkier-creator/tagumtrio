@@ -17,7 +17,7 @@ export default function ViewPayslip() {
     <div className="max-w-6xl mx-auto space-y-6">
       <div>
         <button onClick={() => navigate('/app/portal/payslips')} className="inline-flex items-center gap-2 text-sm text-slate-700 hover:text-slate-900 mb-4"><ArrowLeft className="w-4 h-4" /> Back</button>
-        <h2 className="text-2xl font-bold text-slate-900">Payslip • {periodMeta?.label || 'Details'}</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">Payslip • {periodMeta?.label || 'Details'}</h2>
         <p className="text-slate-500 text-sm mt-1">Every report entry used in this payslip is listed below for transparency.</p>
       </div>
 

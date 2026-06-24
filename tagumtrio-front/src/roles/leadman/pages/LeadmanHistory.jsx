@@ -57,23 +57,23 @@ export default function LeadmanHistory() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div className="rounded-lg border border-slate-200 bg-white p-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">History</p>
-          <h2 className="mt-2 text-2xl font-bold text-slate-900">Submitted Reports</h2>
+          <p className="text-xs uppercase tracking-wide text-slate-400">History</p>
+          <h2 className="mt-2 text-2xl font-semibold text-slate-900">Submitted Reports</h2>
           <p className="mt-1 text-sm text-slate-500">View recent submitted reports and send a consolidated daily report.</p>
         </div>
 
         <div className="flex gap-3 flex-wrap">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 min-w-[220px] select-none pointer-events-none">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 min-w-[220px] select-none pointer-events-none">
             <p className="text-xs text-slate-400">Department</p>
             <p className="mt-2 text-slate-900">{currentDepartment || 'Assigned department'}</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
             <p className="text-xs text-slate-400">Date</p>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-2 bg-transparent text-slate-900 outline-none" />
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
             <p className="text-xs text-slate-400">Search</p>
             <div className="relative mt-2">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -83,7 +83,7 @@ export default function LeadmanHistory() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+      <div className="rounded-lg border border-slate-200 bg-white p-6">
         {loading ? <div className="text-slate-500">Loading...</div> : null}
         {!loading && filtered.length === 0 ? <div className="text-slate-500">No reports found for selected filters.</div> : null}
         <div className="space-y-3">
@@ -104,10 +104,10 @@ export default function LeadmanHistory() {
 
       {selected ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
+          <div className="w-full max-w-4xl rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Submitted daily report</p>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Submitted daily report</p>
                 <h3 className="mt-1 text-lg font-semibold text-slate-900">{selected.department} • {selected.reportDate}</h3>
                 <p className="mt-1 text-sm text-slate-500">Submitted by {selected.submittedByName || selected.submittedBy || 'Unknown'}</p>
               </div>
@@ -118,20 +118,20 @@ export default function LeadmanHistory() {
             <div className="max-h-[72vh] overflow-auto px-5 py-4">
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 mb-4">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Employees involved</p>
-                  <p className="mt-2 text-2xl font-bold text-slate-900">{new Set((selected.entries || []).map((e) => String(e.employeeId || e.employeeName || ''))).size}</p>
+                  <p className="text-xs uppercase tracking-wide text-slate-400">Employees involved</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">{new Set((selected.entries || []).map((e) => String(e.employeeId || e.employeeName || ''))).size}</p>
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total entries</p>
-                  <p className="mt-2 text-2xl font-bold text-slate-900">{(selected.entries || []).length}</p>
+                  <p className="text-xs uppercase tracking-wide text-slate-400">Total entries</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">{(selected.entries || []).length}</p>
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total pieces</p>
-                  <p className="mt-2 text-2xl font-bold text-slate-900">{aggregateReport([selected]).totalPieces}</p>
+                  <p className="text-xs uppercase tracking-wide text-slate-400">Total pieces</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">{aggregateReport([selected]).totalPieces}</p>
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total amount</p>
-                  <p className="mt-2 text-2xl font-bold text-emerald-700">₱{aggregateReport([selected]).totalAmount.toLocaleString()}</p>
+                  <p className="text-xs uppercase tracking-wide text-slate-400">Total amount</p>
+                  <p className="mt-2 text-2xl font-semibold text-emerald-700">₱{aggregateReport([selected]).totalAmount.toLocaleString()}</p>
                 </div>
               </div>
               <DailyReportTable entries={selected.entries || []} fallbackDepartment={selected.department || currentDepartment} />

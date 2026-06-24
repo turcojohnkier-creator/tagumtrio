@@ -23,16 +23,16 @@ export default function AnnouncementPost({ announcement, compact = false, showAc
   const title = String(announcement.title || '').trim()
 
   return (
-    <article className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-lg shadow-black/20">
+    <article className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-lg shadow-black/20">
       <div className="flex items-start gap-4 border-b border-slate-200/80 bg-white/60 px-5 py-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-sm font-bold text-black shadow-lg shadow-emerald-500/20">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-sm font-semibold text-black shadow-lg shadow-emerald-500/20">
           {initials(author)}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className={`${compact ? 'text-base' : 'text-lg'} font-semibold text-slate-900`}>{title || 'Announcement'}</h3>
             {announcement.pinned ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-700">
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
                 <Pin className="h-3 w-3" /> Pinned
               </span>
             ) : null}
@@ -42,7 +42,7 @@ export default function AnnouncementPost({ announcement, compact = false, showAc
             <span>•</span>
             <span>{formatTime(announcement.createdAt)}</span>
             <span>•</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-500">
               <Megaphone className="h-3 w-3" /> {audience}
             </span>
           </div>

@@ -30,14 +30,14 @@ export default function LeadmanWorkers() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+      <div className="rounded-lg border border-slate-200 bg-white p-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Leadman roster</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900">Deployed Workers</h2>
+            <p className="text-xs uppercase tracking-wide text-slate-400">Leadman roster</p>
+            <h2 className="mt-2 text-2xl font-semibold text-slate-900">Deployed Workers</h2>
             <p className="mt-1 text-sm text-slate-500">Review the workers deployed under the selected department.</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs uppercase tracking-wider text-slate-400">Department</p>
             <select value={selectedDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-2 min-w-[220px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 focus:border-emerald-500 focus:outline-none">
               {assignedDepartments.map((department) => (
@@ -55,7 +55,7 @@ export default function LeadmanWorkers() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+      <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
         <div className="border-b border-slate-200 px-6 py-4">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900"><Users className="h-5 w-5 text-cyan-700" /> Active Workers</h3>
         </div>

@@ -67,10 +67,10 @@ function EmployeeModal({ employee, history, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-4xl rounded-3xl border border-slate-200 bg-white shadow-2xl">
+      <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">15-day production history</p>
+            <p className="text-xs uppercase tracking-wide text-slate-400">15-day production history</p>
             <h3 className="mt-1 text-lg font-semibold text-slate-900">{employee.employeeName}</h3>
             <p className="mt-1 text-sm text-slate-500">{employee.employeeId} • {getDepartment(employee)}</p>
           </div>
@@ -80,22 +80,22 @@ function EmployeeModal({ employee, history, onClose }) {
         </div>
 
         <div className="grid gap-3 px-5 py-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Logs</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{history.length}</p>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">Logs</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-900">{history.length}</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Hours</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{totalHours.toLocaleString()}</p>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">Hours</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-900">{totalHours.toLocaleString()}</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Amount</p>
-            <p className="mt-2 text-2xl font-bold text-cyan-700">₱{totalAmount.toLocaleString()}</p>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">Amount</p>
+            <p className="mt-2 text-2xl font-semibold text-cyan-700">₱{totalAmount.toLocaleString()}</p>
           </div>
         </div>
 
         <div className="px-5 pb-4">
-          <div className="max-h-[52vh] overflow-auto rounded-2xl border border-slate-200">
+          <div className="max-h-[52vh] overflow-auto rounded-lg border border-slate-200">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-500">
                 <tr>
@@ -151,9 +151,9 @@ function EmployeeModal({ employee, history, onClose }) {
 
       {confirmOpen ? (
         <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 p-4">
-          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-slate-50 p-6 text-slate-900 shadow-2xl">
+          <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-slate-50 p-6 text-slate-900 shadow-sm">
             <div className="mb-4">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{confirmationTitle || 'Confirm action'}</p>
+              <p className="text-xs uppercase tracking-wide text-slate-400">{confirmationTitle || 'Confirm action'}</p>
               <h4 className="mt-2 text-xl font-semibold">{confirmationTitle}</h4>
               <p className="mt-3 text-sm leading-6 text-slate-700">{confirmationMessage}</p>
               <p className="mt-2 text-xs text-slate-400">This is a placeholder confirmation modal for the finance employee summary action.</p>
@@ -267,14 +267,14 @@ export default function FinanceDepartmentEmployees() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-50 p-6 shadow-2xl shadow-black/20">
+      <section className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-50 p-6 shadow-sm">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-700">
               <Users className="h-3.5 w-3.5" />
               Department Employees
             </div>
-            <h1 className="text-3xl font-bold text-slate-900">Employee list</h1>
+            <h1 className="text-xl font-semibold text-slate-900">Employee list</h1>
             <p className="text-sm leading-6 text-slate-500">
               Sort and filter employees, then open a card to see the 15-day production history.
             </p>
@@ -282,7 +282,7 @@ export default function FinanceDepartmentEmployees() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-xl shadow-black/10">
+      <section className="rounded-lg border border-slate-200 bg-white/80 p-5 shadow-xl shadow-black/10">
         <div className="grid gap-3 lg:grid-cols-[1.2fr_0.7fr_0.5fr_0.5fr]">
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
             <label className="text-[11px] uppercase tracking-wider text-slate-400">Search employees</label>
@@ -321,13 +321,13 @@ export default function FinanceDepartmentEmployees() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-xl shadow-black/10">
+      <section className="rounded-lg border border-slate-200 bg-white/80 p-5 shadow-xl shadow-black/10">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Employees</h2>
             <p className="text-sm text-slate-500">No logs, hours, or amount are shown here. Open a card to inspect the production history.</p>
           </div>
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{filteredEmployees.length} result{filteredEmployees.length === 1 ? '' : 's'}</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400">{filteredEmployees.length} result{filteredEmployees.length === 1 ? '' : 's'}</p>
         </div>
 
           <div className="mt-5 space-y-3">
@@ -337,7 +337,7 @@ export default function FinanceDepartmentEmployees() {
                 key={employee.employeeId || employee.id}
                 type="button"
                 onClick={() => setSelectedEmployeeId(String(employee.employeeId || employee.id))}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition-colors hover:border-cyan-500/30 hover:bg-cyan-500/10"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-left transition-colors hover:border-cyan-500/30 hover:bg-cyan-500/10"
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="min-w-0">
@@ -346,7 +346,7 @@ export default function FinanceDepartmentEmployees() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-slate-800">{getDepartment(employee)}</p>
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Open</p>
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Open</p>
                   </div>
                 </div>
               </button>

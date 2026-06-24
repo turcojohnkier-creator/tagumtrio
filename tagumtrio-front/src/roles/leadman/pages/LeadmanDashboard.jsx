@@ -83,15 +83,15 @@ export default function LeadmanDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-6">
+      <div className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-white p-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Leadman reporting</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900">Report Dashboard</h2>
+            <p className="text-xs uppercase tracking-wide text-slate-400">Leadman reporting</p>
+            <h2 className="mt-2 text-2xl font-semibold text-slate-900">Report Dashboard</h2>
             <p className="mt-1 max-w-2xl text-sm text-slate-500">Use this page to create reports for deployed workers. Transfer approvals, deployed workers, and the daily report live on separate pages.</p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs uppercase tracking-wider text-slate-400">Department</p>
             <select value={selectedDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-2 w-full min-w-[220px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 focus:border-emerald-500 focus:outline-none">
               {assignedDepartments.map((department) => (
@@ -107,7 +107,7 @@ export default function LeadmanDashboard() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="rounded-lg border border-slate-200 bg-white p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             
             <div>

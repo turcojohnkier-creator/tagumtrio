@@ -27,7 +27,7 @@ export default function EmployeeCard({
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-700 border border-slate-300 group-hover:border-emerald-500/50 transition-colors shrink-0">
+          <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center text-sm font-semibold text-slate-700 border border-slate-300 group-hover:border-emerald-500/50 transition-colors shrink-0">
             {initials}
           </div>
           <div className="min-w-0">

@@ -15,14 +15,14 @@ function DialogModal({ dialog, onCancel, onConfirm, onClose }) {
     <Portal>
       <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
         <button type="button" aria-label="Close dialog" className="absolute inset-0 bg-black/60" onClick={isConfirm ? onCancel : onClose} />
-        <div className="relative z-10 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <div className="relative z-10 w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className={`rounded-xl p-2 ${isSuccess ? 'bg-emerald-500/10 text-emerald-700' : isError ? 'bg-rose-500/10 text-rose-700' : 'bg-cyan-500/10 text-cyan-700'}`}>
                 {isSuccess ? <CheckCircle2 className="h-5 w-5" /> : isError ? <AlertTriangle className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{dialog.kicker || (isSuccess ? 'Success' : isError ? 'Error' : 'Confirm action')}</p>
+                <p className="text-xs uppercase tracking-wide text-slate-400">{dialog.kicker || (isSuccess ? 'Success' : isError ? 'Error' : 'Confirm action')}</p>
                 <h3 className="mt-1 text-xl font-semibold text-slate-900">{dialog.title}</h3>
               </div>
             </div>

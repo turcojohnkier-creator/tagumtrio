@@ -100,14 +100,14 @@ export default function LeadmanTransfers() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+      <div className="rounded-lg border border-slate-200 bg-white p-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Leadman queue</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900">Transfer Requests</h2>
+            <p className="text-xs uppercase tracking-wide text-slate-400">Leadman queue</p>
+            <h2 className="mt-2 text-2xl font-semibold text-slate-900">Transfer Requests</h2>
             <p className="mt-1 text-sm text-slate-500">Approve requests or redirect mistaken transfers to the correct department. All pending requests are shown here.</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs uppercase tracking-wider text-slate-400">Department</p>
             <select value={selectedDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-2 min-w-[220px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 focus:border-emerald-500 focus:outline-none">
               {assignedDepartments.map((department) => (
@@ -125,7 +125,7 @@ export default function LeadmanTransfers() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+      <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
         <div className="border-b border-slate-200 px-6 py-4">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900"><BadgeCheck className="h-5 w-5 text-emerald-700" /> Pending Requests for {selectedDepartment}</h3>
         </div>
@@ -149,7 +149,7 @@ export default function LeadmanTransfers() {
                     <td className="px-6 py-4 text-slate-900 font-medium">{request.employeeName}</td>
                     <td className="px-6 py-4 text-slate-500">{request.employeeId}</td>
                     <td className="px-6 py-4">
-                      <span className="rounded-full border border-slate-300 bg-slate-50 px-2.5 py-0.5 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                      <span className="rounded-full border border-slate-300 bg-slate-50 px-2.5 py-0.5 text-[11px] uppercase tracking-wide text-slate-500">
                         {request.requestedDepartment}
                       </span>
                     </td>
@@ -171,11 +171,11 @@ export default function LeadmanTransfers() {
       {redirectOpen && redirectRequest ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <button type="button" aria-label="Close redirect request" className="absolute inset-0 bg-black/60" onClick={() => setRedirectOpen(false)} />
-          <div className="relative z-10 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+          <div className="relative z-10 w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <button type="button" onClick={() => setRedirectOpen(false)} className="absolute right-4 top-4 text-slate-500 hover:text-slate-900">
               <X className="h-5 w-5" />
             </button>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Redirect request</p>
+            <p className="text-xs uppercase tracking-wide text-slate-400">Redirect request</p>
             <h3 className="mt-2 text-xl font-semibold text-slate-900">Move this request to another department</h3>
             <p className="mt-2 text-sm text-slate-500">
               {redirectRequest.employeeName} • {redirectRequest.employeeId}

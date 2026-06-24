@@ -124,7 +124,7 @@ export default function ProductionReports() {
     const notes = verificationNotes[report.id] || ''
 
     return (
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300">
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300">
         <button
           type="button"
           onClick={() => setExpandedReportId(isExpanded ? null : report.id)}
@@ -149,31 +149,31 @@ export default function ProductionReports() {
           <div className="border-t border-slate-200 bg-white/40 p-4 space-y-4">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Department</p>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Department</p>
                 <p className="mt-2 text-lg font-semibold text-slate-900">{report.department || '—'}</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Status</p>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Status</p>
                 <p className="mt-2 text-lg font-semibold text-slate-900">{getStatusLabel(report.status)}</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Entries</p>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Entries</p>
                 <p className="mt-2 text-lg font-semibold text-slate-900">{entries.length}</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Created</p>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Created</p>
                 <p className="mt-2 text-sm font-semibold text-slate-900">{formatProviderDateTime ? formatProviderDateTime(report.createdAt || report.created_at || report.reportDate) : formatDateTime(report.createdAt || report.created_at || report.reportDate)}</p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Report notes</p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-400">Report notes</p>
               <p className="mt-2 text-sm text-slate-800">{report.summary || 'No summary provided.'}</p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Images</p>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Images</p>
                 <p className="mt-2 text-sm text-slate-800">{photos.length || 0} photo{photos.length === 1 ? '' : 's'}</p>
               </div>
               <div className="sm:col-span-3">
@@ -196,9 +196,9 @@ export default function ProductionReports() {
             </div>
 
             {normalizeText(report.status) === 'submitted' ? (
-              <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
+              <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
                 <div>
-                  <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Verification notes</label>
+                  <label className="text-xs uppercase tracking-wide text-slate-400">Verification notes</label>
                   <textarea
                     value={verificationNotes[report.id] || ''}
                     onChange={(event) => setVerificationNotes((current) => ({ ...current, [report.id]: event.target.value }))}
@@ -228,9 +228,9 @@ export default function ProductionReports() {
                 </div>
               </div>
             ) : normalizeText(report.status) === 'production_verified' || normalizeText(report.status) === 'leadman_verified' ? (
-              <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Ready for next step</p>
+                  <p className="text-xs uppercase tracking-wide text-slate-400">Ready for next step</p>
                   <p className="mt-1 text-sm text-slate-700">This report has already been verified and can be forwarded to GM.</p>
                 </div>
                 <button
@@ -253,8 +253,8 @@ export default function ProductionReports() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Production in-charge</p>
-        <h1 className="mt-2 text-3xl font-bold text-slate-900">Production Reports</h1>
+        <p className="text-xs uppercase tracking-wide text-slate-400">Production in-charge</p>
+        <h1 className="mt-2 text-xl font-semibold text-slate-900">Production Reports</h1>
       </div>
 
       <div className="flex gap-2 border-b border-slate-200">
@@ -271,14 +271,14 @@ export default function ProductionReports() {
       <div className="space-y-3">
         {activeTab === 'pending' ? (
           pendingReports.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-8 text-sm text-slate-500">
+            <div className="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-8 text-sm text-slate-500">
               No submitted reports waiting for production review.
             </div>
           ) : (
             pendingReports.map((report) => <ReportCard key={report.id} report={report} />)
           )
         ) : reviewedReports.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-8 text-sm text-slate-500">
+          <div className="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-8 text-sm text-slate-500">
             No reviewed reports yet.
           </div>
         ) : (
@@ -288,7 +288,7 @@ export default function ProductionReports() {
 
       {showPhotoModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-          <div className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-2xl border border-slate-200 bg-white p-6">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-lg border border-slate-200 bg-white p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Verification photos</h3>
               <button type="button" onClick={() => setShowPhotoModal(false)} className="text-slate-500 hover:text-slate-900">Close</button>

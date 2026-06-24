@@ -36,23 +36,23 @@ export default function Announcements() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">{t('gm.announce.title')}</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">{t('gm.announce.title')}</h2>
         <p className="text-slate-500 mt-1">{t('gm.announce.desc')}</p>
       </div>
 
-      <form onSubmit={handleCreate} className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg shadow-black/20">
+      <form onSubmit={handleCreate} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg shadow-black/20">
         <div className="border-b border-slate-200 bg-slate-50/70 px-5 py-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t('gm.announce.create')}</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400">{t('gm.announce.create')}</p>
           <h3 className="mt-1 text-lg font-semibold text-slate-900">{t('gm.announce.post')}</h3>
         </div>
         <div className="grid gap-4 p-5">
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('gm.announce.what')} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none" />
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={5} placeholder={t('gm.announce.body')} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none" />
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('gm.announce.what')} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none" />
+          <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={5} placeholder={t('gm.announce.body')} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none" />
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} /> {t('gm.announce.pin')}
           </label>
           <div className="flex items-center justify-end gap-3">
-            <span className="text-xs uppercase tracking-[0.25em] text-slate-400">{t('gm.announce.broadcast')}</span>
+            <span className="text-xs uppercase tracking-wide text-slate-400">{t('gm.announce.broadcast')}</span>
             <button type="submit" disabled={submitting} className="rounded-xl bg-emerald-500 px-5 py-2.5 font-medium text-black transition-colors hover:bg-emerald-400">{submitting ? t('gm.announce.posting') : t('gm.announce.publish')}</button>
           </div>
         </div>
@@ -85,21 +85,21 @@ export default function Announcements() {
                         setEditSubmitting(false)
                       }
                     }}
-                    className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-5"
+                    className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-5"
                   >
                     <div className="grid gap-4">
                       <input
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
                         placeholder={t('gm.announce.ann_title')}
-                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-emerald-500 focus:outline-none"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-emerald-500 focus:outline-none"
                       />
                       <textarea
                         value={editBody}
                         onChange={(e) => setEditBody(e.target.value)}
                         rows={4}
                         placeholder={t('gm.announce.ann_body')}
-                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-emerald-500 focus:outline-none"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-emerald-500 focus:outline-none"
                       />
                       <label className="flex items-center gap-2 text-sm text-slate-700">
                         <input type="checkbox" checked={editPinned} onChange={(e) => setEditPinned(e.target.checked)} /> {t('gm.announce.pin_top')}

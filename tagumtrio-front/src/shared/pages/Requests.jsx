@@ -182,7 +182,7 @@ export default function Requests() {
     const canApproveReport = canApproveDaily && ['submitted', 'production_verified', 'leadman_verified', 'gm_submitted'].includes(status)
 
     return (
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300">
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300">
         <button
           type="button"
           onClick={() => setExpandedReportId(isExpanded ? null : report.id)}
@@ -203,34 +203,34 @@ export default function Requests() {
           <div className="border-t border-slate-200 bg-white/40 p-4 space-y-4">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Department</p>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Department</p>
                 <p className="mt-2 text-lg font-semibold text-slate-900">{report.department || '—'}</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Status</p>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Status</p>
                 <p className="mt-2 text-lg font-semibold text-slate-900">{getStatusLabel(report.status)}</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Entries</p>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Entries</p>
                 <p className="mt-2 text-lg font-semibold text-slate-900">{entries.length}</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Created</p>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Created</p>
                 <p className="mt-2 text-sm font-semibold text-slate-900">{formatDateTime ? formatDateTime(report.createdAt || report.created_at || report.reportDate) : (report.createdAt || report.created_at || report.reportDate)}</p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Report notes</p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-400">Report notes</p>
               <p className="mt-2 text-sm text-slate-800">{report.summary || 'No notes provided.'}</p>
             </div>
 
             {photos.length > 0 ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Submitted photos</p>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-400">Submitted photos</p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   {photos.slice(0, 4).map((photo, index) => (
-                    <div key={`${report.id}-photo-${index}`} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                    <div key={`${report.id}-photo-${index}`} className="overflow-hidden rounded-lg border border-slate-200 bg-white">
                       <img src={photo} alt={`Submitted photo ${index + 1}`} className="h-40 w-full object-cover" />
                     </div>
                   ))}
@@ -241,9 +241,9 @@ export default function Requests() {
               </div>
             ) : null}
 
-            <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
+            <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Images</p>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Images</p>
                 <p className="mt-2 text-sm text-slate-800">{photos.length || 0} photo{photos.length === 1 ? '' : 's'}</p>
               </div>
               <div className="flex items-end justify-end">
@@ -266,9 +266,9 @@ export default function Requests() {
             </div>
 
             {canApproveReport ? (
-              <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
+              <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
                 <div>
-                  <label className="text-xs uppercase tracking-[0.2em] text-slate-400">Approval notes</label>
+                  <label className="text-xs uppercase tracking-wide text-slate-400">Approval notes</label>
                   <textarea
                     value={verificationNotes[report.id] || ''}
                     onChange={(event) => setVerificationNotes((current) => ({ ...current, [report.id]: event.target.value }))}
@@ -298,7 +298,7 @@ export default function Requests() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
                 {status === 'approved'
                   ? 'This report has been approved by GM.'
                   : status === 'rejected'
@@ -315,7 +315,7 @@ export default function Requests() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">Requests & Submissions</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">Requests & Submissions</h2>
         <p className="text-slate-500 mt-1">Manage employee account submissions and approve submitted daily reports.</p>
       </div>
 
@@ -394,12 +394,12 @@ export default function Requests() {
         </div>
       ) : activeTab === 'dailyReports' ? (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm text-slate-500">Daily report submissions are reviewed here.</p>
               <p className="text-xs text-slate-400">Approvals are available for GM, HR, admin, and production in-charge.</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-500">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-500">
               {dailyReports.length} report{dailyReports.length === 1 ? '' : 's'} loaded
             </div>
           </div>
@@ -416,7 +416,7 @@ export default function Requests() {
 
           {showPhotoModal ? (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-              <div className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-2xl border border-slate-200 bg-white p-6">
+              <div className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-lg border border-slate-200 bg-white p-6">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-slate-900">Report images</h3>
                   <button type="button" onClick={() => setShowPhotoModal(false)} className="text-slate-500 hover:text-slate-900">Close</button>

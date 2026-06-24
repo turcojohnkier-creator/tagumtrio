@@ -29,7 +29,7 @@ export default class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="rounded-2xl border border-rose-300 bg-rose-50 p-6">
+        <div className="rounded-lg border border-rose-300 bg-rose-50 p-6">
           <h3 className="text-xl font-semibold text-rose-700">Something went wrong in the Leadman view</h3>
           <p className="mt-2 text-sm text-rose-700">The leadman UI failed to render. Open the browser console for details.</p>
           <div className="mt-4 flex gap-2">

@@ -98,10 +98,10 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl rounded-2xl border border-slate-200 bg-white shadow-2xl max-h-[90vh] overflow-auto">
+      <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl rounded-lg border border-slate-200 bg-white shadow-sm max-h-[90vh] overflow-auto">
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Submitted daily report</p>
+            <p className="text-xs uppercase tracking-wide text-slate-400">Submitted daily report</p>
             <h3 className="mt-1 text-lg font-semibold text-slate-900">{report.department}</h3>
             <p className="mt-1 text-sm text-slate-500">Submitted {formatReportDate(report.scannedAt)}</p>
           </div>
@@ -113,7 +113,7 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
         <div className="max-h-[72vh] overflow-auto px-5 py-4 space-y-4">
           
 
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white/80">
+          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white/80">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-500">
                 <tr>
@@ -143,9 +143,9 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
             </table>
           </div>
 
-          <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
+          <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Images</p>
+              <p className="text-xs uppercase tracking-wide text-slate-400">Images</p>
               <p className="mt-2 text-sm text-slate-800">{report.photos?.length || 0} photo{report.photos?.length === 1 ? '' : 's'}</p>
             </div>
             <div className="flex items-end justify-end">
@@ -163,20 +163,20 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
             </div>
           </div>
 
-          <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
+          <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Submitted by</p>
+              <p className="text-xs uppercase tracking-wide text-slate-400">Submitted by</p>
               <p className="mt-2 text-sm text-slate-800">{report.submittedBy || 'Unknown'}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Date and time scanned</p>
+              <p className="text-xs uppercase tracking-wide text-slate-400">Date and time scanned</p>
               <p className="mt-2 text-sm text-slate-800">{formatReportDate(report.scannedAt)}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total employees involved</p>
+              <p className="text-xs uppercase tracking-wide text-slate-400">Total employees involved</p>
               <p className="mt-2 text-sm text-slate-800">{report.employeeCount}</p>
             </div><div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Verification</p>
+              <p className="text-xs uppercase tracking-wide text-slate-400">Verification</p>
               <p className={`mt-2 text-sm ${report.isVerified ? 'text-emerald-700' : 'text-rose-700'}`}>{report.verificationLabel}</p>
             </div>
           </div>
@@ -324,7 +324,7 @@ export default function ProductionDashboard() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Daily Production Reports</h2>
+          <h2 className="text-2xl font-semibold text-slate-900">Daily Production Reports</h2>
           <p className="mt-1 text-slate-500">Read and review submitted reports from leadman and the employee workflow.</p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -342,7 +342,7 @@ export default function ProductionDashboard() {
 
 
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
+      <div className="rounded-lg border border-slate-200 bg-white p-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
 
           <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-3">
@@ -387,11 +387,11 @@ export default function ProductionDashboard() {
                 key={report.id}
                 type="button"
                 onClick={() => setSelectedReportId(report.id)}
-                className="group relative block w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition-all hover:border-slate-300 hover:bg-white"
+                className="group relative block w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-left transition-all hover:border-slate-300 hover:bg-white"
               >
                 <div className="pr-12 md:flex md:items-center md:gap-5">
                   <div className="min-w-0 md:flex-1">
-                    <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Submitted report</p>
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Submitted report</p>
                     <h4 className="mt-1 truncate text-lg font-semibold text-slate-900">{report.department || 'Unknown Department'}</h4>
                     <p className="mt-1 text-sm text-slate-500">{formatReportDate(report.scannedAt)}</p>
                   </div>
@@ -441,7 +441,7 @@ export default function ProductionDashboard() {
 
       {showPhotosModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-3xl overflow-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+          <div className="w-full max-w-3xl overflow-auto rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Report images</h3>
               <button
@@ -454,7 +454,7 @@ export default function ProductionDashboard() {
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {selectedPhotos.map((photo, index) => (
-                <div key={`${photo}-${index}`} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                <div key={`${photo}-${index}`} className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
                   <img src={photo} alt={`Report image ${index + 1}`} className="h-64 w-full object-cover" />
                 </div>
               ))}

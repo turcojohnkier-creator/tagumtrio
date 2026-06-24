@@ -26,7 +26,7 @@ export default function EmployeeManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">{t('gm.employee.title')}</h2>
+          <h2 className="text-2xl font-semibold text-slate-900">{t('gm.employee.title')}</h2>
           <p className="text-slate-500 mt-1">{t('gm.employee.desc')}</p>
         </div>
       </div>

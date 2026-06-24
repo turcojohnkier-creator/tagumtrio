@@ -93,7 +93,7 @@ export default function GMOverview() {
   return (
     <div className="space-y-6 pb-8">
       <div className="space-y-5">
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-slate-900">{t('gm.overview.title')}</p>
@@ -127,7 +127,7 @@ export default function GMOverview() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-2">
           {employeesLoading
             ? Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="h-40 animate-pulse rounded-3xl bg-white" />
+                <div key={index} className="h-40 animate-pulse rounded-xl bg-white" />
               ))
             : sortedDepartments.map((d) => (
                 <DepartmentCard key={d.name} department={d} onOpen={() => openDept(d)} />

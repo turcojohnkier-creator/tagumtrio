@@ -62,15 +62,15 @@ export default function EmployeeListModal({ department, onClose, employees = [],
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
       <div className="absolute inset-0 bg-slate-50/70 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-      <div className="relative z-10 w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-6xl overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-50 shadow-2xl shadow-black/50 max-h-[90vh]">
+      <div className="relative z-10 w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-6xl overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-50 shadow-sm max-h-[90vh]">
         <div className="flex flex-col justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5 sm:flex-row sm:items-center">
           <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-slate-400">Department team</p>
+            <p className="text-xs uppercase tracking-wide text-slate-400">Department team</p>
             <h2 className="mt-2 text-2xl font-semibold text-slate-900">{department.name}</h2>
             <p className="mt-1 text-sm text-slate-500">Open the employee roster and reassign workers with one click.</p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="rounded-3xl bg-white px-4 py-2 text-sm text-slate-700">
+            <div className="rounded-xl bg-white px-4 py-2 text-sm text-slate-700">
               Active: <span className="font-semibold text-slate-900">{localEmployees.length}</span>
             </div>
             <button
@@ -84,16 +84,16 @@ export default function EmployeeListModal({ department, onClose, employees = [],
         </div>
 
         <div className="px-6 py-6">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Reassign employees</p>
+                <p className="text-sm uppercase tracking-wide text-slate-400">Reassign employees</p>
                 <p className="mt-1 text-sm text-slate-500">Select a department and reassign employees directly from the roster.</p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 sm:items-center">
                 <label className="text-sm font-medium text-slate-700">Target department</label>
                 <select
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
                   value={targetDept}
                   onChange={(e) => setTargetDept(e.target.value)}
                 >
@@ -107,7 +107,7 @@ export default function EmployeeListModal({ department, onClose, employees = [],
           </div>
 
           <div className="mt-6 overflow-x-auto rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
-            <div className="grid grid-cols-[minmax(220px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_180px] gap-0 border-b border-slate-200 bg-slate-50 px-5 py-3 text-xs uppercase tracking-[0.24em] text-slate-400">
+            <div className="grid grid-cols-[minmax(220px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_180px] gap-0 border-b border-slate-200 bg-slate-50 px-5 py-3 text-xs uppercase tracking-wide text-slate-400">
               <span>Employee</span>
               <span>ID</span>
               <span>Role</span>

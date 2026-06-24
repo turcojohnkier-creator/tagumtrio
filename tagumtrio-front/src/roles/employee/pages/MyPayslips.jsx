@@ -39,7 +39,7 @@ export default function MyPayslips() {
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
         </div>
-        <h2 className="text-2xl font-bold text-slate-900">Payslips</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">Payslips</h2>
         <p className="text-slate-500 text-sm mt-1">Detailed pay sheets with department, scan time, rate, and amount.</p>
       </div>
 
@@ -47,12 +47,12 @@ export default function MyPayslips() {
         <button
           type="button"
           onClick={() => { setModalMode('accumulated'); setOpenModal(true) }}
-          className="text-left rounded-3xl border border-slate-200 bg-white p-6 transition hover:border-emerald-500 hover:bg-slate-50"
+          className="text-left rounded-xl border border-slate-200 bg-white p-6 transition hover:border-emerald-500 hover:bg-slate-50"
         >
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Total salary accumulated</p>
-              <p className="mt-4 text-3xl font-semibold text-slate-900">₱{(totals.totalAmount || 0).toLocaleString()}</p>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Total salary accumulated</p>
+              <p className="mt-4 text-xl font-semibold text-slate-900">₱{(totals.totalAmount || 0).toLocaleString()}</p>
             </div>
             <ListChecks className="w-6 h-6 text-emerald-700" />
           </div>
@@ -61,12 +61,12 @@ export default function MyPayslips() {
         <button
           type="button"
           onClick={() => { setModalMode('today'); setOpenModal(true) }}
-          className="text-left rounded-3xl border border-slate-200 bg-white p-6 transition hover:border-cyan-500 hover:bg-slate-50"
+          className="text-left rounded-xl border border-slate-200 bg-white p-6 transition hover:border-cyan-500 hover:bg-slate-50"
         >
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Today's salary</p>
-              <p className="mt-4 text-3xl font-semibold text-slate-900">₱{todaysSalary.toLocaleString()}</p>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Today's salary</p>
+              <p className="mt-4 text-xl font-semibold text-slate-900">₱{todaysSalary.toLocaleString()}</p>
             </div>
             <Clock className="w-6 h-6 text-cyan-700" />
           </div>
@@ -89,10 +89,10 @@ export default function MyPayslips() {
 
       {openModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-4xl rounded-3xl border border-slate-200 bg-white shadow-2xl">
+          <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{modalMode === 'receipt' ? 'Receipt preview' : 'Scan history'}</p>
+                <p className="text-xs uppercase tracking-wide text-slate-400">{modalMode === 'receipt' ? 'Receipt preview' : 'Scan history'}</p>
                 <h3 className="mt-1 text-lg font-semibold text-slate-900">{modalTitle}</h3>
                 <p className="mt-1 text-sm text-slate-500">Review the work scan details for this employee.</p>
               </div>
@@ -102,23 +102,23 @@ export default function MyPayslips() {
             </div>
 
             <div className="grid gap-3 px-5 py-4 sm:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Employee</p>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-400">Employee</p>
                 <p className="mt-2 text-lg font-semibold text-slate-900">{user?.name || 'Employee'}</p>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total salary</p>
-                <p className="mt-2 text-2xl font-bold text-cyan-700">₱{(totals.totalAmount || 0).toLocaleString()}</p>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-400">Total salary</p>
+                <p className="mt-2 text-2xl font-semibold text-cyan-700">₱{(totals.totalAmount || 0).toLocaleString()}</p>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Entries</p>
-                <p className="mt-2 text-2xl font-bold text-slate-900">{modalMode === 'today' ? todaysRecords.length : allRecords.length}</p>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-400">Entries</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-900">{modalMode === 'today' ? todaysRecords.length : allRecords.length}</p>
               </div>
             </div>
 
             <div className="px-5 pb-4">
               {modalMode === 'receipt' ? (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-6">
                   <div className="flex items-center gap-3 text-emerald-700 mb-4">
                     <Receipt className="w-5 h-5" />
                     <h4 className="text-lg font-semibold">Receipt details</h4>
@@ -130,7 +130,7 @@ export default function MyPayslips() {
                   </div>
                 </div>
               ) : (
-                <div className="max-h-[52vh] overflow-auto rounded-2xl border border-slate-200 bg-slate-50">
+                <div className="max-h-[52vh] overflow-auto rounded-lg border border-slate-200 bg-slate-50">
                   <table className="w-full text-left text-sm text-slate-700">
                     <thead className="bg-white text-slate-500">
                       <tr>
@@ -186,7 +186,7 @@ export default function MyPayslips() {
                 <div className="flex-1">
                   <h3 className="text-slate-900 font-medium">{period.label}</h3>
                   <p className="text-sm text-slate-500 mt-0.5">{period.recordCount} verified work logs</p>
-                  <p className="text-emerald-700 font-bold mt-2">₱{period.totalAmount.toLocaleString()}</p>
+                  <p className="text-emerald-700 font-semibold mt-2">₱{period.totalAmount.toLocaleString()}</p>
                   <p className="text-slate-400 text-xs mt-1">Last updated {formatDateTime(period.latestDate)}</p>
                 </div>
               </div>

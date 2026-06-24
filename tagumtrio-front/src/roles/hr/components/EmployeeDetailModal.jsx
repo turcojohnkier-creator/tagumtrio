@@ -16,10 +16,10 @@ export default function EmployeeDetailModal({ employee, onClose, onToggleActive,
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative w-full max-w-3xl mx-auto bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden">
+      <div className="relative w-full max-w-3xl mx-auto bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-slate-200">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-2xl text-emerald-700 font-bold border border-emerald-500/20">{name.split(' ').map(n=>n[0]).join('').substring(0,2)}</div>
+            <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-2xl text-emerald-700 font-semibold border border-emerald-500/20">{name.split(' ').map(n=>n[0]).join('').substring(0,2)}</div>
             <div>
               <h3 className="text-lg font-semibold text-slate-900">{name}</h3>
               <p className="text-xs text-slate-500">{id}</p>

@@ -68,10 +68,10 @@ function ReportDetailModal({ batch, onClose, onSubmit, onDelete, isSubmitting })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-5xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
+      <div className="w-full max-w-5xl rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Daily report</p>
+            <p className="text-xs uppercase tracking-wide text-slate-400">Daily report</p>
             <h3 className="mt-1 text-lg font-semibold text-slate-900">{batch.department || 'Unknown Department'}</h3>
             <p className="mt-1 text-sm text-slate-500">Scanned {formatReportDate(batch.scannedAt)}</p>
           </div>
@@ -88,32 +88,32 @@ function ReportDetailModal({ batch, onClose, onSubmit, onDelete, isSubmitting })
         <div className="max-h-[72vh] overflow-auto px-5 py-4 space-y-4">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Employees involved</p>
-              <p className="mt-2 text-2xl font-bold text-slate-900">{batch.employeeCount}</p>
+              <p className="text-xs uppercase tracking-wide text-slate-400">Employees involved</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-900">{batch.employeeCount}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Department</p>
+              <p className="text-xs uppercase tracking-wide text-slate-400">Department</p>
               <p className="mt-2 text-lg font-semibold text-slate-900">{batch.department || '-'}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Thickness</p>
+              <p className="text-xs uppercase tracking-wide text-slate-400">Thickness</p>
               <p className="mt-2 text-lg font-semibold text-slate-900">{batch.thickness || '-'}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Crates / Pieces</p>
+              <p className="text-xs uppercase tracking-wide text-slate-400">Crates / Pieces</p>
               <p className="mt-2 text-lg font-semibold text-slate-900">{batch.cratesPieces || '-'}</p>
             </div>
           </div>
 
           <DailyReportTable entries={batch.entries} />
 
-          <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
+          <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Date and time scanned</p>
+              <p className="text-xs uppercase tracking-wide text-slate-400">Date and time scanned</p>
               <p className="mt-2 text-sm text-slate-800">{formatReportDate(batch.scannedAt)}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total entries</p>
+              <p className="text-xs uppercase tracking-wide text-slate-400">Total entries</p>
               <p className="mt-2 text-sm text-slate-800">{batch.entries.length}</p>
             </div>
           </div>
@@ -262,14 +262,14 @@ export default function LeadmanDailyReport() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+      <div className="rounded-lg border border-slate-200 bg-white p-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Leadman daily log</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900">Daily Production Report</h2>
+            <p className="text-xs uppercase tracking-wide text-slate-400">Leadman daily log</p>
+            <h2 className="mt-2 text-2xl font-semibold text-slate-900">Daily Production Report</h2>
             <p className="mt-1 text-sm text-slate-500">Write and save the end-of-day production report for the selected department.</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs uppercase tracking-wider text-slate-400">Department</p>
             <select value={selectedDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-2 min-w-[220px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 focus:border-emerald-500 focus:outline-none">
               {assignedDepartments.map((department) => (
@@ -280,12 +280,12 @@ export default function LeadmanDailyReport() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
+      <div className="rounded-lg border border-slate-200 bg-white p-6 space-y-4">
         <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900"><MessageSquareWarning className="h-5 w-5 text-cyan-700" /> Daily Production Report</h3>
         <p className="text-sm text-slate-500">Each scanned report becomes a small card. Open a card for the full report and submit it individually, or submit all cards in one batch.</p>
 
         {reportBatches.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">No scanned reports yet.</div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">No scanned reports yet.</div>
         ) : (
           <div className="grid gap-4">
             {reportBatches.map((batch) => (
@@ -300,7 +300,7 @@ export default function LeadmanDailyReport() {
                     setSelectedBatchId(batch.id)
                   }
                 }}
-                className="group relative rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition-all hover:border-emerald-500/30 hover:bg-white"
+                className="group relative rounded-lg border border-slate-200 bg-slate-50 p-4 text-left transition-all hover:border-emerald-500/30 hover:bg-white"
               >
                 <div className="absolute right-3 top-3">
                   <button
@@ -318,7 +318,7 @@ export default function LeadmanDailyReport() {
 
                 <div className="pr-12 md:flex md:items-center md:gap-5">
                   <div className="min-w-0 md:flex-1">
-                    <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Scanned report</p>
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Scanned report</p>
                   
                     <p className="mt-1 text-sm text-slate-500">{formatReportDate(batch.scannedAt)}</p>
                   </div>

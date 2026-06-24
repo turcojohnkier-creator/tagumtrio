@@ -98,10 +98,10 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/60 px-4 py-10 sm:py-14">
-      <div className="mx-auto w-full max-w-3xl rounded-3xl border border-slate-200 bg-white/75 p-6 shadow-2xl shadow-black/30 backdrop-blur sm:p-8 md:p-10">
+      <div className="mx-auto w-full max-w-3xl rounded-xl border border-slate-200 bg-white/75 p-6 shadow-sm backdrop-blur sm:p-8 md:p-10">
         <div className="mb-6">
-          <p className="text-xs uppercase tracking-widest text-emerald-700 font-semibold">TriOPS</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">Create account</h1>
+          <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">TriOPS</p>
+          <h1 className="mt-1 text-2xl font-semibold text-slate-900">Create account</h1>
           <p className="mt-2 text-sm text-slate-500">Register your account profile. Leadman accounts can be assigned to one or more departments.</p>
         </div>
 

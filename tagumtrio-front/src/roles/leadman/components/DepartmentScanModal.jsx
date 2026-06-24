@@ -37,7 +37,7 @@ function EmployeePickerModal({ open, department, employeeOptions, selectedEmploy
   return (
     <Portal>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-        <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl rounded-2xl border border-slate-200 bg-white shadow-2xl max-h-[90vh] overflow-auto">
+        <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl rounded-lg border border-slate-200 bg-white shadow-sm max-h-[90vh] overflow-auto">
           <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
             <div>
               <h4 className="text-base font-semibold text-slate-900">Employees Included</h4>
@@ -267,12 +267,12 @@ export default function DepartmentScanModal({
   return (
     <Portal>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <form onSubmit={handleSubmit} className="relative w-full max-w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl max-h-[90vh] overflow-auto">
+        <form onSubmit={handleSubmit} className="relative w-full max-w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm max-h-[90vh] overflow-auto">
           <button type="button" onClick={onClose} className="absolute right-5 top-5 text-slate-500 hover:text-slate-900">
             <X className="h-5 w-5" />
           </button>
 
-          <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
           <p className="mt-1 text-sm text-slate-500">{description}</p>
 
           <div className="mt-5 space-y-4">

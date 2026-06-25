@@ -2,7 +2,7 @@ import { Suspense, lazy } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { DialogProvider } from './context/dialog-context'
-import QRProvider from './context/qr-provider'
+import AppDataProvider from './context/app-data-provider'
 import LeadmanLayout from './roles/leadman/layout/LeadmanLayout'
 import MainLayout from './shared/layout/MainLayout'
 import EmployeeLayout from './roles/employee/layout/EmployeeLayout'
@@ -31,7 +31,7 @@ const GMAnnouncements = lazy(() => import('./roles/gm/pages/Announcements'))
 const GMOverview = lazy(() => import('./roles/gm/pages/GMOverview'))
 const EmployeeDashboard = lazy(() => import('./roles/employee/pages/EmployeeDashboard'))
 const EmployeeAnnouncements = lazy(() => import('./roles/employee/pages/Announcements'))
-const MyAttendance = lazy(() => import('./roles/employee/pages/MyAttendance'))
+const MyLeaves = lazy(() => import('./roles/employee/pages/MyLeaves'))
 const MyPayslips = lazy(() => import('./roles/employee/pages/MyPayslips'))
 const ViewPayslip = lazy(() => import('./roles/employee/pages/ViewPayslip'))
 const Requests = lazy(() => import('./shared/pages/Requests'))
@@ -44,7 +44,7 @@ export default function App() {
   return (
     <AuthProvider>
       <DialogProvider>
-        <QRProvider>
+        <AppDataProvider>
           <BrowserRouter>
             <Suspense fallback={<RouteLoadingFallback />}>
               <Routes>
@@ -55,7 +55,7 @@ export default function App() {
                 <Route path="/app/portal/*" element={<EmployeeLayout />}>
                   <Route index element={<EmployeeDashboard />} />
                   <Route path="announcements" element={<EmployeeAnnouncements />} />
-                  <Route path="leaves" element={<MyAttendance />} />
+                  <Route path="leaves" element={<MyLeaves />} />
                   <Route path="payslips" element={<MyPayslips />} />
                   <Route path="payslips/:id" element={<ViewPayslip />} />
                   <Route path="*" element={<Navigate to="/app/portal" replace />} />
@@ -107,7 +107,7 @@ export default function App() {
               </Routes>
             </Suspense>
           </BrowserRouter>
-        </QRProvider>
+        </AppDataProvider>
       </DialogProvider>
     </AuthProvider>
   )

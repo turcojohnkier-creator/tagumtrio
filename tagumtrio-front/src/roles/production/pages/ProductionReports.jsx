@@ -2,7 +2,11 @@ import { useMemo, useState } from 'react'
 import { ChevronDown, Check, CircleAlert, Image as ImageIcon, Send } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 import { useDialog } from '../../../context/dialog-context'
-import { useQr } from '../../../context/qr-context'
+import { useAppData } from '../../../context/app-data-context'
+import PageHeader from '../../../shared/ui/PageHeader'
+import Button from '../../../shared/ui/Button'
+import Badge from '../../../shared/ui/Badge'
+import EmptyState from '../../../shared/ui/EmptyState'
 
 function formatDateTime(value) {
   if (!value) return '—'
@@ -36,20 +40,19 @@ function getStatusLabel(status) {
   }
 }
 
-function getStatusClasses(status) {
+function getStatusVariant(status) {
   switch (normalizeText(status)) {
     case 'submitted':
-      return 'bg-amber-500/10 text-amber-700 border-amber-500/20'
+      return 'warning'
     case 'production_verified':
-      return 'bg-cyan-500/10 text-cyan-700 border-cyan-500/20'
     case 'leadman_verified':
-      return 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20'
+      return 'success'
     case 'gm_submitted':
-      return 'bg-blue-500/10 text-blue-700 border-blue-500/20'
+      return 'info'
     case 'rejected':
-      return 'bg-rose-500/10 text-rose-700 border-rose-500/20'
+      return 'danger'
     default:
-      return 'bg-slate-500/10 text-slate-700 border-slate-400/20'
+      return 'neutral'
   }
 }
 
@@ -61,7 +64,7 @@ export default function ProductionReports() {
     refreshDailyReports,
     updateDailyReportStatus,
     formatDateTime: formatProviderDateTime,
-  } = useQr()
+  } = useAppData()
 
   const [activeTab, setActiveTab] = useState('reviewed')
   const [expandedReportId, setExpandedReportId] = useState(null)
@@ -124,7 +127,7 @@ export default function ProductionReports() {
     const notes = verificationNotes[report.id] || ''
 
     return (
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300">
+      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 transition-colors hover:border-zinc-300">
         <button
           type="button"
           onClick={() => setExpandedReportId(isExpanded ? null : report.id)}
@@ -132,49 +135,49 @@ export default function ProductionReports() {
         >
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="truncate font-semibold text-slate-900">{report.department || 'Unknown Department'} • {report.reportDate || report.report_date || 'No date'}</h3>
-              <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${getStatusClasses(report.status)}`}>{getStatusLabel(report.status)}</span>
+              <h3 className="truncate font-semibold text-zinc-900">{report.department || 'Unknown Department'} • {report.reportDate || report.report_date || 'No date'}</h3>
+              <Badge variant={getStatusVariant(report.status)}>{getStatusLabel(report.status)}</Badge>
             </div>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-zinc-500">
               Submitted by {report.submittedByName || report.submitted_by_name || 'Unknown'} • {formatProviderDateTime ? formatProviderDateTime(report.createdAt || report.created_at || report.reportDate) : formatDateTime(report.createdAt || report.created_at || report.reportDate)}
             </p>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-zinc-400">
               {entries.length} entr{entries.length === 1 ? 'y' : 'ies'} • {report.summary || 'No summary provided'}
             </p>
           </div>
-          <ChevronDown className={`h-5 w-5 shrink-0 text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`h-5 w-5 shrink-0 text-zinc-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
         </button>
 
         {isExpanded ? (
-          <div className="border-t border-slate-200 bg-white/40 p-4 space-y-4">
+          <div className="border-t border-zinc-200 bg-white/40 p-4 space-y-4">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Department</p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">{report.department || '—'}</p>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-zinc-400">Department</p>
+                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{report.department || '—'}</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Status</p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">{getStatusLabel(report.status)}</p>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-zinc-400">Status</p>
+                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{getStatusLabel(report.status)}</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Entries</p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">{entries.length}</p>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-zinc-400">Entries</p>
+                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{entries.length}</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Created</p>
-                <p className="mt-2 text-sm font-semibold text-slate-900">{formatProviderDateTime ? formatProviderDateTime(report.createdAt || report.created_at || report.reportDate) : formatDateTime(report.createdAt || report.created_at || report.reportDate)}</p>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-zinc-400">Created</p>
+                <p className="mt-2 text-sm font-semibold text-zinc-900">{formatProviderDateTime ? formatProviderDateTime(report.createdAt || report.created_at || report.reportDate) : formatDateTime(report.createdAt || report.created_at || report.reportDate)}</p>
               </div>
             </div>
 
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-slate-400">Report notes</p>
-              <p className="mt-2 text-sm text-slate-800">{report.summary || 'No summary provided.'}</p>
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+              <p className="text-xs uppercase tracking-wide text-zinc-400">Report notes</p>
+              <p className="mt-2 text-sm text-zinc-800">{report.summary || 'No summary provided.'}</p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Images</p>
-                <p className="mt-2 text-sm text-slate-800">{photos.length || 0} photo{photos.length === 1 ? '' : 's'}</p>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-zinc-400">Images</p>
+                <p className="mt-2 text-sm text-zinc-800">{photos.length || 0} photo{photos.length === 1 ? '' : 's'}</p>
               </div>
               <div className="sm:col-span-3">
                 {photos.length > 0 ? (
@@ -184,64 +187,62 @@ export default function ProductionReports() {
                       setSelectedPhotos(photos.slice(0, 4))
                       setShowPhotoModal(true)
                     }}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-800 transition-colors hover:border-slate-300 hover:bg-white"
+                    className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:border-zinc-300 hover:bg-white"
                   >
                     <ImageIcon className="h-4 w-4" />
                     Preview images
                   </button>
                 ) : (
-                  <p className="mt-2 text-sm text-slate-400">No images available</p>
+                  <p className="mt-2 text-sm text-zinc-400">No images available</p>
                 )}
               </div>
             </div>
 
             {normalizeText(report.status) === 'submitted' ? (
-              <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
+              <div className="grid gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
                 <div>
-                  <label className="text-xs uppercase tracking-wide text-slate-400">Verification notes</label>
+                  <label className="text-xs uppercase tracking-wide text-zinc-400">Verification notes</label>
                   <textarea
                     value={verificationNotes[report.id] || ''}
                     onChange={(event) => setVerificationNotes((current) => ({ ...current, [report.id]: event.target.value }))}
                     placeholder="Add notes before marking this report as verified."
-                    className="mt-2 min-h-[96px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500"
+                    className="mt-2 min-h-[96px] w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-500"
                   />
                 </div>
                 <div className="flex flex-col gap-2 lg:w-[220px]">
-                  <button
+                  <Button
                     type="button"
                     disabled={actionLoadingId === report.id}
                     onClick={() => patchReport(report, 'production_verified', verificationNotes[report.id] || '')}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 font-medium text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     <Check className="h-4 w-4" />
                     {actionLoadingId === report.id ? 'Updating...' : 'Verify report'}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="danger"
                     disabled={actionLoadingId === report.id}
                     onClick={() => patchReport(report, 'rejected', verificationNotes[report.id] || '')}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 font-medium text-rose-700 transition-colors hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     <CircleAlert className="h-4 w-4" />
                     Reject report
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : normalizeText(report.status) === 'production_verified' || normalizeText(report.status) === 'leadman_verified' ? (
-              <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Ready for next step</p>
-                  <p className="mt-1 text-sm text-slate-700">This report has already been verified and can be forwarded to GM.</p>
+                  <p className="text-xs uppercase tracking-wide text-zinc-400">Ready for next step</p>
+                  <p className="mt-1 text-sm text-zinc-700">This report has already been verified and can be forwarded to GM.</p>
                 </div>
-                <button
+                <Button
                   type="button"
                   disabled={actionLoadingId === report.id}
                   onClick={() => patchReport(report, 'gm_submitted')}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-500 px-4 py-2.5 font-medium text-slate-900 transition-colors hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   <Send className="h-4 w-4" />
                   Submit to GM
-                </button>
+                </Button>
               </div>
             ) : null}
           </div>
@@ -252,17 +253,14 @@ export default function ProductionReports() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-xs uppercase tracking-wide text-slate-400">Production in-charge</p>
-        <h1 className="mt-2 text-xl font-semibold text-slate-900">Production Reports</h1>
-      </div>
+      <PageHeader eyebrow="Production in-charge" title="Production Reports" />
 
-      <div className="flex gap-2 border-b border-slate-200">
-        
+      <div className="flex gap-2 border-b border-zinc-200">
+
         <button
           type="button"
           onClick={() => setActiveTab('reviewed')}
-          className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'reviewed' ? 'border-emerald-500 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'reviewed' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
         >
           Reviewed ({reviewedReports.length})
         </button>
@@ -271,16 +269,12 @@ export default function ProductionReports() {
       <div className="space-y-3">
         {activeTab === 'pending' ? (
           pendingReports.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-8 text-sm text-slate-500">
-              No submitted reports waiting for production review.
-            </div>
+            <EmptyState title="No pending reports" description="No submitted reports waiting for production review." />
           ) : (
             pendingReports.map((report) => <ReportCard key={report.id} report={report} />)
           )
         ) : reviewedReports.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-8 text-sm text-slate-500">
-            No reviewed reports yet.
-          </div>
+          <EmptyState title="No reviewed reports yet" />
         ) : (
           reviewedReports.map((report) => <ReportCard key={report.id} report={report} />)
         )}
@@ -288,14 +282,14 @@ export default function ProductionReports() {
 
       {showPhotoModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-          <div className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-lg border border-slate-200 bg-white p-6">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-xl border border-zinc-200 bg-white shadow-sm p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">Verification photos</h3>
-              <button type="button" onClick={() => setShowPhotoModal(false)} className="text-slate-500 hover:text-slate-900">Close</button>
+              <h3 className="font-heading text-lg font-bold text-zinc-900">Verification photos</h3>
+              <button type="button" onClick={() => setShowPhotoModal(false)} className="text-zinc-500 hover:text-zinc-900">Close</button>
             </div>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {selectedPhotos.map((photo, index) => (
-                <div key={`${photo}-${index}`} className="aspect-square rounded-xl border border-slate-200 bg-slate-50 p-3 text-center text-sm text-slate-500">
+                <div key={`${photo}-${index}`} className="aspect-square rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-center text-sm text-zinc-500">
                   <ImageIcon className="mx-auto mb-2 h-8 w-8" />
                   <p className="truncate">{photo}</p>
                 </div>

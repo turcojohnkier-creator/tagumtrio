@@ -1,8 +1,12 @@
 import { useMemo, useState } from 'react'
-import { Navigate, Link } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../../context/auth-context'
 import { useDialog } from '../../../context/dialog-context'
-import { useQr } from '../../../context/qr-context'
+import { useAppData } from '../../../context/app-data-context'
+import PageHeader from '../../../shared/ui/PageHeader'
+import Button, { LinkButton } from '../../../shared/ui/Button'
+import Badge from '../../../shared/ui/Badge'
+import EmptyState from '../../../shared/ui/EmptyState'
 
 function formatReportDate(value) {
   if (!value) return '-'
@@ -20,7 +24,7 @@ function formatReportDate(value) {
 export default function ProductionCompiledReports() {
   const { user } = useAuth()
   const dialog = useDialog()
-  const { dailyReports, updateDailyReportStatus, refreshDailyReports } = useQr()
+  const { dailyReports, updateDailyReportStatus, refreshDailyReports } = useAppData()
   const [submittingReportId, setSubmittingReportId] = useState('')
 
   if (user?.role === 'gm') {
@@ -73,67 +77,58 @@ export default function ProductionCompiledReports() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Compiled Production Reports</h2>
-          <p className="mt-1 text-slate-500">These compiled reports are ready to be submitted to GM consolidated review.</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            to="/app/production"
-            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-800 transition-colors hover:border-slate-300 hover:bg-white"
-          >
+      <PageHeader
+        title="Compiled Production Reports"
+        description="These compiled reports are ready to be submitted to GM consolidated review."
+        actions={(
+          <LinkButton to="/app/production" variant="secondary">
             Back to production dashboard
-          </Link>
-          
-        </div>
-      </div>
+          </LinkButton>
+        )}
+      />
 
-      <div className="rounded-lg border border-slate-200 bg-white p-6 space-y-4">
+      <div className="rounded-xl border border-zinc-200 bg-white shadow-sm p-6 space-y-4">
         {compiledReports.length === 0 ? (
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
-            No compiled reports available. Use the production dashboard to compile a submitted report.
-          </div>
+          <EmptyState title="No compiled reports" description="Use the production dashboard to compile a submitted report." />
         ) : (
           <div className="space-y-4">
             {compiledReports.map((report) => (
-              <div key={report.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div key={report.id} className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-slate-400">Compiled report</p>
-                    <h3 className="mt-1 text-lg font-semibold text-slate-900">{report.department || 'Unknown department'}</h3>
-                    <p className="mt-1 text-sm text-slate-500">Submitted {formatReportDate(report.createdAt || report.created_at || report.reportDate)}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Compiled report</p>
+                    <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{report.department || 'Unknown department'}</h3>
+                    <p className="mt-1 text-sm text-zinc-500">Submitted {formatReportDate(report.createdAt || report.created_at || report.reportDate)}</p>
                   </div>
                   <div className="flex flex-wrap gap-2 text-sm">
-                    <span className="rounded-full border border-slate-300 bg-white px-3 py-1 text-slate-700">Employees: {Array.isArray(report.entries) ? report.entries.length : 0}</span>
-                    <span className="rounded-full border border-slate-300 bg-white px-3 py-1 text-slate-700">Status: {report.status || 'compiled'}</span>
+                    <Badge variant="success">Employees: {Array.isArray(report.entries) ? report.entries.length : 0}</Badge>
+                    <Badge variant="success">Status: {report.status || 'compiled'}</Badge>
                   </div>
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-400">Thickness</p>
-                    <p className="mt-2 text-sm text-slate-900">{report.thickness || '-'}</p>
+                  <div className="rounded-xl border border-emerald-200 bg-white shadow-sm px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-zinc-400">Thickness</p>
+                    <p className="mt-2 text-sm text-zinc-900">{report.thickness || '-'}</p>
                   </div>
-                  <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-400">Crates / pieces</p>
-                    <p className="mt-2 text-sm text-slate-900">{report.cratesPieces || '-'}</p>
+                  <div className="rounded-xl border border-emerald-200 bg-white shadow-sm px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-zinc-400">Crates / pieces</p>
+                    <p className="mt-2 text-sm text-zinc-900">{report.cratesPieces || '-'}</p>
                   </div>
-                  <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-400">Submitted by</p>
-                    <p className="mt-2 text-sm text-slate-900">{report.submittedBy || 'Unknown'}</p>
+                  <div className="rounded-xl border border-emerald-200 bg-white shadow-sm px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-zinc-400">Submitted by</p>
+                    <p className="mt-2 text-sm text-zinc-900">{report.submittedBy || 'Unknown'}</p>
                   </div>
                 </div>
 
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm text-slate-700">Report ID: {report.id}</p>
-                  <button
+                  <p className="text-sm text-zinc-700">Report ID: {report.id}</p>
+                  <Button
                     type="button"
                     onClick={() => handleSubmitToGM(report)}
                     disabled={submittingReportId === report.id}
-                    className="inline-flex items-center justify-center rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {submittingReportId === report.id ? 'Submitting...' : 'Submit to GM'}
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}

@@ -1,19 +1,76 @@
 import { useState } from 'react'
-import { useQr } from '../../../context/qr-context'
+import { useAppData } from '../../../context/app-data-context'
 import { useAuth } from '../../../context/auth-context'
 import AnnouncementPost from '../../../shared/ui/AnnouncementPost'
+import PageHeader from '../../../shared/ui/PageHeader'
+import Card from '../../../shared/ui/Card'
+import Button from '../../../shared/ui/Button'
+import EmptyState from '../../../shared/ui/EmptyState'
+
+const ROLE_OPTIONS = [
+  { key: 'employee', label: 'Employee' },
+  { key: 'leadman', label: 'Leadman' },
+  { key: 'gm', label: 'GM' },
+  { key: 'hr', label: 'HR' },
+  { key: 'finance', label: 'Finance' },
+  { key: 'production_incharge', label: 'Production' },
+]
+
+function RoleTargetPicker({ selected, onChange }) {
+  function toggleRole(roleKey) {
+    if (selected.includes(roleKey)) {
+      onChange(selected.filter((role) => role !== roleKey))
+    } else {
+      onChange([...selected, roleKey])
+    }
+  }
+
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Visible to</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => onChange([])}
+          className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${selected.length === 0 ? 'bg-emerald-600 text-white shadow-sm' : 'border border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300'}`}
+        >
+          All roles
+        </button>
+        {ROLE_OPTIONS.map((role) => (
+          <button
+            key={role.key}
+            type="button"
+            onClick={() => toggleRole(role.key)}
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${selected.includes(role.key) ? 'bg-emerald-600 text-white shadow-sm' : 'border border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300'}`}
+          >
+            {role.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function targetRolesLabel(targetRoles) {
+  if (!Array.isArray(targetRoles) || targetRoles.length === 0) return 'All roles'
+  return targetRoles
+    .map((roleKey) => ROLE_OPTIONS.find((role) => role.key === roleKey)?.label || roleKey)
+    .join(', ')
+}
 
 export default function Announcements() {
-  const { announcements = [], createAnnouncement, updateAnnouncement, removeAnnouncement } = useQr()
+  const { announcements = [], createAnnouncement, updateAnnouncement, removeAnnouncement } = useAppData()
   const { user, t } = useAuth()
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [pinned, setPinned] = useState(false)
+  const [targetRoles, setTargetRoles] = useState([])
   const [submitting, setSubmitting] = useState(false)
   const [editingAnnouncementId, setEditingAnnouncementId] = useState(null)
   const [editTitle, setEditTitle] = useState('')
   const [editBody, setEditBody] = useState('')
   const [editPinned, setEditPinned] = useState(false)
+  const [editTargetRoles, setEditTargetRoles] = useState([])
   const [editSubmitting, setEditSubmitting] = useState(false)
 
   async function handleCreate(e) {
@@ -21,10 +78,11 @@ export default function Announcements() {
     if (!title) return
     setSubmitting(true)
     try {
-      await createAnnouncement({ title, body, pinned, author: user?.name || 'Admin' })
+      await createAnnouncement({ title, body, pinned, author: user?.name || 'Admin', targetRoles })
       setTitle('')
       setBody('')
       setPinned(false)
+      setTargetRoles([])
     } catch (err) {
       console.error(err)
       alert('Failed to create announcement')
@@ -33,35 +91,37 @@ export default function Announcements() {
     }
   }
 
+  function handleTogglePin(announcement) {
+    updateAnnouncement(announcement.id, { pinned: !announcement.pinned }).catch(() => {})
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-slate-900">{t('gm.announce.title')}</h2>
-        <p className="text-slate-500 mt-1">{t('gm.announce.desc')}</p>
-      </div>
+      <PageHeader title={t('gm.announce.title')} description={t('gm.announce.desc')} />
 
-      <form onSubmit={handleCreate} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg shadow-black/20">
-        <div className="border-b border-slate-200 bg-slate-50/70 px-5 py-4">
-          <p className="text-xs uppercase tracking-wide text-slate-400">{t('gm.announce.create')}</p>
-          <h3 className="mt-1 text-lg font-semibold text-slate-900">{t('gm.announce.post')}</h3>
+      <form onSubmit={handleCreate} className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+        <div className="border-b border-zinc-200 bg-zinc-50/70 px-5 py-4">
+          <p className="text-xs uppercase tracking-wide text-zinc-400">{t('gm.announce.create')}</p>
+          <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{t('gm.announce.post')}</h3>
         </div>
         <div className="grid gap-4 p-5">
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('gm.announce.what')} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none" />
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={5} placeholder={t('gm.announce.body')} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none" />
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('gm.announce.what')} className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none" />
+          <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={5} placeholder={t('gm.announce.body')} className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none" />
+          <RoleTargetPicker selected={targetRoles} onChange={setTargetRoles} />
+          <label className="flex items-center gap-2 text-sm text-zinc-700">
             <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} /> {t('gm.announce.pin')}
           </label>
           <div className="flex items-center justify-end gap-3">
-            <span className="text-xs uppercase tracking-wide text-slate-400">{t('gm.announce.broadcast')}</span>
-            <button type="submit" disabled={submitting} className="rounded-xl bg-emerald-500 px-5 py-2.5 font-medium text-black transition-colors hover:bg-emerald-400">{submitting ? t('gm.announce.posting') : t('gm.announce.publish')}</button>
+            <span className="text-xs uppercase tracking-wide text-zinc-400">{t('gm.announce.broadcast')}</span>
+            <Button type="submit" disabled={submitting}>{submitting ? t('gm.announce.posting') : t('gm.announce.publish')}</Button>
           </div>
         </div>
       </form>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">{t('gm.announce.recent')}</h3>
+      <Card>
+        <h3 className="font-heading text-lg font-bold text-zinc-900 mb-4">{t('gm.announce.recent')}</h3>
         {announcements.length === 0 ? (
-          <div className="text-sm text-slate-500">{t('gm.announce.no')}</div>
+          <EmptyState title={t('gm.announce.no')} />
         ) : (
           <div className="space-y-3">
             {announcements.map((a) => (
@@ -76,6 +136,7 @@ export default function Announcements() {
                           title: editTitle,
                           body: editBody,
                           pinned: editPinned,
+                          targetRoles: editTargetRoles,
                         })
                         setEditingAnnouncementId(null)
                       } catch (err) {
@@ -85,66 +146,70 @@ export default function Announcements() {
                         setEditSubmitting(false)
                       }
                     }}
-                    className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-5"
+                    className="space-y-4 rounded-xl border border-zinc-200 bg-zinc-50 p-5"
                   >
                     <div className="grid gap-4">
                       <input
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
                         placeholder={t('gm.announce.ann_title')}
-                        className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-emerald-500 focus:outline-none"
+                        className="w-full rounded-xl border border-zinc-200 bg-white shadow-sm px-4 py-3 text-zinc-900 focus:border-emerald-500 focus:outline-none"
                       />
                       <textarea
                         value={editBody}
                         onChange={(e) => setEditBody(e.target.value)}
                         rows={4}
                         placeholder={t('gm.announce.ann_body')}
-                        className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-emerald-500 focus:outline-none"
+                        className="w-full rounded-xl border border-zinc-200 bg-white shadow-sm px-4 py-3 text-zinc-900 focus:border-emerald-500 focus:outline-none"
                       />
-                      <label className="flex items-center gap-2 text-sm text-slate-700">
+                      <RoleTargetPicker selected={editTargetRoles} onChange={setEditTargetRoles} />
+                      <label className="flex items-center gap-2 text-sm text-zinc-700">
                         <input type="checkbox" checked={editPinned} onChange={(e) => setEditPinned(e.target.checked)} /> {t('gm.announce.pin_top')}
                       </label>
                     </div>
                     <div className="flex flex-wrap items-center justify-end gap-3">
-                      <button
+                      <Button
                         type="button"
+                        variant="secondary"
                         onClick={() => setEditingAnnouncementId(null)}
-                        className="rounded-xl border border-slate-300 bg-slate-100 px-4 py-2 text-sm text-slate-800 hover:bg-slate-200"
                       >
                         {t('gm.announce.cancel')}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="submit"
                         disabled={editSubmitting}
-                        className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-medium text-black hover:bg-emerald-400"
                       >
                         {editSubmitting ? t('gm.announce.saving') : t('gm.announce.save')}
-                      </button>
+                      </Button>
                     </div>
                   </form>
                 ) : (
                   <>
-                    <AnnouncementPost announcement={a} showActions={false} />
-                    <div className="flex flex-wrap justify-end gap-3 px-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingAnnouncementId(a.id)
-                          setEditTitle(a.title || '')
-                          setEditBody(a.body || '')
-                          setEditPinned(Boolean(a.pinned))
-                        }}
-                        className="text-xs font-medium text-slate-800 transition-colors hover:text-slate-900"
-                      >
-                        {t('gm.announce.edit')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeAnnouncement(a.id)}
-                        className="text-xs font-medium text-rose-700 transition-colors hover:text-rose-700"
-                      >
-                        {t('gm.announce.delete')}
-                      </button>
+                    <AnnouncementPost announcement={a} showActions={false} onTogglePin={handleTogglePin} />
+                    <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+                      <span className="text-xs text-zinc-400">Visible to: {targetRolesLabel(a.targetRoles)}</span>
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingAnnouncementId(a.id)
+                            setEditTitle(a.title || '')
+                            setEditBody(a.body || '')
+                            setEditPinned(Boolean(a.pinned))
+                            setEditTargetRoles(Array.isArray(a.targetRoles) ? a.targetRoles : [])
+                          }}
+                          className="text-xs font-medium text-zinc-800 transition-colors hover:text-zinc-900"
+                        >
+                          {t('gm.announce.edit')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeAnnouncement(a.id)}
+                          className="text-xs font-medium text-rose-700 transition-colors hover:text-rose-700"
+                        >
+                          {t('gm.announce.delete')}
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}
@@ -152,7 +217,7 @@ export default function Announcements() {
             ))}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   )
 }

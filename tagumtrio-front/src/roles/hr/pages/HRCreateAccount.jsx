@@ -2,18 +2,20 @@ import { useMemo, useState } from 'react'
 import { AlertCircle, Eye, EyeOff, Lock, UserCircle2 } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 import { useDialog } from '../../../context/dialog-context'
+import { createEmployeeAccountApi } from '../../../lib/api'
 import { DEPARTMENTS } from '../../../constants/departments'
+import PageHeader from '../../../shared/ui/PageHeader'
+import Card from '../../../shared/ui/Card'
+import Button from '../../../shared/ui/Button'
 
 const ROLE_OPTIONS = [
   { key: 'employee', label: 'Employee' },
   { key: 'leadman', label: 'Leadman' },
   { key: 'production_incharge', label: 'Production In-Charge' },
-  { key: 'gm', label: 'GM / General Manager' },
-  { key: 'hr', label: 'HR / Admin' },
 ]
 
 export default function HRCreateAccount() {
-  const { user, registerUser } = useAuth()
+  const { user } = useAuth()
   const dialog = useDialog()
 
   const [name, setName] = useState('')
@@ -36,16 +38,11 @@ export default function HRCreateAccount() {
     return date.toLocaleString()
   }
 
-  function handleEmailBlur() {
-    if (identifier.trim() && !identifier.includes('@')) {
-      setIdentifier((prev) => prev + '@triops.local')
-    }
-  }
-
   const validationMessage = useMemo(() => {
     if (!name.trim()) return 'Enter full name.'
-    if (!identifier.trim()) return 'Enter email or employee ID.'
-    if (identifier.trim().length < 3) return 'Identifier is too short.'
+    if (!identifier.trim()) return 'Enter a username.'
+    if (identifier.trim().length < 3) return 'Username is too short.'
+    if (/\s/.test(identifier.trim())) return 'Username cannot contain spaces.'
     if (role === 'employee' && !employeeDepartment) return 'Select a department for the employee.'
     if (role === 'leadman' && leadmanDepartments.length === 0) return 'Select at least one leadman department.'
     if (!password) return 'Enter the account password.'
@@ -69,10 +66,10 @@ export default function HRCreateAccount() {
 
   if (user?.role !== 'hr') {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-slate-900">Access denied</h2>
-        <p className="mt-2 text-sm text-slate-500">This page is restricted to HR administrators only.</p>
-      </div>
+      <Card>
+        <h2 className="text-xl font-semibold text-zinc-900">Access denied</h2>
+        <p className="mt-2 text-sm text-zinc-500">This page is restricted to HR administrators only.</p>
+      </Card>
     )
   }
 
@@ -87,85 +84,80 @@ export default function HRCreateAccount() {
 
     setSubmitting(true)
 
-    const result = await registerUser({
-      name: name.trim(),
-      identifier: identifier.trim(),
-      password,
-      role,
-      department: role === 'employee' ? employeeDepartment : undefined,
-      departments: role === 'leadman' ? leadmanDepartments : undefined,
-    })
+    try {
+      const created = await createEmployeeAccountApi({
+        name: name.trim(),
+        identifier: identifier.trim(),
+        password,
+        role,
+        department: role === 'employee' ? employeeDepartment : undefined,
+        departments: role === 'leadman' ? leadmanDepartments : undefined,
+      })
 
-    if (!result.ok) {
-      setFormError(result.error || 'Unable to create account.')
+      setName('')
+      setIdentifier('')
+      setRole('employee')
+      setEmployeeDepartment(DEPARTMENTS[0] || '')
+      setLeadmanDepartments([DEPARTMENTS[0]])
+      setPassword('')
+      setConfirmPassword('')
+      setAgree(true)
       setSubmitting(false)
-      return
+
+      dialog.success({
+        title: 'Account created',
+        message: `The user account was successfully provisioned at ${formatCreatedAt(created?.created_at)}.`,
+      })
+    } catch (error) {
+      setFormError(error?.message || 'Unable to create account.')
+      setSubmitting(false)
     }
-
-    setName('')
-    setIdentifier('')
-    setRole('employee')
-    setEmployeeDepartment(DEPARTMENTS[0] || '')
-    setLeadmanDepartments([DEPARTMENTS[0]])
-    setPassword('')
-    setConfirmPassword('')
-    setAgree(true)
-    setSubmitting(false)
-
-    dialog.success({
-      title: 'Account created',
-      message: `The user account was successfully provisioned at ${formatCreatedAt(result.user?.created_at)}.`,
-    })
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-slate-900">HR Account Provisioning</h2>
-        <p className="text-slate-500 mt-1">Create user accounts manually for employees, leadman, and production incharge.</p>
-      </div>
+      <PageHeader title="HR Account Provisioning" description="Create user accounts manually for employees, leadman, and production incharge." />
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <Card>
         <div className="mb-6">
           <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">Manual user creation</p>
-          <h3 className="mt-1 text-xl font-semibold text-slate-900">Provision a new account</h3>
-          <p className="mt-2 text-sm text-slate-500">The account fields match the public registration form, but only HR may create them.</p>
+          <h3 className="mt-1 text-xl font-semibold text-zinc-900">Provision a new account</h3>
+          <p className="mt-2 text-sm text-zinc-500">The account fields match the public registration form, but only HR may create them.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="text-sm text-slate-700">Full name</label>
+              <label className="text-sm text-zinc-700">Full name</label>
               <div className="mt-1.5 relative">
-                <UserCircle2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <UserCircle2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <input
                   type="text"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-zinc-300 bg-zinc-50 py-3 pl-10 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none"
                   placeholder="e.g. Juan Dela Cruz"
                 />
               </div>
             </div>
 
             <div className="sm:col-span-2">
-              <label className="text-sm text-slate-700">Email</label>
+              <label className="text-sm text-zinc-700">Username</label>
               <input
                 type="text"
                 value={identifier}
                 onChange={(event) => setIdentifier(event.target.value)}
-                onBlur={handleEmailBlur}
-                className="mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none"
-                placeholder="e.g. juan@triops.local"
+                className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none"
+                placeholder="e.g. juan.delacruz"
               />
             </div>
 
             <div>
-              <label className="text-sm text-slate-700">Role</label>
+              <label className="text-sm text-zinc-700">Role</label>
               <select
                 value={role}
                 onChange={(event) => setRole(event.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none"
               >
                 {ROLE_OPTIONS.map((item) => (
                   <option key={item.key} value={item.key}>{item.label}</option>
@@ -175,11 +167,11 @@ export default function HRCreateAccount() {
 
             {role === 'employee' && (
               <div>
-                <label className="text-sm text-slate-700">Department</label>
+                <label className="text-sm text-zinc-700">Department</label>
                 <select
                   value={employeeDepartment}
                   onChange={(event) => setEmployeeDepartment(event.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none"
                 >
                   {DEPARTMENTS.map((item) => (
                     <option key={item} value={item}>{item}</option>
@@ -189,17 +181,17 @@ export default function HRCreateAccount() {
             )}
 
             {role === 'leadman' && (
-              <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-                <label className="text-sm font-medium text-slate-900">Leadman departments</label>
-                <p className="mt-1 text-xs text-slate-500">Select one or more departments this leadman account will manage.</p>
+              <div className="sm:col-span-2 rounded-xl border border-zinc-200 bg-zinc-50/80 p-4">
+                <label className="text-sm font-medium text-zinc-900">Leadman departments</label>
+                <p className="mt-1 text-xs text-zinc-500">Select one or more departments this leadman account will manage.</p>
                 <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 max-h-48 overflow-y-auto pr-1">
                   {DEPARTMENTS.map((item) => (
-                    <label key={item} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-800">
+                    <label key={item} className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white shadow-sm px-2.5 py-2 text-xs text-zinc-800">
                       <input
                         type="checkbox"
                         checked={leadmanDepartments.includes(item)}
                         onChange={() => toggleDepartment(item)}
-                        className="rounded border-slate-300 bg-white text-emerald-500 focus:ring-emerald-500"
+                        className="rounded border-zinc-300 bg-white text-emerald-500 focus:ring-emerald-500"
                       />
                       <span>{item}</span>
                     </label>
@@ -209,46 +201,46 @@ export default function HRCreateAccount() {
             )}
 
             <div>
-              <label className="text-sm text-slate-700">Password</label>
+              <label className="text-sm text-zinc-700">Password</label>
               <div className="mt-1.5 relative">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-10 pr-12 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-zinc-300 bg-zinc-50 py-3 pl-10 pr-12 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none"
                   placeholder="At least 6 characters"
                 />
-                <button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                <button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900" aria-label={showPassword ? 'Hide password' : 'Show password'}>
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="text-sm text-slate-700">Confirm password</label>
+              <label className="text-sm text-zinc-700">Confirm password</label>
               <div className="mt-1.5 relative">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-10 pr-12 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-zinc-300 bg-zinc-50 py-3 pl-10 pr-12 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none"
                   placeholder="Re-enter password"
                 />
-                <button type="button" onClick={() => setShowConfirmPassword((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900" aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
+                <button type="button" onClick={() => setShowConfirmPassword((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900" aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
           </div>
 
-          <label className="flex items-start gap-2 text-sm text-slate-700">
+          <label className="flex items-start gap-2 text-sm text-zinc-700">
             <input
               type="checkbox"
               checked={agree}
               onChange={(event) => setAgree(event.target.checked)}
-              className="mt-0.5 rounded border-slate-300 bg-white text-emerald-500 focus:ring-emerald-500"
+              className="mt-0.5 rounded border-zinc-300 bg-white text-emerald-500 focus:ring-emerald-500"
             />
             <span>I confirm the account details are correct.</span>
           </label>
@@ -260,15 +252,15 @@ export default function HRCreateAccount() {
             </div>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={submitting || Boolean(validationMessage)}
-            className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+            className="w-full"
           >
             {submitting ? 'Creating account...' : 'Create account'}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
     </div>
   )
 }

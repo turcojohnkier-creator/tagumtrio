@@ -23,16 +23,16 @@ export default function EmployeeCard({
   return (
     <div
       onClick={onClick}
-      className={`bg-white border border-slate-200 rounded-xl p-4 transition-colors ${onClick ? 'cursor-pointer hover:border-slate-300 group' : ''} ${className}`}
+      className={`bg-white border border-zinc-200 rounded-xl p-4 transition-colors ${onClick ? 'cursor-pointer hover:border-zinc-300 group' : ''} ${className}`}
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center text-sm font-semibold text-slate-700 border border-slate-300 group-hover:border-emerald-500/50 transition-colors shrink-0">
+          <div className="w-11 h-11 rounded-full bg-zinc-100 flex items-center justify-center text-sm font-semibold text-zinc-700 border border-zinc-300 group-hover:border-emerald-500/50 transition-colors shrink-0">
             {initials}
           </div>
           <div className="min-w-0">
-            <h3 className="font-semibold text-slate-900 truncate leading-tight">{name}</h3>
-            <p className="text-xs text-slate-500 truncate mt-0.5">{id}</p>
+            <h3 className="font-semibold text-zinc-900 truncate leading-tight">{name}</h3>
+            <p className="text-xs text-zinc-500 truncate mt-0.5">{id}</p>
           </div>
         </div>
 
@@ -43,7 +43,7 @@ export default function EmployeeCard({
             {status}
           </span>
           {department && department !== '—' ? (
-            <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-700">
+            <span className="inline-flex items-center rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-700">
               {department}
             </span>
           ) : null}
@@ -51,20 +51,20 @@ export default function EmployeeCard({
       </div>
 
       <div className={`mt-3 grid gap-2 text-sm ${department && department !== '—' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-[11px] uppercase tracking-wide text-slate-400">Role</div>
-          <div className="mt-1 truncate text-slate-800">{role}</div>
+        <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
+          <div className="text-[11px] uppercase tracking-wide text-zinc-400">Role</div>
+          <div className="mt-1 truncate text-zinc-800">{role}</div>
         </div>
         {department && department !== '—' ? (
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-            <div className="text-[11px] uppercase tracking-wide text-slate-400">Department</div>
-            <div className="mt-1 truncate text-slate-800">{department}</div>
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
+            <div className="text-[11px] uppercase tracking-wide text-zinc-400">Department</div>
+            <div className="mt-1 truncate text-zinc-800">{department}</div>
           </div>
         ) : null}
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-[11px] uppercase tracking-wide text-slate-400">Created</div>
-          <div className="mt-1 inline-flex items-center gap-1.5 text-slate-800">
-            <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+        <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
+          <div className="text-[11px] uppercase tracking-wide text-zinc-400">Created</div>
+          <div className="mt-1 inline-flex items-center gap-1.5 text-zinc-800">
+            <CalendarDays className="h-3.5 w-3.5 text-zinc-400" />
             <span>{createdLabel}</span>
           </div>
         </div>

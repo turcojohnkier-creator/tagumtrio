@@ -1,4 +1,4 @@
-import { Users } from 'lucide-react'
+import { ChevronRight, Users } from 'lucide-react'
 
 export default function DepartmentCard({ department, onOpen }) {
   const name = department.name || department.department || 'Unknown'
@@ -8,22 +8,27 @@ export default function DepartmentCard({ department, onOpen }) {
     <button
       type="button"
       onClick={onOpen}
-      className="group relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-5 text-left shadow-sm transition duration-200 hover:border-emerald-500/40 hover:bg-white"
+      className="group flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
     >
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-sky-500 to-violet-500 opacity-40" />
-      <div className="relative flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-slate-400">Department</p>
-          <h3 className="mt-2 text-xl font-semibold text-slate-900">{name}</h3>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+            <Users className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-zinc-400">Department</p>
+            <h3 className="mt-0.5 font-heading text-lg font-bold text-zinc-900">{name}</h3>
+          </div>
         </div>
-        <div className="rounded-xl bg-white/80 px-4 py-2 text-center">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Active</p>
-          <p className="mt-1 text-xl font-semibold text-emerald-700">{count}</p>
+        <div className="shrink-0 rounded-lg bg-emerald-50 px-3 py-1.5 text-center">
+          <p className="text-[10px] uppercase tracking-wide text-emerald-700/70">Active</p>
+          <p className="text-lg font-bold text-emerald-700">{count}</p>
         </div>
       </div>
 
-      <div className="mt-6 rounded-xl bg-white/70 px-4 py-3 text-sm font-medium text-slate-500">
-        Tap the card to open the department roster.
+      <div className="flex items-center justify-between rounded-lg bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-500 transition-colors group-hover:bg-emerald-50 group-hover:text-emerald-700">
+        View roster
+        <ChevronRight className="h-4 w-4" />
       </div>
     </button>
   )

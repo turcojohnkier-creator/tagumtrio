@@ -1,15 +1,15 @@
-import React, { useMemo, useState, useEffect } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { useMemo, useState, useEffect } from 'react'
 import DepartmentCard from '../../../roles/gm/components/DepartmentCard'
 import EmployeeListModal from '../../../roles/gm/components/EmployeeListModal'
 import { DEPARTMENTS } from '../../../constants/departments'
-import { useQr } from '../../../context/qr-context'
+import { useAppData } from '../../../context/app-data-context'
 import { useAuth } from '../../../context/auth-context'
 import { fetchEmployeesByDepartmentApi, fetchEmployeesApi } from '../../../lib/api'
+import PageHeader from '../../../shared/ui/PageHeader'
 
 export default function GMOverview() {
   const { t } = useAuth()
-  const { employees = [], employeesLoading, addReassignmentNotification, updateEmployeeRecord } = useQr()
+  const { employees = [], employeesLoading, addReassignmentNotification, updateEmployeeRecord } = useAppData()
   const [selectedDept, setSelectedDept] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [sortOption, setSortOption] = useState('most')
@@ -93,36 +93,29 @@ export default function GMOverview() {
   return (
     <div className="space-y-6 pb-8">
       <div className="space-y-5">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-900">{t('gm.overview.title')}</p>
-              <p className="text-sm text-slate-500">{t('gm.overview.desc')}</p>
+        <PageHeader
+          eyebrow={`${departments.length} ${t('gm.overview.departments')}`}
+          title={t('gm.overview.title')}
+          description={t('gm.overview.desc')}
+          actions={(
+            <div className="inline-flex gap-1 rounded-full bg-zinc-100 p-1">
+              <button
+                type="button"
+                onClick={() => setSortOption('most')}
+                className={`rounded-full px-3 py-2 text-sm font-medium transition ${sortOption === 'most' ? 'bg-white text-emerald-700 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}
+              >
+                {t('gm.overview.most')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSortOption('least')}
+                className={`rounded-full px-3 py-2 text-sm font-medium transition ${sortOption === 'least' ? 'bg-white text-emerald-700 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}
+              >
+                {t('gm.overview.least')}
+              </button>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-4 py-2 text-sm text-slate-700">
-                <ChevronRight className="h-4 w-4 text-emerald-700" />
-                {departments.length} {t('gm.overview.departments')}
-              </div>
-              <div className="inline-flex gap-2 rounded-full border border-slate-200 bg-slate-50 p-1">
-                <button
-                  type="button"
-                  onClick={() => setSortOption('most')}
-                  className={`rounded-full px-3 py-2 text-sm font-medium transition ${sortOption === 'most' ? 'bg-emerald-500 text-slate-900' : 'text-slate-700 hover:bg-slate-100'}`}
-                >
-                  {t('gm.overview.most')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSortOption('least')}
-                  className={`rounded-full px-3 py-2 text-sm font-medium transition ${sortOption === 'least' ? 'bg-emerald-500 text-slate-900' : 'text-slate-700 hover:bg-slate-100'}`}
-                >
-                  {t('gm.overview.least')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+          )}
+        />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-2">
           {employeesLoading

@@ -1,10 +1,14 @@
 import { useMemo, useState, useEffect } from 'react'
-import { BadgeCheck, ClipboardList, ScanLine, Search } from 'lucide-react'
+import { ScanLine, Search } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
-import { useQr } from '../../../context/qr-context'
-import DepartmentScanModal from '../../../roles/leadman/components/DepartmentScanModal'
+import { useAppData } from '../../../context/app-data-context'
+import ReportEntryModal from '../../../roles/leadman/components/ReportEntryModal'
 import { useDialog } from '../../../context/dialog-context'
 import EmployeeCard from '../../../roles/leadman/components/EmployeeCard'
+import PageHeader from '../../../shared/ui/PageHeader'
+import Card, { SectionTitle } from '../../../shared/ui/Card'
+import Button from '../../../shared/ui/Button'
+import EmptyState from '../../../shared/ui/EmptyState'
 
 function asText(value) {
   return String(value || '').toLowerCase()
@@ -12,7 +16,7 @@ function asText(value) {
 
 export default function LeadmanDashboard() {
   const { user } = useAuth()
-  const { departmentRequests, employees, getLeadmanDeployedEmployees, getLeadmanAttendance, recordAttendanceScan, formatDateTime, selectedLeadmanDepartment, setSelectedLeadmanDepartment } = useQr()
+  const { departmentRequests, employees, getLeadmanDeployedEmployees, addReportEntry, formatDateTime, selectedLeadmanDepartment, setSelectedLeadmanDepartment } = useAppData()
   const dialog = useDialog()
 
   const assignedDepartments = useMemo(() => {
@@ -54,20 +58,6 @@ export default function LeadmanDashboard() {
 
   const scanCandidates = deployedEmployees.length > 0 ? deployedEmployees : fallbackDepartmentEmployees
 
-  const currentScans = useMemo(() => {
-    return getLeadmanAttendance(selectedDepartment)
-      .filter((record) => record.status === 'leadman_verified')
-      .filter((record) => asText(record.employeeName).includes(asText(query)) || asText(record.employeeId).includes(asText(query)) || asText(record.department).includes(asText(query)))
-  }, [getLeadmanAttendance, query, selectedDepartment])
-
-  const stats = useMemo(() => {
-    return {
-      deployed: deployedEmployees.length,
-      scans: currentScans.length,
-      pending: departmentRequests.filter((request) => request.requestedDepartment === selectedDepartment && request.status === 'pending').length,
-    }
-  }, [currentScans, departmentRequests, deployedEmployees.length, selectedDepartment])
-
   const selectedEmployee = scanCandidates.find((employee) => employee.employeeId === selectedEmployeeId) || scanCandidates[0] || null
 
   useEffect(() => {
@@ -83,50 +73,44 @@ export default function LeadmanDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-white p-6">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-slate-400">Leadman reporting</p>
-            <h2 className="mt-2 text-2xl font-semibold text-slate-900">Report Dashboard</h2>
-            <p className="mt-1 max-w-2xl text-sm text-slate-500">Use this page to create reports for deployed workers. Transfer approvals, deployed workers, and the daily report live on separate pages.</p>
-          </div>
-
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-400">Department</p>
-            <select value={selectedDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-2 w-full min-w-[220px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 focus:border-emerald-500 focus:outline-none">
+      <PageHeader
+        eyebrow="Leadman reporting"
+        title="Report Dashboard"
+        description="Use this page to create reports for deployed workers. Transfer approvals, deployed workers, and the daily report live on separate pages."
+        actions={(
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Department</p>
+            <select value={selectedDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-1.5 w-full min-w-[220px] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none">
               {assignedDepartments.map((department) => (
                 <option key={department} value={department}>{department}</option>
               ))}
             </select>
           </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          
-        </div>
-      </div>
+        )}
+      />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-        <div className="rounded-lg border border-slate-200 bg-white p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            
-            <div>
-              <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900"><ScanLine className="h-5 w-5 text-emerald-700" /> Create Report</h3>
-              <p className="mt-1 text-sm text-slate-500">Open the report form and select the deployed worker to include in this report.</p>
-            </div>
-            <button onClick={() => setScanModalOpen(true)} disabled={scanCandidates.length === 0} className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 font-medium text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50">
-              <ScanLine className="h-4 w-4" /> Create Report
-            </button>
-          </div>
+        <Card>
+          <SectionTitle
+            icon={ScanLine}
+            hint="Open the report form and select the deployed worker to include in this report."
+            action={(
+              <Button onClick={() => setScanModalOpen(true)} disabled={scanCandidates.length === 0}>
+                <ScanLine className="h-4 w-4" /> Create Report
+              </Button>
+            )}
+          >
+            Create Report
+          </SectionTitle>
 
-          <div className="mt-5 relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} type="text" placeholder="Search deployed workers..." className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none" />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} type="text" placeholder="Search deployed workers..." className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none" />
           </div>
 
           <div className="mt-5 space-y-3">
             {scanCandidates.length === 0 ? (
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">No employees found in {selectedDepartment} yet.</div>
+              <EmptyState title="No deployed workers" description={`No employees found in ${selectedDepartment} yet.`} />
             ) : (
               <div className="grid grid-cols-1 gap-3">
                 {scanCandidates.map((employee) => (
@@ -137,7 +121,7 @@ export default function LeadmanDashboard() {
                         employeeName: employee.employeeName,
                         role: employee.role || 'Worker',
                         department: employee.department,
-                        
+
                       }}
                       showActions={false}
                     />
@@ -146,16 +130,10 @@ export default function LeadmanDashboard() {
               </div>
             )}
           </div>
-        </div>
-
-        <div className="space-y-6">
-          
-
-        
-        </div>
+        </Card>
       </div>
 
-      <DepartmentScanModal
+      <ReportEntryModal
         open={scanModalOpen}
         department={selectedDepartment}
         employeeOptions={scanCandidates}
@@ -168,7 +146,7 @@ export default function LeadmanDashboard() {
           const list = Array.isArray(payloads) ? payloads : [payloads]
           if (list.length === 0) return
           setSelectedEmployeeId(list[0].employeeId)
-          list.forEach((payload) => recordAttendanceScan(payload))
+          list.forEach((payload) => addReportEntry(payload))
           setScanModalOpen(false)
           dialog.success({
             title: 'Report recorded',

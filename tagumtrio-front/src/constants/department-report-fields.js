@@ -120,7 +120,7 @@ function normalizeDepartmentName(department) {
   return ALIASES[department] || department || 'Sundry'
 }
 
-export function getDepartmentQrScanSpec(department) {
+export function getDepartmentReportFieldSpec(department) {
   const resolvedDepartment = normalizeDepartmentName(department)
   const fields = FIELD_SETS[resolvedDepartment] || FIELD_SETS.Sundry
   return {
@@ -130,8 +130,8 @@ export function getDepartmentQrScanSpec(department) {
   }
 }
 
-export function buildDepartmentQrScanDefaults(department) {
-  return getDepartmentQrScanSpec(department).fields.reduce((accumulator, field) => {
+export function buildDepartmentReportFieldDefaults(department) {
+  return getDepartmentReportFieldSpec(department).fields.reduce((accumulator, field) => {
     if (field.type === 'date') {
       accumulator[field.key] = toLocalDateValue()
       return accumulator
@@ -147,8 +147,8 @@ export function buildDepartmentQrScanDefaults(department) {
   }, {})
 }
 
-export function buildDepartmentQrSummary(department, values = {}) {
-  const spec = getDepartmentQrScanSpec(department)
+export function buildDepartmentReportSummary(department, values = {}) {
+  const spec = getDepartmentReportFieldSpec(department)
   return spec.fields
     .map((field) => {
       const value = values[field.key]

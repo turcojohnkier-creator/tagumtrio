@@ -121,6 +121,13 @@ export async function fetchEmployeesApi() {
   return apiRequest('/v1/employees')
 }
 
+export async function createEmployeeAccountApi(payload) {
+  return apiRequest('/v1/employees', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function fetchEmployeesByDepartmentApi(department) {
   const q = department ? `?department=${encodeURIComponent(department)}` : ''
   try {
@@ -157,17 +164,6 @@ export async function redirectDepartmentRequestApi(requestId, payload, leadmanId
   })
 }
 
-export async function fetchAttendanceApi() {
-  return apiRequest('/v1/attendance')
-}
-
-export async function createAttendanceApi(payload) {
-  return apiRequest('/v1/attendance', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-
 export async function fetchDailyReportsApi(params = {}) {
   const query = new URLSearchParams()
   if (params.department) query.set('department', params.department)
@@ -192,24 +188,6 @@ export async function updateDailyReportApi(reportId, payload) {
   return apiRequest(`/v1/daily-reports/${encodeURIComponent(reportId)}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
-  })
-}
-
-export async function updateAttendanceApi(recordId, payload) {
-  return { id: recordId, ...payload }
-}
-
-export async function leadmanVerifyAttendanceApi(recordId, leadmanId) {
-  const q = leadmanId ? `?leadmanId=${encodeURIComponent(leadmanId)}` : ''
-  return apiRequest(`/v1/attendance/${encodeURIComponent(recordId)}/verify-leadman${q}`, {
-    method: 'PATCH',
-  })
-}
-
-export async function headVerifyAttendanceApi(recordId, headId) {
-  const q = headId ? `?headId=${encodeURIComponent(headId)}` : ''
-  return apiRequest(`/v1/attendance/${encodeURIComponent(recordId)}/verify-head${q}`, {
-    method: 'PATCH',
   })
 }
 

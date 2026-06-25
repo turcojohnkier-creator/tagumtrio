@@ -97,47 +97,47 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/60 px-4 py-10 sm:py-14">
-      <div className="mx-auto w-full max-w-3xl rounded-xl border border-slate-200 bg-white/75 p-6 shadow-sm backdrop-blur sm:p-8 md:p-10">
+    <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-emerald-50/60 px-4 py-10 sm:py-14">
+      <div className="mx-auto w-full max-w-3xl rounded-xl border border-zinc-200 bg-white/75 p-6 shadow-sm backdrop-blur sm:p-8 md:p-10">
         <div className="mb-6">
           <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">TriOPS</p>
-          <h1 className="mt-1 text-2xl font-semibold text-slate-900">Create account</h1>
-          <p className="mt-2 text-sm text-slate-500">Register your account profile. Leadman accounts can be assigned to one or more departments.</p>
+          <h1 className="mt-1 text-2xl font-semibold text-zinc-900">Create account</h1>
+          <p className="mt-2 text-sm text-zinc-500">Register your account profile. Leadman accounts can be assigned to one or more departments.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="text-sm text-slate-700">Full name</label>
+              <label className="text-sm text-zinc-700">Full name</label>
               <div className="mt-1.5 relative">
-                <UserCircle2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <UserCircle2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <input
                   type="text"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-zinc-300 bg-zinc-50 py-3 pl-10 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none"
                   placeholder="e.g. Juan Dela Cruz"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-sm text-slate-700">Email or Employee ID</label>
+              <label className="text-sm text-zinc-700">Email or Employee ID</label>
               <input
                 type="text"
                 value={identifier}
                 onChange={(event) => setIdentifier(event.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none"
                 placeholder="e.g. juan@triops.local"
               />
             </div>
 
             <div>
-              <label className="text-sm text-slate-700">Role</label>
+              <label className="text-sm text-zinc-700">Role</label>
               <select
                 value={role}
                 onChange={(event) => setRole(event.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none"
               >
                 {ROLE_OPTIONS.map((item) => (
                   <option key={item.key} value={item.key}>{item.label}</option>
@@ -146,17 +146,17 @@ export default function Register() {
             </div>
 
             {role === 'leadman' && (
-              <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-                <label className="text-sm font-medium text-slate-900">Leadman departments</label>
-                <p className="mt-1 text-xs text-slate-500">Select one or more departments this leadman account will handle.</p>
+              <div className="sm:col-span-2 rounded-xl border border-zinc-200 bg-zinc-50/80 p-4">
+                <label className="text-sm font-medium text-zinc-900">Leadman departments</label>
+                <p className="mt-1 text-xs text-zinc-500">Select one or more departments this leadman account will handle.</p>
                 <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 max-h-48 overflow-y-auto pr-1">
                   {DEPARTMENTS.map((item) => (
-                    <label key={item} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-800">
+                    <label key={item} className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-xs text-zinc-800">
                       <input
                         type="checkbox"
                         checked={leadmanDepartments.includes(item)}
                         onChange={() => toggleDepartment(item)}
-                        className="rounded border-slate-300 bg-white text-emerald-500 focus:ring-emerald-500"
+                        className="rounded border-zinc-300 bg-white text-emerald-500 focus:ring-emerald-500"
                       />
                       <span>{item}</span>
                     </label>
@@ -166,46 +166,46 @@ export default function Register() {
             )}
 
             <div>
-              <label className="text-sm text-slate-700">Password</label>
+              <label className="text-sm text-zinc-700">Password</label>
               <div className="mt-1.5 relative">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-10 pr-12 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-zinc-300 bg-zinc-50 py-3 pl-10 pr-12 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none"
                   placeholder="At least 6 characters"
                 />
-                <button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                <button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900" aria-label={showPassword ? 'Hide password' : 'Show password'}>
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="text-sm text-slate-700">Confirm password</label>
+              <label className="text-sm text-zinc-700">Confirm password</label>
               <div className="mt-1.5 relative">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-10 pr-12 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-zinc-300 bg-zinc-50 py-3 pl-10 pr-12 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none"
                   placeholder="Re-enter password"
                 />
-                <button type="button" onClick={() => setShowConfirmPassword((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900" aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
+                <button type="button" onClick={() => setShowConfirmPassword((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900" aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
           </div>
 
-          <label className="flex items-start gap-2 text-sm text-slate-700">
+          <label className="flex items-start gap-2 text-sm text-zinc-700">
             <input
               type="checkbox"
               checked={agree}
               onChange={(event) => setAgree(event.target.checked)}
-              className="mt-0.5 rounded border-slate-300 bg-white text-emerald-500 focus:ring-emerald-500"
+              className="mt-0.5 rounded border-zinc-300 bg-white text-emerald-500 focus:ring-emerald-500"
             />
             <span>I confirm that the registration details are correct</span>
           </label>
@@ -220,12 +220,12 @@ export default function Register() {
           <button
             type="submit"
             disabled={submitting || Boolean(validationMessage)}
-            className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+            className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400"
           >
             {submitting ? 'Creating account...' : 'Create account'}
           </button>
 
-          <p className="text-center text-sm text-slate-500">
+          <p className="text-center text-sm text-zinc-500">
             Already registered?{' '}
             <Link to="/login" className="font-semibold text-emerald-700 hover:text-emerald-700">Sign in</Link>
           </p>

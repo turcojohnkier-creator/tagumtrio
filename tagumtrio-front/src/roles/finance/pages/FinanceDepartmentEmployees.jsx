@@ -1,7 +1,11 @@
 import { useMemo, useState, useEffect } from 'react'
 import { ArrowUpDown, Search, Users, X } from 'lucide-react'
-import { useQr } from '../../../context/qr-context'
+import { useAppData } from '../../../context/app-data-context'
 import { fetchEmployeesByDepartmentApi } from '../../../lib/api'
+import PageHeader from '../../../shared/ui/PageHeader'
+import Card from '../../../shared/ui/Card'
+import Button from '../../../shared/ui/Button'
+import EmptyState from '../../../shared/ui/EmptyState'
 
 function formatDate(value) {
   if (!value) return '-'
@@ -67,37 +71,37 @@ function EmployeeModal({ employee, history, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
+      <div className="w-full max-w-4xl rounded-xl border border-zinc-200 bg-white shadow-sm">
+        <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-400">15-day production history</p>
-            <h3 className="mt-1 text-lg font-semibold text-slate-900">{employee.employeeName}</h3>
-            <p className="mt-1 text-sm text-slate-500">{employee.employeeId} • {getDepartment(employee)}</p>
+            <p className="text-xs uppercase tracking-wide text-zinc-400">15-day production history</p>
+            <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{employee.employeeName}</h3>
+            <p className="mt-1 text-sm text-zinc-500">{employee.employeeId} • {getDepartment(employee)}</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full border border-slate-300 bg-slate-50 p-2 text-slate-700 transition-colors hover:bg-slate-100">
+          <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <div className="grid gap-3 px-5 py-4 sm:grid-cols-3">
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-wide text-slate-400">Logs</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-900">{history.length}</p>
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-zinc-400">Logs</p>
+            <p className="mt-2 font-heading text-2xl font-bold text-zinc-900">{history.length}</p>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-wide text-slate-400">Hours</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-900">{totalHours.toLocaleString()}</p>
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-zinc-400">Hours</p>
+            <p className="mt-2 font-heading text-2xl font-bold text-zinc-900">{totalHours.toLocaleString()}</p>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-wide text-slate-400">Amount</p>
-            <p className="mt-2 text-2xl font-semibold text-cyan-700">₱{totalAmount.toLocaleString()}</p>
+          <div className="rounded-lg border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700/70">Amount</p>
+            <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-emerald-700">₱{totalAmount.toLocaleString()}</p>
           </div>
         </div>
 
         <div className="px-5 pb-4">
-          <div className="max-h-[52vh] overflow-auto rounded-lg border border-slate-200">
+          <div className="max-h-[52vh] overflow-auto rounded-lg border border-zinc-200">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-500">
+              <thead className="bg-emerald-50/70 text-emerald-800">
                 <tr>
                   <th className="px-4 py-3 font-medium">Date</th>
                   <th className="px-4 py-3 font-medium">Department</th>
@@ -105,18 +109,18 @@ function EmployeeModal({ employee, history, onClose }) {
                   <th className="px-4 py-3 font-medium">Amount</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200/70 bg-white/50">
+              <tbody className="divide-y divide-zinc-200/70 bg-white/50">
                 {history.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-slate-500">No production history in the last 15 days.</td>
+                    <td colSpan={4} className="px-4 py-8 text-center text-zinc-500">No production history in the last 15 days.</td>
                   </tr>
                 ) : (
                   history.map((record) => (
-                    <tr key={record.id || `${record.employeeId}-${record.scannedAt}`} className="text-slate-700 hover:bg-white/70">
+                    <tr key={record.id || `${record.employeeId}-${record.scannedAt}`} className="text-zinc-700 hover:bg-emerald-50/40">
                       <td className="px-4 py-4">{formatDate(record.scannedAt || record.createdAt)}</td>
                       <td className="px-4 py-4">{record.department || getDepartment(employee)}</td>
                       <td className="px-4 py-4">{Number(record.loggedHours || 0).toLocaleString()}</td>
-                      <td className="px-4 py-4 font-semibold text-cyan-700">₱{Number(record.amount || 0).toLocaleString()}</td>
+                      <td className="px-4 py-4 font-semibold text-emerald-700">₱{Number(record.amount || 0).toLocaleString()}</td>
                     </tr>
                   ))
                 )}
@@ -125,55 +129,39 @@ function EmployeeModal({ employee, history, onClose }) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-slate-500">Use the action buttons below to submit or export this payroll summary.</p>
+        <div className="flex flex-col gap-3 border-t border-zinc-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-zinc-500">Use the action buttons below to submit or export this payroll summary.</p>
           <div className="flex flex-wrap items-center justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => openConfirmation('pdf')}
-              className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-800 transition-colors hover:border-cyan-500/50 hover:bg-white"
-            >
+            <Button type="button" variant="outline" onClick={() => openConfirmation('pdf')}>
               Generate PDF
-            </button>
-            <button
-              type="button"
-              onClick={() => openConfirmation('submit')}
-              className="rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-emerald-400"
-            >
+            </Button>
+            <Button type="button" onClick={() => openConfirmation('submit')}>
               Submit
-            </button>
-            <button type="button" onClick={onClose} className="rounded-xl bg-slate-100 px-4 py-2.5 text-sm text-slate-800 transition-colors hover:bg-slate-200">
+            </Button>
+            <Button type="button" variant="secondary" onClick={onClose}>
               Close
-            </button>
+            </Button>
           </div>
         </div>
       </div>
 
       {confirmOpen ? (
         <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 p-4">
-          <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-slate-50 p-6 text-slate-900 shadow-sm">
+          <div className="w-full max-w-lg rounded-xl border border-zinc-200 bg-zinc-50 p-6 text-zinc-900 shadow-sm">
             <div className="mb-4">
-              <p className="text-xs uppercase tracking-wide text-slate-400">{confirmationTitle || 'Confirm action'}</p>
+              <p className="text-xs uppercase tracking-wide text-zinc-400">{confirmationTitle || 'Confirm action'}</p>
               <h4 className="mt-2 text-xl font-semibold">{confirmationTitle}</h4>
-              <p className="mt-3 text-sm leading-6 text-slate-700">{confirmationMessage}</p>
-              <p className="mt-2 text-xs text-slate-400">This is a placeholder confirmation modal for the finance employee summary action.</p>
+              <p className="mt-3 text-sm leading-6 text-zinc-700">{confirmationMessage}</p>
+              <p className="mt-2 text-xs text-zinc-400">This is a placeholder confirmation modal for the finance employee summary action.</p>
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={closeConfirmation}
-                className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 transition-colors hover:border-slate-400 hover:bg-slate-100"
-              >
+              <Button type="button" variant="outline" onClick={closeConfirmation}>
                 Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirm}
-                className="rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-emerald-400"
-              >
+              </Button>
+              <Button type="button" onClick={handleConfirm}>
                 Confirm {confirmAction === 'submit' ? 'Submit' : 'Generate PDF'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -183,7 +171,7 @@ function EmployeeModal({ employee, history, onClose }) {
 }
 
 export default function FinanceDepartmentEmployees() {
-  const { getFinanceEmployees, getFinanceEmployeeHistory } = useQr()
+  const { getFinanceEmployees, getFinanceEmployeeHistory } = useAppData()
   const [query, setQuery] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('All Departments')
   const [sortField, setSortField] = useState('name')
@@ -267,43 +255,39 @@ export default function FinanceDepartmentEmployees() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-50 p-6 shadow-sm">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-700">
-              <Users className="h-3.5 w-3.5" />
-              Department Employees
-            </div>
-            <h1 className="text-xl font-semibold text-slate-900">Employee list</h1>
-            <p className="text-sm leading-6 text-slate-500">
-              Sort and filter employees, then open a card to see the 15-day production history.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow={(
+          <span className="inline-flex items-center gap-1.5">
+            <Users className="h-3.5 w-3.5" />
+            Department Employees
+          </span>
+        )}
+        title="Employee list"
+        description="Sort and filter employees, then open a card to see the 15-day production history."
+      />
 
-      <section className="rounded-lg border border-slate-200 bg-white/80 p-5 shadow-xl shadow-black/10">
+      <Card>
         <div className="grid gap-3 lg:grid-cols-[1.2fr_0.7fr_0.5fr_0.5fr]">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-            <label className="text-[11px] uppercase tracking-wider text-slate-400">Search employees</label>
+          <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+            <label className="text-[11px] uppercase tracking-wider text-zinc-400">Search employees</label>
             <div className="mt-1 flex items-center gap-2">
-              <Search className="h-4 w-4 text-slate-400" />
-              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name, ID, or department" className="w-full bg-transparent text-sm text-slate-900 focus:outline-none" />
+              <Search className="h-4 w-4 text-zinc-400" />
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name, ID, or department" className="w-full bg-transparent text-sm text-zinc-900 focus:outline-none" />
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-            <label className="text-[11px] uppercase tracking-wider text-slate-400">Department</label>
-            <select value={departmentFilter} onChange={(event) => setDepartmentFilter(event.target.value)} className="mt-1 w-full bg-slate-50 text-sm text-slate-900 focus:outline-none">
+          <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+            <label className="text-[11px] uppercase tracking-wider text-zinc-400">Department</label>
+            <select value={departmentFilter} onChange={(event) => setDepartmentFilter(event.target.value)} className="mt-1 w-full bg-zinc-50 text-sm text-zinc-900 focus:outline-none">
               {departments.map((department) => (
                 <option key={department} value={department}>{department}</option>
               ))}
             </select>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-            <label className="text-[11px] uppercase tracking-wider text-slate-400">Sort by</label>
-            <select value={sortField} onChange={(event) => setSortField(event.target.value)} className="mt-1 w-full bg-slate-50 text-sm text-slate-900 focus:outline-none">
+          <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+            <label className="text-[11px] uppercase tracking-wider text-zinc-400">Sort by</label>
+            <select value={sortField} onChange={(event) => setSortField(event.target.value)} className="mt-1 w-full bg-zinc-50 text-sm text-zinc-900 focus:outline-none">
               <option value="name">Name</option>
               <option value="id">Employee ID</option>
               <option value="department">Department</option>
@@ -313,21 +297,21 @@ export default function FinanceDepartmentEmployees() {
           <button
             type="button"
             onClick={() => setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-800 hover:border-slate-300"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-800 hover:border-zinc-300"
           >
             <ArrowUpDown className="h-4 w-4" />
             {sortDirection === 'asc' ? 'Ascending' : 'Descending'}
           </button>
         </div>
-      </section>
+      </Card>
 
-      <section className="rounded-lg border border-slate-200 bg-white/80 p-5 shadow-xl shadow-black/10">
+      <Card>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Employees</h2>
-            <p className="text-sm text-slate-500">No logs, hours, or amount are shown here. Open a card to inspect the production history.</p>
+            <h2 className="font-heading text-lg font-bold text-zinc-900">Employees</h2>
+            <p className="text-sm text-zinc-500">No logs, hours, or amount are shown here. Open a card to inspect the production history.</p>
           </div>
-          <p className="text-xs uppercase tracking-wide text-slate-400">{filteredEmployees.length} result{filteredEmployees.length === 1 ? '' : 's'}</p>
+          <p className="text-xs uppercase tracking-wide text-zinc-400">{filteredEmployees.length} result{filteredEmployees.length === 1 ? '' : 's'}</p>
         </div>
 
           <div className="mt-5 space-y-3">
@@ -337,25 +321,25 @@ export default function FinanceDepartmentEmployees() {
                 key={employee.employeeId || employee.id}
                 type="button"
                 onClick={() => setSelectedEmployeeId(String(employee.employeeId || employee.id))}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-left transition-colors hover:border-cyan-500/30 hover:bg-cyan-500/10"
+                className="w-full rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-left transition-colors hover:border-emerald-500/30 hover:bg-emerald-500/10"
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-900">{employee.employeeName || employee.name}</p>
-                    <p className="mt-1 text-xs text-slate-400">{employee.employeeId || employee.id}</p>
+                    <p className="text-sm font-semibold text-zinc-900">{employee.employeeName || employee.name}</p>
+                    <p className="mt-1 text-xs text-zinc-400">{employee.employeeId || employee.id}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-slate-800">{getDepartment(employee)}</p>
-                    <p className="text-xs uppercase tracking-wide text-slate-400">Open</p>
+                    <p className="text-sm font-medium text-zinc-800">{getDepartment(employee)}</p>
+                    <p className="text-xs uppercase tracking-wide text-zinc-400">Open</p>
                   </div>
                 </div>
               </button>
             ))
           ) : (
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">No employees match your search.</div>
+            <EmptyState title="No employees match your search" />
           )}
         </div>
-      </section>
+      </Card>
 
       <EmployeeModal
         employee={selectedEmployee}

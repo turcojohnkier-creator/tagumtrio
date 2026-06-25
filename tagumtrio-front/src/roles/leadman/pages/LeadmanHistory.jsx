@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
-import { useQr } from '../../../context/qr-context'
+import { useAppData } from '../../../context/app-data-context'
 import DailyReportTable from '../../../shared/reports/DailyReportTable'
 import { fetchDailyReportsApi } from '../../../lib/api'
+import PageHeader from '../../../shared/ui/PageHeader'
+import Card from '../../../shared/ui/Card'
+import Button from '../../../shared/ui/Button'
+import EmptyState from '../../../shared/ui/EmptyState'
 
 function asText(v) { return String(v || '').toLowerCase() }
 
@@ -23,7 +27,7 @@ function aggregateReport(reports = []) {
 
 export default function LeadmanHistory() {
   const { user } = useAuth()
-  const { formatDateTime, selectedLeadmanDepartment } = useQr()
+  const { formatDateTime, selectedLeadmanDepartment } = useAppData()
 
   const currentDepartment = selectedLeadmanDepartment || (user?.departments?.[0] || user?.department || '')
   const [date, setDate] = useState(new Date().toISOString().slice(0,10))
@@ -57,80 +61,79 @@ export default function LeadmanHistory() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-slate-200 bg-white p-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-slate-400">History</p>
-          <h2 className="mt-2 text-2xl font-semibold text-slate-900">Submitted Reports</h2>
-          <p className="mt-1 text-sm text-slate-500">View recent submitted reports and send a consolidated daily report.</p>
-        </div>
-
-        <div className="flex gap-3 flex-wrap">
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 min-w-[220px] select-none pointer-events-none">
-            <p className="text-xs text-slate-400">Department</p>
-            <p className="mt-2 text-slate-900">{currentDepartment || 'Assigned department'}</p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs text-slate-400">Date</p>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-2 bg-transparent text-slate-900 outline-none" />
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs text-slate-400">Search</p>
-            <div className="relative mt-2">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search reports..." className="pl-10 bg-transparent text-slate-900 outline-none" />
+      <PageHeader
+        eyebrow="History"
+        title="Submitted Reports"
+        description="View recent submitted reports and send a consolidated daily report."
+        actions={(
+          <div className="flex flex-wrap gap-3">
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 min-w-[200px] select-none">
+              <p className="text-xs font-semibold text-zinc-400">Department</p>
+              <p className="mt-1.5 text-zinc-900">{currentDepartment || 'Assigned department'}</p>
+            </div>
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+              <p className="text-xs text-zinc-400">Date</p>
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5 bg-transparent text-zinc-900 outline-none" />
+            </div>
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+              <p className="text-xs text-zinc-400">Search</p>
+              <div className="relative mt-1.5">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search reports..." className="pl-9 bg-transparent text-zinc-900 outline-none" />
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        )}
+      />
 
-      <div className="rounded-lg border border-slate-200 bg-white p-6">
-        {loading ? <div className="text-slate-500">Loading...</div> : null}
-        {!loading && filtered.length === 0 ? <div className="text-slate-500">No reports found for selected filters.</div> : null}
+      <Card>
+        {loading ? <div className="text-zinc-500">Loading...</div> : null}
+        {!loading && filtered.length === 0 ? <EmptyState title="No reports found" description="No reports found for selected filters." /> : null}
         <div className="space-y-3">
           {filtered.map((report) => (
-            <div key={report.id} className="rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 flex items-center justify-between">
+            <div key={report.id} className="rounded-xl border border-zinc-200 bg-zinc-50 py-2 px-3 flex items-center justify-between">
               <div>
-                <div className="font-medium text-slate-900">{report.department} • {report.reportDate}</div>
-                <div className="text-xs text-slate-500 mt-1">Submitted by {report.submittedByName || report.submittedBy || 'Unknown'} • {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</div>
-                <div className="text-sm text-slate-700 mt-1">Entries: {Array.isArray(report.entries) ? report.entries.length : 0}</div>
+                <div className="font-medium text-zinc-900">{report.department} • {report.reportDate}</div>
+                <div className="text-xs text-zinc-500 mt-1">Submitted by {report.submittedByName || report.submittedBy || 'Unknown'} • {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</div>
+                <div className="text-sm text-zinc-700 mt-1">Entries: {Array.isArray(report.entries) ? report.entries.length : 0}</div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setSelected(report)} className="rounded-xl bg-slate-100 px-3 py-1.5 text-slate-800">Open</button>
+                <Button variant="secondary" size="sm" onClick={() => setSelected(report)}>Open</Button>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
       {selected ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-4xl rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
+          <div className="w-full max-w-4xl rounded-xl border border-zinc-200 bg-white shadow-sm">
+            <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
               <div>
-                <p className="text-xs uppercase tracking-wide text-slate-400">Submitted daily report</p>
-                <h3 className="mt-1 text-lg font-semibold text-slate-900">{selected.department} • {selected.reportDate}</h3>
-                <p className="mt-1 text-sm text-slate-500">Submitted by {selected.submittedByName || selected.submittedBy || 'Unknown'}</p>
+                <p className="text-xs uppercase tracking-wide text-zinc-400">Submitted daily report</p>
+                <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{selected.department} • {selected.reportDate}</h3>
+                <p className="mt-1 text-sm text-zinc-500">Submitted by {selected.submittedByName || selected.submittedBy || 'Unknown'}</p>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => setSelected(null)} className="rounded-full border border-slate-300 bg-slate-50 p-2 text-slate-700">Close</button>
+                <button onClick={() => setSelected(null)} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700">Close</button>
               </div>
             </div>
             <div className="max-h-[72vh] overflow-auto px-5 py-4">
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 mb-4">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Employees involved</p>
-                  <p className="mt-2 text-2xl font-semibold text-slate-900">{new Set((selected.entries || []).map((e) => String(e.employeeId || e.employeeName || ''))).size}</p>
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                  <p className="text-xs uppercase tracking-wide text-zinc-400">Employees involved</p>
+                  <p className="mt-2 font-heading text-2xl font-bold text-zinc-900">{new Set((selected.entries || []).map((e) => String(e.employeeId || e.employeeName || ''))).size}</p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Total entries</p>
-                  <p className="mt-2 text-2xl font-semibold text-slate-900">{(selected.entries || []).length}</p>
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                  <p className="text-xs uppercase tracking-wide text-zinc-400">Total entries</p>
+                  <p className="mt-2 font-heading text-2xl font-bold text-zinc-900">{(selected.entries || []).length}</p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Total pieces</p>
-                  <p className="mt-2 text-2xl font-semibold text-slate-900">{aggregateReport([selected]).totalPieces}</p>
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                  <p className="text-xs uppercase tracking-wide text-zinc-400">Total pieces</p>
+                  <p className="mt-2 font-heading text-2xl font-bold text-zinc-900">{aggregateReport([selected]).totalPieces}</p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Total amount</p>
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                  <p className="text-xs uppercase tracking-wide text-zinc-400">Total amount</p>
                   <p className="mt-2 text-2xl font-semibold text-emerald-700">₱{aggregateReport([selected]).totalAmount.toLocaleString()}</p>
                 </div>
               </div>

@@ -1,11 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ClipboardList, Filter, Search, X } from 'lucide-react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { ChevronRight, Search, X } from 'lucide-react'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/auth-context'
 import { useDialog } from '../../../context/dialog-context'
-import { useQr } from '../../../context/qr-context'
+import { useAppData } from '../../../context/app-data-context'
 import { fetchDailyReportsApi } from '../../../lib/api'
 import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from '../../../shared/reports/report-entry-utils'
+import PageHeader from '../../../shared/ui/PageHeader'
+import Card from '../../../shared/ui/Card'
+import Button, { LinkButton } from '../../../shared/ui/Button'
+import Badge from '../../../shared/ui/Badge'
+import EmptyState from '../../../shared/ui/EmptyState'
 
 function formatReportDate(value) {
   if (!value) return '-'
@@ -98,14 +103,14 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl rounded-lg border border-slate-200 bg-white shadow-sm max-h-[90vh] overflow-auto">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
+      <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl rounded-xl border border-zinc-200 bg-white shadow-sm max-h-[90vh] overflow-auto">
+        <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-400">Submitted daily report</p>
-            <h3 className="mt-1 text-lg font-semibold text-slate-900">{report.department}</h3>
-            <p className="mt-1 text-sm text-slate-500">Submitted {formatReportDate(report.scannedAt)}</p>
+            <p className="text-xs uppercase tracking-wide text-zinc-400">Submitted daily report</p>
+            <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{report.department}</h3>
+            <p className="mt-1 text-sm text-zinc-500">Submitted {formatReportDate(report.scannedAt)}</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full border border-slate-300 bg-slate-50 p-2 text-slate-700 transition-colors hover:bg-slate-100">
+          <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -113,9 +118,9 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
         <div className="max-h-[72vh] overflow-auto px-5 py-4 space-y-4">
           
 
-          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white/80">
+          <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-500">
+              <thead className="bg-emerald-50/70 text-emerald-800">
                 <tr>
                   <th className="px-4 py-3 font-medium">Employee</th>
                   <th className="px-4 py-3 font-medium">Department</th>
@@ -125,75 +130,74 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
                   <th className="px-4 py-3 font-medium">Amount</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200/70 bg-white/50">
+              <tbody className="divide-y divide-zinc-200/70 bg-white/50">
                 {report.entries.map((entry) => (
-                  <tr key={entry.id || `${getEntryIdentifier(entry)}-${getEntryLabel(entry)}-${entry.scannedAt || ''}`} className="text-slate-700 hover:bg-white/80">
+                  <tr key={entry.id || `${getEntryIdentifier(entry)}-${getEntryLabel(entry)}-${entry.scannedAt || ''}`} className="text-zinc-700 hover:bg-emerald-50/40">
                     <td className="px-4 py-4">
-                      <div className="font-medium text-slate-900">{getEntryLabel(entry) || 'Untitled item'}</div>
-                      <div className="text-xs text-slate-400">{getEntryIdentifier(entry) || '-'}</div>
+                      <div className="font-medium text-zinc-900">{getEntryLabel(entry) || 'Untitled item'}</div>
+                      <div className="text-xs text-zinc-400">{getEntryIdentifier(entry) || '-'}</div>
                     </td>
-                    <td className="px-4 py-4 text-slate-700">{resolveEntryDepartment(entry, report.department)}</td>
-                    <td className="px-4 py-4 text-slate-700">{getFieldValue(entry, 'thickness') || report.thickness || '-'}</td>
-                    <td className="px-4 py-4 text-slate-700">{getEntryPieces(entry) || report.cratesPieces || '-'}</td>
-                    <td className="px-4 py-4 text-slate-700">{getFieldValue(entry, 'date') || getFieldValue(entry, 'dateIn') || formatReportDate(entry.scannedAt || report.scannedAt)}</td>
-                    <td className="px-4 py-4 font-semibold text-slate-900">₱{Number(entry.amount || 0).toLocaleString()}</td>
+                    <td className="px-4 py-4 text-zinc-700">{resolveEntryDepartment(entry, report.department)}</td>
+                    <td className="px-4 py-4 text-zinc-700">{getFieldValue(entry, 'thickness') || report.thickness || '-'}</td>
+                    <td className="px-4 py-4 text-zinc-700">{getEntryPieces(entry) || report.cratesPieces || '-'}</td>
+                    <td className="px-4 py-4 text-zinc-700">{getFieldValue(entry, 'date') || getFieldValue(entry, 'dateIn') || formatReportDate(entry.scannedAt || report.scannedAt)}</td>
+                    <td className="px-4 py-4 font-semibold text-zinc-900">₱{Number(entry.amount || 0).toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
+          <div className="grid gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 md:grid-cols-2">
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-400">Images</p>
-              <p className="mt-2 text-sm text-slate-800">{report.photos?.length || 0} photo{report.photos?.length === 1 ? '' : 's'}</p>
+              <p className="text-xs uppercase tracking-wide text-zinc-400">Images</p>
+              <p className="mt-2 text-sm text-zinc-800">{report.photos?.length || 0} photo{report.photos?.length === 1 ? '' : 's'}</p>
             </div>
             <div className="flex items-end justify-end">
               {report.photos?.length > 0 ? (
                 <button
                   type="button"
                   onClick={() => onPreviewPhotos?.(report.photos)}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-900 transition-colors hover:border-slate-300 hover:bg-white"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-2 text-sm font-medium text-zinc-900 transition-colors hover:border-zinc-300 hover:bg-white"
                 >
                   Preview images
                 </button>
               ) : (
-                <p className="text-sm text-slate-400">No images submitted</p>
+                <p className="text-sm text-zinc-400">No images submitted</p>
               )}
             </div>
           </div>
 
-          <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
+          <div className="grid gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 md:grid-cols-2">
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-400">Submitted by</p>
-              <p className="mt-2 text-sm text-slate-800">{report.submittedBy || 'Unknown'}</p>
+              <p className="text-xs uppercase tracking-wide text-zinc-400">Submitted by</p>
+              <p className="mt-2 text-sm text-zinc-800">{report.submittedBy || 'Unknown'}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-400">Date and time scanned</p>
-              <p className="mt-2 text-sm text-slate-800">{formatReportDate(report.scannedAt)}</p>
+              <p className="text-xs uppercase tracking-wide text-zinc-400">Date and time scanned</p>
+              <p className="mt-2 text-sm text-zinc-800">{formatReportDate(report.scannedAt)}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-400">Total employees involved</p>
-              <p className="mt-2 text-sm text-slate-800">{report.employeeCount}</p>
+              <p className="text-xs uppercase tracking-wide text-zinc-400">Total employees involved</p>
+              <p className="mt-2 text-sm text-zinc-800">{report.employeeCount}</p>
             </div><div>
-              <p className="text-xs uppercase tracking-wide text-slate-400">Verification</p>
-              <p className={`mt-2 text-sm ${report.isVerified ? 'text-emerald-700' : 'text-rose-700'}`}>{report.verificationLabel}</p>
+              <p className="text-xs uppercase tracking-wide text-zinc-400">Verification</p>
+              <Badge className="mt-2" variant={report.isVerified ? 'success' : 'danger'}>{report.verificationLabel}</Badge>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:justify-end sm:items-center">
-          <button type="button" onClick={onClose} className="rounded-xl bg-slate-100 px-4 py-2.5 text-slate-800 transition-colors hover:bg-slate-200">
+        <div className="flex flex-col gap-3 border-t border-zinc-200 px-5 py-4 sm:flex-row sm:justify-end sm:items-center">
+          <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => onCompile(report)}
             disabled={!report.isVerified || compilingReportId === report.id}
-            className="rounded-xl bg-emerald-500 px-4 py-2.5 text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {compilingReportId === report.id ? 'Compiling...' : report.isVerified ? 'Compile' : 'Cannot compile until verified'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -204,7 +208,7 @@ export default function ProductionDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const dialog = useDialog()
-  const { updateDailyReportStatus } = useQr()
+  const { updateDailyReportStatus } = useAppData()
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -322,44 +326,34 @@ export default function ProductionDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Daily Production Reports</h2>
-          <p className="mt-1 text-slate-500">Read and review submitted reports from leadman and the employee workflow.</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          {user?.role === 'production_incharge' ? (
-            <Link
-              to="/app/production/compiled"
-              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-800 transition-colors hover:border-slate-300 hover:bg-white"
-            >
-              View compiled reports
-            </Link>
-          ) : null}
-          
-        </div>
-      </div>
+      <PageHeader
+        title="Daily Production Reports"
+        description="Read and review submitted reports from leadman and the employee workflow."
+        actions={user?.role === 'production_incharge' ? (
+          <LinkButton to="/app/production/compiled" variant="secondary">
+            View compiled reports
+          </LinkButton>
+        ) : null}
+      />
 
-
-
-      <div className="rounded-lg border border-slate-200 bg-white p-6 space-y-4">
+      <Card className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
 
           <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
               <input
                 type="text"
                 value={searchText}
                 onChange={(event) => setSearchText(event.target.value)}
                 placeholder="Search department, thickness, or submitted by..."
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300/40"
+                className="w-full rounded-lg border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-300/40"
               />
             </div>
             <select
               value={selectedDepartment}
               onChange={(event) => setSelectedDepartment(event.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300/40"
+              className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-300/40"
             >
               {departments.map((department) => (
                 <option key={department} value={department}>{department}</option>
@@ -369,15 +363,15 @@ export default function ProductionDashboard() {
               type="date"
               value={selectedDate}
               onChange={(event) => setSelectedDate(event.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300/40"
+              className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-300/40"
             />
           </div>
         </div>
 
-        {error ? <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-        {loading ? <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">Loading submitted reports...</div> : null}
+        {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        {loading ? <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">Loading submitted reports...</div> : null}
         {!loading && filteredReports.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">No submitted reports yet.</div>
+          <EmptyState title="No submitted reports yet" />
         ) : null}
 
         {!loading && filteredReports.length > 0 ? (
@@ -387,46 +381,46 @@ export default function ProductionDashboard() {
                 key={report.id}
                 type="button"
                 onClick={() => setSelectedReportId(report.id)}
-                className="group relative block w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-left transition-all hover:border-slate-300 hover:bg-white"
+                className="group relative block w-full rounded-lg border border-zinc-200 bg-white p-4 text-left transition-all hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
               >
                 <div className="pr-12 md:flex md:items-center md:gap-5">
                   <div className="min-w-0 md:flex-1">
-                    <p className="text-xs uppercase tracking-wide text-slate-400">Submitted report</p>
-                    <h4 className="mt-1 truncate text-lg font-semibold text-slate-900">{report.department || 'Unknown Department'}</h4>
-                    <p className="mt-1 text-sm text-slate-500">{formatReportDate(report.scannedAt)}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Submitted report</p>
+                    <h4 className="mt-1 truncate font-heading text-lg font-bold text-zinc-900">{report.department || 'Unknown Department'}</h4>
+                    <p className="mt-1 text-sm text-zinc-500">{formatReportDate(report.scannedAt)}</p>
                   </div>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-4 md:mt-0 md:w-[56%] md:grid-cols-4">
-                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-                      <p className="text-[11px] text-slate-400">Employees</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-900">{report.employeeCount}</p>
+                    <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
+                      <p className="text-[11px] text-zinc-400">Employees</p>
+                      <p className="mt-1 text-sm font-semibold text-zinc-900">{report.employeeCount}</p>
                     </div>
-                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-                      <p className="text-[11px] text-slate-400">Thickness</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-900">{report.thickness || '-'}</p>
+                    <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
+                      <p className="text-[11px] text-zinc-400">Thickness</p>
+                      <p className="mt-1 text-sm font-semibold text-zinc-900">{report.thickness || '-'}</p>
                     </div>
-                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-                      <p className="text-[11px] text-slate-400">Crates / Pieces</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-900">{report.cratesPieces || '-'}</p>
+                    <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
+                      <p className="text-[11px] text-zinc-400">Crates / Pieces</p>
+                      <p className="mt-1 text-sm font-semibold text-zinc-900">{report.cratesPieces || '-'}</p>
                     </div>
-                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-                      <p className="text-[11px] text-slate-400">Status</p>
-                      <p className={`mt-1 text-sm font-semibold ${report.isVerified ? 'text-emerald-700' : 'text-rose-700'}`}>
+                    <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
+                      <p className="text-[11px] text-zinc-400">Status</p>
+                      <Badge variant={report.isVerified ? 'success' : 'danger'} className="mt-1">
                         {report.verificationLabel}
-                      </p>
+                      </Badge>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between text-xs text-slate-400 md:mt-0 md:min-w-[140px] md:flex-col md:items-end md:justify-center">
+                  <div className="mt-4 flex items-center justify-between text-xs text-zinc-400 md:mt-0 md:min-w-[140px] md:flex-col md:items-end md:justify-center">
                     <span>{report.entries.length} row{report.entries.length === 1 ? '' : 's'}</span>
-                    <span className="text-slate-700 group-hover:text-slate-900">Open report</span>
+                    <span className="flex items-center gap-1 text-emerald-600 group-hover:text-emerald-700">Open report <ChevronRight className="h-3.5 w-3.5" /></span>
                   </div>
                 </div>
               </button>
             ))}
           </div>
         ) : null}
-      </div>
+      </Card>
 
       <ReportDetailModal
         report={selectedReport}
@@ -441,20 +435,20 @@ export default function ProductionDashboard() {
 
       {showPhotosModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-3xl overflow-auto rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="w-full max-w-3xl overflow-auto rounded-xl border border-zinc-200 bg-white shadow-sm p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">Report images</h3>
+              <h3 className="font-heading text-lg font-bold text-zinc-900">Report images</h3>
               <button
                 type="button"
                 onClick={() => setShowPhotosModal(false)}
-                className="text-slate-500 hover:text-slate-900"
+                className="text-zinc-500 hover:text-zinc-900"
               >
                 Close
               </button>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {selectedPhotos.map((photo, index) => (
-                <div key={`${photo}-${index}`} className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                <div key={`${photo}-${index}`} className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
                   <img src={photo} alt={`Report image ${index + 1}`} className="h-64 w-full object-cover" />
                 </div>
               ))}

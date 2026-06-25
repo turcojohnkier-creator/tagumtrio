@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from './auth-context'
-import { QRContext } from './qr-context'
+import { AppDataContext } from './app-data-context'
 import { DEPARTMENTS } from '../constants/departments'
-import { buildDepartmentQrSummary } from '../constants/qr-scan-fields'
+import { buildDepartmentReportSummary } from '../constants/department-report-fields'
 
 // Local storage keys and defaults
-const STORAGE_KEY = 'triops-qr-state'
+const STORAGE_KEY = 'triops-app-data-state'
 const LEADMAN_DEPARTMENT_KEY_PREFIX = 'triops-leadman-dept:'
 // Optional per-department rates; missing entries fall back to 70
 const DEPARTMENT_RATES = {}
 import {
-  createAttendanceApi,
   fetchDepartmentRequestsApi,
   fetchEmployeesApi,
   fetchDailyReportsApi,
@@ -24,8 +23,6 @@ import {
   fetchLeaveRequestsApi,
   approveLeaveRequestApi,
   rejectLeaveRequestApi,
-  headVerifyAttendanceApi,
-  leadmanVerifyAttendanceApi,
   submitDailyReportApi,
   updateDailyReportApi,
   fetchAnnouncementsApi,
@@ -89,7 +86,6 @@ function mergeEmployees(remoteEmployees = []) {
 // Demo builders removed. Fallbacks below use empty arrays to avoid showing demo data.
 const DEFAULT_STATE = {
   departmentRequests: [],
-  attendanceRecords: [],
   payments: [],
   leaveRequests: [],
   announcements: [],
@@ -107,7 +103,6 @@ function loadState() {
     const parsed = JSON.parse(raw)
     return {
       departmentRequests: Array.isArray(parsed.departmentRequests) ? parsed.departmentRequests : DEFAULT_STATE.departmentRequests,
-      attendanceRecords: Array.isArray(parsed.attendanceRecords) ? parsed.attendanceRecords : DEFAULT_STATE.attendanceRecords,
       payments: Array.isArray(parsed.payments) ? parsed.payments : DEFAULT_STATE.payments,
       leaveRequests: Array.isArray(parsed.leaveRequests) ? parsed.leaveRequests : DEFAULT_STATE.leaveRequests,
       announcements: Array.isArray(parsed.announcements) ? parsed.announcements : DEFAULT_STATE.announcements,
@@ -185,11 +180,10 @@ function getAssignedLeadmanDepartments(user) {
   return []
 }
 
-export function QRProvider({ children }) {
+export function AppDataProvider({ children }) {
   const { user } = useAuth()
   const initialState = loadState()
   const [departmentRequests, setDepartmentRequests] = useState(initialState.departmentRequests)
-  const [attendanceRecords, setAttendanceRecords] = useState(initialState.attendanceRecords)
   const [dailyReportDrafts, setDailyReportDrafts] = useState({})
   const [payments, setPayments] = useState(initialState.payments || [])
   const [announcements, setAnnouncements] = useState(initialState.announcements || [])
@@ -197,7 +191,6 @@ export function QRProvider({ children }) {
   // schedules feature removed; keep empty state to avoid breaking callers
   const [schedules, setSchedules] = useState([])
   const [leaveRequests, setLeaveRequests] = useState(initialState.leaveRequests || [])
-  const [syncPending, setSyncPending] = useState(0)
   const [employees, setEmployees] = useState([])
   const [employeesLoading, setEmployeesLoading] = useState(false)
   const [dailyReports, setDailyReports] = useState([])
@@ -483,31 +476,10 @@ export function QRProvider({ children }) {
     }
   }, [user?.id])
 
-  async function refreshPendingCount() {
-    try {
-      const c = await pendingCount()
-      setSyncPending(c)
-    } catch { /* ignore */ }
-  }
-
-  useEffect(() => {
-    refreshPendingCount()
-    function onlineHandler() {
-      // try to sync when back online
-      trySyncOnce().then(() => refreshPendingCount())
-    }
-    window.addEventListener('online', onlineHandler)
-    const interval = setInterval(() => trySyncOnce().then(() => refreshPendingCount()), 1000 * 60)
-    return () => {
-      window.removeEventListener('online', onlineHandler)
-      clearInterval(interval)
-    }
-  }, [])
-
   useEffect(() => {
     if (typeof window === 'undefined') return
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ departmentRequests, attendanceRecords, payments, leaveRequests, announcements, schedules }))
-  }, [departmentRequests, attendanceRecords, payments, leaveRequests])
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ departmentRequests, payments, leaveRequests, announcements, schedules }))
+  }, [departmentRequests, payments, leaveRequests])
 
   async function submitDepartmentRequest(record) {
     const tempId = `REQ-${Date.now()}`
@@ -549,7 +521,7 @@ export function QRProvider({ children }) {
   async function approveDepartmentRequest(id, leadmanId) {
   try {
     const approvedRequest = await approveDepartmentRequestApi(id, leadmanId);
-    
+
     // Update the request status
     setDepartmentRequests((current) => current.map((request) => (
       request.id === id ? { ...request, ...approvedRequest, status: 'approved' } : request
@@ -561,7 +533,7 @@ export function QRProvider({ children }) {
         ? { ...employee, department: approvedRequest.requestedDepartment }
         : employee
     )));
-    
+
     return approvedRequest;
   } catch (error) {
     throw error;
@@ -592,89 +564,52 @@ export function QRProvider({ children }) {
     }
   }
 
-  function recordAttendanceScan(record) {
+  function addReportEntry(record) {
     const departmentRate = DEPARTMENT_RATES[record.department || record.dept || record.raw?.department] ?? 70
     const rawEmployeeId = record.employeeId ?? record.id ?? record.employee_id ?? record.identifier ?? record.raw?.employeeId ?? record.raw?.employee_id ?? ''
     let employeeId = Number(rawEmployeeId)
     if (Number.isNaN(employeeId)) employeeId = undefined
     const employeeName = String(record.employeeName || record.name || record.employee_name || record.fullName || record.raw?.employeeName || record.raw?.employee_name || '').trim()
     const department = String(record.department || record.dept || record.raw?.department || '').trim()
-// New (Robust) Code
-const id = `ATD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    const scannedAt = record.scanCapturedAt || record.scannedAt || new Date().toISOString()
-    const qrFields = record.qrFields || {}
+    const id = `RPT-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+    const capturedAt = record.scanCapturedAt || record.scannedAt || new Date().toISOString()
+    const reportFields = record.qrFields || {}
     const batchId = String(record.batchId || record.raw?.batchId || id)
-    const batchCapturedAt = record.batchCapturedAt || record.raw?.batchCapturedAt || scannedAt
+    const batchCapturedAt = record.batchCapturedAt || record.raw?.batchCapturedAt || capturedAt
     const batchEmployeeCount = Number(record.batchEmployeeCount || record.raw?.batchEmployeeCount || 1)
-    const notes = record.notes || buildDepartmentQrSummary(department, qrFields) || null
+    const notes = record.notes || buildDepartmentReportSummary(department, reportFields) || null
     const raw = record.raw || {
       department,
       employeeId,
       employeeName,
       loggedHours: Number(record.loggedHours || 0),
-      qrFields,
-      qrSummary: record.qrSummary || notes,
-      capturedAt: scannedAt,
+      reportFields,
+      reportSummary: record.qrSummary || notes,
+      capturedAt,
       batchId,
       batchCapturedAt,
       batchEmployeeCount,
     }
-    const payload = {
-      id,
-      ...record,
-      employeeId,
-      employeeName,
-      department,
-      scannedAt,
-      batchId,
-      batchCapturedAt,
-      batchEmployeeCount,
-      status: 'leadman_verified',
-      leadmanVerifiedAt: new Date().toISOString(),
-      rate: record.rate ?? departmentRate,
-      amount: Number(record.loggedHours || 0) * Number(record.rate ?? departmentRate),
-      raw,
-      notes,
-    }
+    const rate = record.rate ?? departmentRate
+    const amount = Number(record.loggedHours || 0) * Number(rate)
 
-    let foundDuplicate = null
-    setAttendanceRecords((current) => {
-      const duplicate = current.find((existing) => (
-        existing.employeeId === payload.employeeId
-        && existing.department === payload.department
-        && existing.scannedAt === payload.scannedAt
-        && existing.loggedHours === payload.loggedHours
-        && existing.amount === payload.amount
-        && existing.notes === payload.notes
-      ))
-      if (duplicate) {
-        foundDuplicate = duplicate
-        return current
-      }
-      return [payload, ...current]
-    })
-
-    if (foundDuplicate) {
-      return foundDuplicate.id
-    }
-    // add to daily report draft for the department
     try {
       setDailyReportDrafts((cur) => {
-        const key = `${payload.department}:${new Date(payload.scannedAt).toISOString().slice(0, 10)}`
-        const draft = cur[key] || { department: payload.department, reportDate: new Date(payload.scannedAt).toISOString().slice(0, 10), entries: [], summary: '', totalHours: 0, totalAmount: 0 }
+        const key = `${department}:${new Date(capturedAt).toISOString().slice(0, 10)}`
+        const draft = cur[key] || { department, reportDate: new Date(capturedAt).toISOString().slice(0, 10), entries: [], summary: '', totalHours: 0, totalAmount: 0 }
         const entry = {
-          id: payload.id,
-          batchId: payload.batchId,
-          batchCapturedAt: payload.batchCapturedAt,
-          batchEmployeeCount: payload.batchEmployeeCount,
-          employeeId: payload.employeeId,
-          employeeName: payload.employeeName,
-          scannedAt: payload.scannedAt,
-          loggedHours: payload.loggedHours,
-          rate: payload.rate,
-          amount: payload.amount,
-          raw: payload.raw,
-          notes: payload.notes,
+          id,
+          batchId,
+          batchCapturedAt,
+          batchEmployeeCount,
+          employeeId,
+          employeeName,
+          scannedAt: capturedAt,
+          loggedHours: record.loggedHours,
+          rate,
+          amount,
+          raw,
+          notes,
         }
         draft.entries = [entry, ...draft.entries]
         draft.totalHours = (draft.totalHours || 0) + Number(entry.loggedHours || 0)
@@ -682,37 +617,8 @@ const id = `ATD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         return { ...cur, [key]: draft }
       })
     } catch (e) { /* ignore in non-browser env */ }
-    // enqueue for offline sync
-    // Attendance backend is intentionally not used in this workflow anymore.
-    // Keep the local draft/report flow only.
+
     return id
-  }
-
-  function approveAttendanceByHead(id, headId) {
-    setAttendanceRecords((current) => current.map((record) => (
-      record.id === id
-        ? { ...record, status: 'head_verified', headId, headVerifiedAt: new Date().toISOString() }
-        : record
-    )))
-    headVerifyAttendanceApi(id, headId).catch(() => {})
-  }
-
-  function submitScan(record) {
-    const id = recordAttendanceScan(record)
-    // try immediate sync if online
-    try {
-      trySyncOnce().then(() => refreshPendingCount())
-    } catch {}
-    return id
-  }
-
-  function approveByLeadman(id, leadmanId) {
-    approveDepartmentRequest(id, leadmanId)
-    leadmanVerifyAttendanceApi(id, leadmanId).catch(() => {})
-  }
-
-  function approveByHead(id, headId) {
-    approveAttendanceByHead(id, headId)
   }
 
   function updateEmployeeRecord(employeeId, updates = {}) {
@@ -767,7 +673,6 @@ const id = `ATD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
   function clearAll() {
     setDepartmentRequests([])
-    setAttendanceRecords([])
     setPayments([])
     setLeaveRequests([])
   }
@@ -867,7 +772,7 @@ const id = `ATD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     const payload = { id: tempId, ...record, audience: record.audience || 'All employees', visibility: record.visibility || 'all_employees', createdAt: new Date().toISOString() }
     setAnnouncements((cur) => [payload, ...cur])
     try {
-      const created = await createAnnouncementApi({ title: record.title, body: record.body, pinned: record.pinned, audience: payload.audience, visibility: payload.visibility })
+      const created = await createAnnouncementApi({ title: record.title, body: record.body, pinned: record.pinned, audience: payload.audience, visibility: payload.visibility, targetRoles: record.targetRoles })
       setAnnouncements((cur) => cur.map((a) => (a.id === tempId ? created : a)))
       return created
     } catch (e) {
@@ -937,7 +842,7 @@ const id = `ATD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       (left, right) => new Date(right.requestedAt || right.createdAt || 0) - new Date(left.requestedAt || left.createdAt || 0)
     )
   }
-  
+
   function getLeadmanDeployedEmployees(department) {
     const approvedRequests = departmentRequests.filter((request) => request.status === 'approved' && request.requestedDepartment === department)
     const latestByEmployee = new Map()
@@ -1000,30 +905,6 @@ const id = `ATD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         }
       })
     })
-  }
-
-  function getEmployeeAttendance(employeeId) {
-    return dedupeBy(
-      attendanceRecords.filter((record) => String(record.employeeId) === String(employeeId)),
-      (record) => String(record.id || `${record.employeeId}-${record.department}-${record.scannedAt}-${record.status}`),
-      (left, right) => new Date(right.scannedAt || right.leadmanVerifiedAt || right.headVerifiedAt || 0) - new Date(left.scannedAt || left.leadmanVerifiedAt || left.headVerifiedAt || 0)
-    )
-  }
-
-  function getLeadmanAttendance(department) {
-    return dedupeBy(
-      attendanceRecords.filter((record) => record.department === department && record.status !== 'head_verified'),
-      (record) => String(record.id || `${record.employeeId}-${record.department}-${record.scannedAt}-${record.status}`),
-      (left, right) => new Date(right.scannedAt || right.leadmanVerifiedAt || right.headVerifiedAt || 0) - new Date(left.scannedAt || left.leadmanVerifiedAt || left.headVerifiedAt || 0)
-    )
-  }
-
-  function getHeadPendingAttendance() {
-    return dedupeBy(
-      attendanceRecords.filter((record) => record.status === 'leadman_verified'),
-      (record) => String(record.id || `${record.employeeId}-${record.department}-${record.scannedAt}-${record.status}`),
-      (left, right) => new Date(right.scannedAt || right.leadmanVerifiedAt || 0) - new Date(left.scannedAt || left.leadmanVerifiedAt || 0)
-    )
   }
 
   function getFinanceAttendance() {
@@ -1296,33 +1177,24 @@ const id = `ATD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   }
 
   return (
-    <QRContext.Provider
+    <AppDataContext.Provider
       value={{
         departmentRequests,
-        attendanceRecords,
         leaveRequests,
         approveDepartmentRequest,
         submitLeaveRequest,
         approveLeaveRequest,
-        recordAttendanceScan,
-        approveAttendanceByHead,
-        submitScan,
-        approveByLeadman,
-        approveByHead,
+        addReportEntry,
         clearAll,
         getEmployeeDepartment,
         getEmployeeLeaveRequests,
         getLeadmanDepartmentRequests,
-        getEmployeeAttendance,
         getLeadmanDeployedEmployees,
-        getLeadmanAttendance,
-        getHeadPendingAttendance,
         addReassignmentNotification,
         getReassignmentNotifications,
         getEmployeeReassignmentNotifications,
         getUnseenLeadmanReassignmentNotifications,
         getUnseenEmployeeReassignmentNotifications,
-        getUnseenLeadmanReassignmentNotifications,
         markReassignmentNotificationsSeen,
         updateEmployeeRecord,
         getFinanceAttendance,
@@ -1342,8 +1214,6 @@ const id = `ATD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         isPayslipReleased,
         getEmployeePayments,
         getFinancePayments,
-        syncPending,
-        syncNow: async () => { const r = await trySyncOnce(); await refreshPendingCount(); return r },
         formatDateTime,
         periodLabel,
         periodKey,
@@ -1352,7 +1222,7 @@ const id = `ATD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         employeesLoading,
         DEPARTMENTS,
         DEPARTMENT_RATES,
-        buildDepartmentQrSummary,
+        buildDepartmentReportSummary,
         announcements,
         createAnnouncement,
         updateAnnouncement,
@@ -1381,12 +1251,8 @@ const id = `ATD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       }}
     >
       {children}
-    </QRContext.Provider>
+    </AppDataContext.Provider>
   )
 }
 
-export default QRProvider
-async function trySyncOnce() {
-  console.warn("Syncing is not currently implemented.");
-  return null;
-}
+export default AppDataProvider

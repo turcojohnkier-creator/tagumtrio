@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
-import { useQr } from '../../../context/qr-context'
+import { useAppData } from '../../../context/app-data-context'
 import { updateEmployeeApi } from '../../../lib/api'
 import EmployeeCard from '../../../roles/hr/components/EmployeeCard'
 import EmployeeDetailModal from '../../../roles/hr/components/EmployeeDetailModal'
+import PageHeader from '../../../shared/ui/PageHeader'
+import Card from '../../../shared/ui/Card'
+import Button from '../../../shared/ui/Button'
+import Badge from '../../../shared/ui/Badge'
+import EmptyState from '../../../shared/ui/EmptyState'
 
 export default function EmployeeDirectory() {
-  const { employees = [], employeesLoading, refreshEmployees } = useQr()
+  const { employees = [], employeesLoading, refreshEmployees } = useAppData()
   const [searchText, setSearchText] = useState('')
   const [roleFilter, setRoleFilter] = useState('All Roles')
   const [sortByRole, setSortByRole] = useState(false)
@@ -85,16 +90,16 @@ export default function EmployeeDirectory() {
     [filteredEmployees]
   )
 
-  function renderEmployeeSection(title, employeesList, emptyMessage) {
+  function renderEmployeeSection(title, employeesList, emptyMessage, tone = 'emerald') {
     return (
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
             {title}
           </h3>
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-500">
+          <Badge variant={tone === 'emerald' ? 'success' : 'neutral'}>
             {employeesList.length}
-          </span>
+          </Badge>
         </div>
 
         <div className="grid grid-cols-1 gap-3">
@@ -115,9 +120,7 @@ export default function EmployeeDirectory() {
         </div>
 
         {employeesList.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-5 text-sm text-slate-400">
-            {emptyMessage}
-          </div>
+          <EmptyState description={emptyMessage} />
         ) : null}
       </section>
     )
@@ -126,29 +129,32 @@ export default function EmployeeDirectory() {
   
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-900">HR Accounts</h2>
-          <p className="text-slate-500 mt-1">View all created accounts, inspect details, and archive or restore inactive users.</p>
-        </div>
-      </div>
+      <PageHeader
+        title="HR Accounts"
+        description="View all created accounts, inspect details, and archive or restore inactive users."
+        actions={(
+          <Badge variant="success" className="px-4 py-1.5 text-sm">
+            {localEmployees.length} accounts
+          </Badge>
+        )}
+      />
 
-      <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6 grid gap-4 xl:grid-cols-[1.9fr_1fr] xl:items-center">
+      <Card className="grid gap-4 xl:grid-cols-[1.9fr_1fr] xl:items-center">
         <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
           <input
             type="text"
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
             placeholder="Search accounts by name, ID, or role..."
-            className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            className="w-full bg-zinc-50 border border-zinc-200 text-zinc-900 text-sm rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
           />
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-2">
           <select
             value={roleFilter}
             onChange={(event) => setRoleFilter(event.target.value)}
-            className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            className="bg-zinc-50 border border-zinc-200 text-zinc-700 text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
           >
             {roleOptions.map((role) => (
               <option key={role} value={role}>{role}</option>
@@ -158,40 +164,34 @@ export default function EmployeeDirectory() {
           <button
             type="button"
             onClick={() => setSortByRole((current) => !current)}
-            className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${sortByRole ? 'border-emerald-500 bg-emerald-500/10 text-emerald-700' : 'border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'}`}
+            className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${sortByRole ? 'border-emerald-500 bg-emerald-500/10 text-emerald-700' : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50'}`}
           >
             {sortByRole ? 'Sorted by role' : 'Sort by role'}
           </button>
         </div>
-      </div>
+      </Card>
 
-      {employeesLoading && <div className="rounded-xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-500">Loading accounts from the database...</div>}
+      {employeesLoading && <div className="rounded-xl border border-zinc-200 bg-white px-4 py-6 text-sm text-zinc-500">Loading accounts from the database...</div>}
 
       <div className="space-y-6">
-        {renderEmployeeSection('Active Accounts', activeEmployees, 'No active accounts match your filters.')}
-        {renderEmployeeSection('Inactive Accounts', inactiveEmployees, 'No inactive accounts match your filters.')}
+        {renderEmployeeSection('Active Accounts', activeEmployees, 'No active accounts match your filters.', 'emerald')}
+        {renderEmployeeSection('Inactive Accounts', inactiveEmployees, 'No inactive accounts match your filters.', 'zinc')}
       </div>
 
       {!employeesLoading && filteredEmployees.length === 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-500">
-          <div>No accounts matched your filters.</div>
-          <div className="mt-3 flex gap-3">
-            <button
-              type="button"
-              onClick={() => refreshEmployees().catch(() => {})}
-              className="rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-black"
-            >
-              Retry loading accounts
-            </button>
-            <button
-              type="button"
-              onClick={() => setRoleFilter('All Roles')}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700"
-            >
-              Clear filters
-            </button>
-          </div>
-        </div>
+        <EmptyState
+          title="No accounts matched your filters"
+          action={(
+            <div className="flex gap-3">
+              <Button size="sm" onClick={() => refreshEmployees().catch(() => {})}>
+                Retry loading accounts
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setRoleFilter('All Roles')}>
+                Clear filters
+              </Button>
+            </div>
+          )}
+        />
       )}
 
       {selectedEmployee && (

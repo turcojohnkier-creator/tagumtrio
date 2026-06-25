@@ -10,6 +10,9 @@ class AnnouncementCreate(BaseModel):
     author: str | None = None
     audience: str | None = None
     visibility: str | None = None
+    target_roles: list[str] | None = Field(default=None, alias="targetRoles")
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class AnnouncementUpdate(BaseModel):
@@ -19,6 +22,9 @@ class AnnouncementUpdate(BaseModel):
     author: str | None = None
     audience: str | None = None
     visibility: str | None = None
+    target_roles: list[str] | None = Field(default=None, alias="targetRoles")
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class AnnouncementPublic(BaseModel):
@@ -29,6 +35,7 @@ class AnnouncementPublic(BaseModel):
     pinned: bool
     audience: str = Field(default="All employees")
     visibility: str = Field(default="all_employees")
+    target_roles: list[str] | None = Field(default=None, alias="targetRoles")
     created_at: datetime = Field(alias="createdAt")
     updated_at: datetime = Field(alias="updatedAt")
 

@@ -1,9 +1,13 @@
 import { useMemo, useState } from 'react'
 import { BadgeCheck, Search, X } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
-import { useQr } from '../../../context/qr-context'
+import { useAppData } from '../../../context/app-data-context'
 import { DEPARTMENTS } from '../../../constants/departments'
 import { useDialog } from '../../../context/dialog-context'
+import PageHeader from '../../../shared/ui/PageHeader'
+import Card, { SectionTitle } from '../../../shared/ui/Card'
+import Button from '../../../shared/ui/Button'
+import EmptyState from '../../../shared/ui/EmptyState'
 
 function asText(value) {
   return String(value || '').toLowerCase()
@@ -15,7 +19,7 @@ function sameDepartment(left, right) {
 
 export default function LeadmanTransfers() {
   const { user } = useAuth()
-  const { departmentRequests, approveDepartmentRequest, redirectDepartmentRequest, formatDateTime, selectedLeadmanDepartment, setSelectedLeadmanDepartment } = useQr()
+  const { departmentRequests, approveDepartmentRequest, redirectDepartmentRequest, formatDateTime, selectedLeadmanDepartment, setSelectedLeadmanDepartment } = useAppData()
   const dialog = useDialog()
 
   const assignedDepartments = useMemo(() => {
@@ -100,64 +104,64 @@ export default function LeadmanTransfers() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-slate-200 bg-white p-6">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-slate-400">Leadman queue</p>
-            <h2 className="mt-2 text-2xl font-semibold text-slate-900">Transfer Requests</h2>
-            <p className="mt-1 text-sm text-slate-500">Approve requests or redirect mistaken transfers to the correct department. All pending requests are shown here.</p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-400">Department</p>
-            <select value={selectedDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-2 min-w-[220px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 focus:border-emerald-500 focus:outline-none">
+      <PageHeader
+        eyebrow="Leadman queue"
+        title="Transfer Requests"
+        description="Approve requests or redirect mistaken transfers to the correct department. All pending requests are shown here."
+        actions={(
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Department</p>
+            <select value={selectedDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-1.5 min-w-[220px] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none">
               {assignedDepartments.map((department) => (
                 <option key={department} value={department}>{department}</option>
               ))}
             </select>
           </div>
-        </div>
-
-        <div className="mt-5 max-w-xl">
+        )}
+      >
+        <div className="max-w-xl">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} type="text" placeholder="Search requests..." className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} type="text" placeholder="Search requests..." className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none" />
           </div>
         </div>
-      </div>
+      </PageHeader>
 
-      <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-        <div className="border-b border-slate-200 px-6 py-4">
-          <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900"><BadgeCheck className="h-5 w-5 text-emerald-700" /> Pending Requests for {selectedDepartment}</h3>
+      <Card padding="p-0">
+        <div className="border-b border-zinc-200 px-6 py-4">
+          <SectionTitle icon={BadgeCheck}>Pending Requests for {selectedDepartment}</SectionTitle>
         </div>
         {selectedDepartmentRequests.length === 0 ? (
-          <div className="p-6 text-sm text-slate-500">No pending transfer requests for {selectedDepartment}.</div>
+          <div className="p-6">
+            <EmptyState title="No pending transfer requests" description={`No pending transfer requests for ${selectedDepartment}.`} />
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-slate-200 bg-slate-50">
+              <thead className="border-b border-emerald-100 bg-emerald-50/70 text-emerald-800">
                 <tr>
-                  <th className="px-6 py-3 text-left font-medium text-slate-700">Employee</th>
-                  <th className="px-6 py-3 text-left font-medium text-slate-700">ID</th>
-                  <th className="px-6 py-3 text-left font-medium text-slate-700">Department</th>
-                  <th className="px-6 py-3 text-left font-medium text-slate-700">Requested</th>
-                  <th className="px-6 py-3 text-right font-medium text-slate-700">Actions</th>
+                  <th className="px-6 py-3 text-left font-medium text-zinc-700">Employee</th>
+                  <th className="px-6 py-3 text-left font-medium text-zinc-700">ID</th>
+                  <th className="px-6 py-3 text-left font-medium text-zinc-700">Department</th>
+                  <th className="px-6 py-3 text-left font-medium text-zinc-700">Requested</th>
+                  <th className="px-6 py-3 text-right font-medium text-zinc-700">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-zinc-200">
                 {selectedDepartmentRequests.map((request) => (
-                  <tr key={request.id} className="hover:bg-slate-100/50">
-                    <td className="px-6 py-4 text-slate-900 font-medium">{request.employeeName}</td>
-                    <td className="px-6 py-4 text-slate-500">{request.employeeId}</td>
+                  <tr key={request.id} className="hover:bg-zinc-100/50">
+                    <td className="px-6 py-4 text-zinc-900 font-medium">{request.employeeName}</td>
+                    <td className="px-6 py-4 text-zinc-500">{request.employeeId}</td>
                     <td className="px-6 py-4">
-                      <span className="rounded-full border border-slate-300 bg-slate-50 px-2.5 py-0.5 text-[11px] uppercase tracking-wide text-slate-500">
+                      <span className="rounded-full border border-zinc-300 bg-zinc-50 px-2.5 py-0.5 text-[11px] uppercase tracking-wide text-zinc-500">
                         {request.requestedDepartment}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-slate-500 text-xs">{formatDateTime(request.requestedAt)}</td>
+                    <td className="px-6 py-4 text-zinc-500 text-xs">{formatDateTime(request.requestedAt)}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => handleTransferAction(request, 'approve')} className="rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-medium text-black transition-colors hover:bg-emerald-400">Approve</button>
-                        <button onClick={() => handleTransferAction(request, 'redirect')} className="rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-800 transition-colors hover:bg-slate-200">Redirect</button>
+                        <Button size="sm" onClick={() => handleTransferAction(request, 'approve')}>Approve</Button>
+                        <Button size="sm" variant="secondary" onClick={() => handleTransferAction(request, 'redirect')}>Redirect</Button>
                       </div>
                     </td>
                   </tr>
@@ -166,28 +170,28 @@ export default function LeadmanTransfers() {
             </table>
           </div>
         )}
-      </div>
+      </Card>
 
       {redirectOpen && redirectRequest ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <button type="button" aria-label="Close redirect request" className="absolute inset-0 bg-black/60" onClick={() => setRedirectOpen(false)} />
-          <div className="relative z-10 w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <button type="button" onClick={() => setRedirectOpen(false)} className="absolute right-4 top-4 text-slate-500 hover:text-slate-900">
+          <div className="relative z-10 w-full max-w-md rounded-xl border border-zinc-200 bg-white shadow-sm p-6 shadow-sm">
+            <button type="button" onClick={() => setRedirectOpen(false)} className="absolute right-4 top-4 text-zinc-500 hover:text-zinc-900">
               <X className="h-5 w-5" />
             </button>
-            <p className="text-xs uppercase tracking-wide text-slate-400">Redirect request</p>
-            <h3 className="mt-2 text-xl font-semibold text-slate-900">Move this request to another department</h3>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="text-xs uppercase tracking-wide text-zinc-400">Redirect request</p>
+            <h3 className="mt-2 text-xl font-semibold text-zinc-900">Move this request to another department</h3>
+            <p className="mt-2 text-sm text-zinc-500">
               {redirectRequest.employeeName} • {redirectRequest.employeeId}
             </p>
 
             <div className="mt-5 space-y-4">
               <div>
-                <label className="text-sm text-slate-700">Target department</label>
+                <label className="text-sm text-zinc-700">Target department</label>
                 <select
                   value={redirectDepartment}
                   onChange={(e) => setRedirectDepartment(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 focus:border-emerald-500 focus:outline-none"
+                  className="mt-2 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-zinc-900 focus:border-emerald-500 focus:outline-none"
                 >
                   {DEPARTMENTS.filter((department) => !sameDepartment(department, redirectRequest.requestedDepartment)).map((department) => (
                     <option key={department} value={department}>{department}</option>
@@ -196,29 +200,28 @@ export default function LeadmanTransfers() {
               </div>
 
               <div>
-                <label className="text-sm text-slate-700">Reason note</label>
+                <label className="text-sm text-zinc-700">Reason note</label>
                 <textarea
                   value={redirectReason}
                   onChange={(e) => setRedirectReason(e.target.value)}
                   rows={4}
-                  className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 focus:border-emerald-500 focus:outline-none"
+                  className="mt-2 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-zinc-900 focus:border-emerald-500 focus:outline-none"
                   placeholder="Optional note for the correction"
                 />
               </div>
             </div>
 
             <div className="mt-6 flex items-center justify-end gap-3">
-              <button type="button" onClick={() => setRedirectOpen(false)} className="rounded-xl bg-slate-100 px-4 py-2.5 text-slate-800 transition-colors hover:bg-slate-200">
+              <Button type="button" variant="secondary" onClick={() => setRedirectOpen(false)}>
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 disabled={redirectSubmitting || !redirectDepartment}
                 onClick={submitRedirect}
-                className="rounded-xl bg-emerald-500 px-4 py-2.5 font-medium text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {redirectSubmitting ? 'Redirecting...' : 'Confirm Redirect'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

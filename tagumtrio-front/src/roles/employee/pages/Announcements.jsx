@@ -1,32 +1,33 @@
 import { useAuth } from '../../../context/auth-context'
-import { useQr } from '../../../context/qr-context'
+import { useAppData } from '../../../context/app-data-context'
 import AnnouncementPost from '../../../shared/ui/AnnouncementPost'
+import PageHeader from '../../../shared/ui/PageHeader'
+import Card from '../../../shared/ui/Card'
+import EmptyState from '../../../shared/ui/EmptyState'
 
 export default function EmployeeAnnouncements() {
   const { user } = useAuth()
-  const { announcements = [] } = useQr()
+  const { announcements = [], updateAnnouncement } = useAppData()
+
+  function handleTogglePin(announcement) {
+    updateAnnouncement(announcement.id, { pinned: !announcement.pinned }).catch(() => {})
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-xs uppercase tracking-wide text-slate-400">Employee Portal</p>
-        <h2 className="mt-2 text-2xl font-semibold text-slate-900">Announcements</h2>
-        <p className="mt-1 text-sm text-slate-500">Company updates and notices for employees.</p>
-      </div>
+      <PageHeader eyebrow="Employee Portal" title="Announcements" description="Company updates and notices for employees." />
 
-      <div className="rounded-lg border border-slate-200 bg-white p-6">
+      <Card>
         {Array.isArray(announcements) && announcements.length > 0 ? (
           <div className="space-y-4">
             {announcements.map((announcement) => (
-              <AnnouncementPost key={announcement.id} announcement={announcement} />
+              <AnnouncementPost key={announcement.id} announcement={announcement} onTogglePin={handleTogglePin} />
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
-            No announcements yet for {user?.department || 'your department'}.
-          </div>
+          <EmptyState description={`No announcements yet for ${user?.department || 'your department'}.`} />
         )}
-      </div>
+      </Card>
     </div>
   )
 }

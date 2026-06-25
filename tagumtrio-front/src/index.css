@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 :root {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #0f172a;
-  background: #f8fafc;
+  font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #18181b;
+  background: #ffffff;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -16,6 +16,10 @@ html,
 body,
 #root {
   min-height: 100%;
+}
+
+html {
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -30,22 +34,22 @@ a {
 }
 
 ::selection {
-  background: rgba(16, 185, 129, 0.25);
-  color: #0f172a;
+  background: rgba(16, 185, 129, 0.22);
+  color: #18181b;
 }
 
 /* Fix select and option visibility */
 select {
-  color: #0f172a;
+  color: #18181b;
   background-color: #ffffff;
 }
 
 select option {
-  color: #0f172a;
+  color: #18181b;
   background-color: #ffffff;
 }
 
 select option:checked {
   background: linear-gradient(#d1fae5, #d1fae5);
-  color: #0f172a;
+  color: #18181b;
 }

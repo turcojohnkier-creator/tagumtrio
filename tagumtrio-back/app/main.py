@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.core.config import settings
 from app.db import Base, engine
@@ -8,7 +9,6 @@ import app.models.department_request
 import app.models.announcement
 from app.api.auth import router as auth_router
 from app.api.v1.endpoints.department_requests import router as department_requests_router
-from app.api.v1.endpoints.attendance import router as attendance_router
 from app.api.v1.endpoints.leave_requests import router as leave_requests_router
 from app.api.v1.endpoints.announcements import router as announcements_router
 from app.api.v1.endpoints.users import router as users_router
@@ -16,6 +16,10 @@ from app.api.v1.endpoints.payroll import router as payroll_router
 from app.api.v1.endpoints.daily_reports import router as daily_reports_router
 
 Base.metadata.create_all(bind=engine)
+
+# create_all only creates missing tables, not missing columns on existing ones.
+with engine.begin() as connection:
+    connection.execute(text("ALTER TABLE announcements ADD COLUMN IF NOT EXISTS target_roles VARCHAR(255)"))
 
 app = FastAPI(title="TriOPS Backend")
 
@@ -29,7 +33,6 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 app.include_router(department_requests_router, prefix="/api/v1")
-app.include_router(attendance_router, prefix="/api/v1")
 app.include_router(leave_requests_router, prefix="/api/v1")
 app.include_router(announcements_router, prefix="/api/v1")
 app.include_router(users_router, prefix="/api/v1")

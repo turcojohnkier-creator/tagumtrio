@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react'
 import { Search, Users } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
-import { useQr } from '../../../context/qr-context'
+import { useAppData } from '../../../context/app-data-context'
 import EmployeeCard from '../../../roles/leadman/components/EmployeeCard'
+import PageHeader from '../../../shared/ui/PageHeader'
+import Card, { SectionTitle } from '../../../shared/ui/Card'
+import EmptyState from '../../../shared/ui/EmptyState'
 
 export default function LeadmanWorkers() {
   const { user } = useAuth()
-  const { getLeadmanDeployedEmployees, getEmployeeAttendance, formatDateTime, selectedLeadmanDepartment, setSelectedLeadmanDepartment } = useQr()
+  const { getLeadmanDeployedEmployees, formatDateTime, selectedLeadmanDepartment, setSelectedLeadmanDepartment } = useAppData()
 
   const assignedDepartments = useMemo(() => {
     if (Array.isArray(user?.departments) && user.departments.length > 0) return user.departments
@@ -30,41 +33,40 @@ export default function LeadmanWorkers() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-slate-200 bg-white p-6">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-slate-400">Leadman roster</p>
-            <h2 className="mt-2 text-2xl font-semibold text-slate-900">Deployed Workers</h2>
-            <p className="mt-1 text-sm text-slate-500">Review the workers deployed under the selected department.</p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-400">Department</p>
-            <select value={selectedDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-2 min-w-[220px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 focus:border-emerald-500 focus:outline-none">
+      <PageHeader
+        eyebrow="Leadman roster"
+        title="Deployed Workers"
+        description="Review the workers deployed under the selected department."
+        actions={(
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Department</p>
+            <select value={selectedDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-1.5 min-w-[220px] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none">
               {assignedDepartments.map((department) => (
                 <option key={department} value={department}>{department}</option>
               ))}
             </select>
           </div>
-        </div>
-
-        <div className="mt-5 max-w-xl">
+        )}
+      >
+        <div className="max-w-xl">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} type="text" placeholder="Search deployed workers..." className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} type="text" placeholder="Search deployed workers..." className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none" />
           </div>
         </div>
-      </div>
+      </PageHeader>
 
-      <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-        <div className="border-b border-slate-200 px-6 py-4">
-          <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900"><Users className="h-5 w-5 text-cyan-700" /> Active Workers</h3>
+      <Card padding="p-0">
+        <div className="border-b border-zinc-200 px-6 py-4">
+          <SectionTitle icon={Users}>Active Workers</SectionTitle>
         </div>
         {deployedEmployees.length === 0 ? (
-          <div className="p-6 text-sm text-slate-500">No deployed employees in {selectedDepartment} yet.</div>
+          <div className="p-6">
+            <EmptyState title="No deployed workers" description={`No deployed employees in ${selectedDepartment} yet.`} />
+          </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-4 p-6">
             {deployedEmployees.map((employee) => {
-              const employeeAttendance = getEmployeeAttendance(employee.employeeId).filter((record) => record.status === 'leadman_verified')
               return (
                 <EmployeeCard
                   key={employee.employeeId}
@@ -73,7 +75,7 @@ export default function LeadmanWorkers() {
                     employeeName: employee.employeeName,
                     department: employee.department,
                     role: employee.role || 'Worker',
-                    
+
                   }}
                   showActions={false}
                 />
@@ -81,7 +83,7 @@ export default function LeadmanWorkers() {
             })}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   )
 }

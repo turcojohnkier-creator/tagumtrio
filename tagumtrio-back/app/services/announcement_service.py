@@ -14,6 +14,18 @@ def _make_id(prefix: str = "ANN") -> str:
     return f"{prefix}-{token}"
 
 
+def _roles_to_db(target_roles: list[str] | None) -> str | None:
+    if not target_roles:
+        return None
+    return ",".join(sorted({role.strip() for role in target_roles if role and role.strip()})) or None
+
+
+def _roles_from_db(stored: str | None) -> list[str] | None:
+    if not stored:
+        return None
+    return [role for role in stored.split(",") if role]
+
+
 def _to_public(record: Announcement) -> AnnouncementPublic:
     return AnnouncementPublic.model_validate({
         "id": record.id,
@@ -23,13 +35,17 @@ def _to_public(record: Announcement) -> AnnouncementPublic:
         "pinned": record.pinned,
         "audience": record.audience,
         "visibility": record.visibility,
+        "targetRoles": _roles_from_db(record.target_roles),
         "createdAt": record.created_at,
         "updatedAt": record.updated_at,
     })
 
 
-def list_announcements(db: Session) -> list[AnnouncementPublic]:
+def list_announcements(db: Session, viewer_role: str | None = None) -> list[AnnouncementPublic]:
     rows = db.query(Announcement).order_by(Announcement.pinned.desc(), Announcement.created_at.desc()).all()
+    # GM manages announcements, so it always sees everything regardless of targeting.
+    if viewer_role and viewer_role != "gm":
+        rows = [row for row in rows if not row.target_roles or viewer_role in row.target_roles.split(",")]
     return [_to_public(row) for row in rows]
 
 
@@ -42,6 +58,7 @@ def create_announcement(db: Session, payload: AnnouncementCreate) -> Announcemen
         pinned=bool(payload.pinned),
         audience=(payload.audience or "All employees").strip(),
         visibility=(payload.visibility or "all_employees").strip(),
+        target_roles=_roles_to_db(payload.target_roles),
         created_at=datetime.now(timezone.utc),
     )
     db.add(record)
@@ -67,6 +84,8 @@ def update_announcement(db: Session, announcement_id: str, payload: Announcement
         record.audience = payload.audience.strip()
     if payload.visibility is not None:
         record.visibility = payload.visibility.strip()
+    if "target_roles" in payload.model_fields_set:
+        record.target_roles = _roles_to_db(payload.target_roles)
 
     db.commit()
     db.refresh(record)

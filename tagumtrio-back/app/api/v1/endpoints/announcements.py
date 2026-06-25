@@ -18,7 +18,7 @@ def get_announcements(
 ) -> list[AnnouncementPublic]:
     if current_user is None:
         raise HTTPException(status_code=http_status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
-    return list_announcements(db)
+    return list_announcements(db, viewer_role=current_user.role)
 
 
 @router.post("", response_model=AnnouncementPublic)

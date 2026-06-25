@@ -39,12 +39,12 @@ function DialogModal({ dialog, onCancel, onConfirm, onClose }) {
                 <button type="button" onClick={onCancel} className="rounded-xl bg-slate-100 px-4 py-2.5 text-slate-800 transition-colors hover:bg-slate-200">
                   {dialog.cancelText || 'Cancel'}
                 </button>
-                <button type="button" onClick={onConfirm} className="rounded-xl bg-emerald-500 px-4 py-2.5 font-medium text-black transition-colors hover:bg-emerald-400">
+                <button type="button" onClick={onConfirm} className="rounded-xl bg-forest px-4 py-2.5 font-medium text-white transition-colors hover:bg-forest-hover">
                   {dialog.confirmText || 'Confirm'}
                 </button>
               </>
             ) : (
-              <button type="button" onClick={onClose} className="rounded-xl bg-emerald-500 px-4 py-2.5 font-medium text-black transition-colors hover:bg-emerald-400">
+              <button type="button" onClick={onClose} className="rounded-xl bg-forest px-4 py-2.5 font-medium text-white transition-colors hover:bg-forest-hover">
                 {dialog.confirmText || 'Okay'}
               </button>
             )}

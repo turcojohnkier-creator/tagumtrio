@@ -11,6 +11,7 @@ from app.services.daily_report_service import (
     approve_daily_report,
     create_daily_report,
     list_daily_reports,
+    list_daily_reports_for_employee,
     resubmit_daily_report,
     update_daily_report,
 )
@@ -18,6 +19,7 @@ from app.services.daily_report_service import (
 router = APIRouter(prefix="/daily-reports", tags=["daily-reports"])
 
 VERIFICATION_STATUSES = {"leadman_verified", "rejected"}
+PRODUCTION_INCHARGE_STATUSES = {"compiled", "gm_submitted"}
 
 
 @router.post("", response_model=DailyReportPublic)
@@ -55,6 +57,9 @@ def get_daily_reports(
             return list_daily_reports(db, department=allowed_departments[0], report_date=report_date)
         return list_daily_reports(db, department=allowed_departments, report_date=report_date)
 
+    if current_user.role == 'employee':
+        return list_daily_reports_for_employee(db, current_user.id)
+
     raise HTTPException(status_code=403, detail="Insufficient permissions")
 
 
@@ -71,6 +76,9 @@ def patch_daily_report(report_id: str, payload: DailyReportUpdate, db: Session =
         allowed_departments = current_user.departments or ([current_user.department] if current_user.department else [])
         if current_user.role != "leadman" or record.target_department not in allowed_departments:
             raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Only the target department's leadman can verify or reject this report")
+
+    if payload.status in PRODUCTION_INCHARGE_STATUSES and current_user.role != "production_incharge":
+        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Only production in-charge can advance a report to this stage")
 
     try:
         return update_daily_report(db, report_id, payload)

@@ -91,6 +91,14 @@ def list_daily_reports(
     return [_to_public(row) for row in rows]
 
 
+def list_daily_reports_for_employee(db: Session, employee_id: int) -> list[DailyReportPublic]:
+    # Employees only ever see their own *approved* (payroll-released) reports —
+    # never pending work, and never other employees' entries within a shared report.
+    rows = db.query(DailyReport).filter(DailyReport.status == 'approved').order_by(DailyReport.created_at.desc()).all()
+    matching = [row for row in rows if any(str(entry.get('employeeId')) == str(employee_id) for entry in (row.entries or []))]
+    return [_to_public(row) for row in matching]
+
+
 def update_daily_report(db: Session, report_id: str, payload: DailyReportUpdate) -> DailyReportPublic:
     record = db.query(DailyReport).filter(DailyReport.id == report_id).first()
     if record is None:

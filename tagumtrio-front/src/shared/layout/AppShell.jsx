@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { Bell, ChevronDown, LayoutGrid, LogOut, X } from 'lucide-react'
 import { useState } from 'react'
 import { formatRole } from '../../lib/roles'
+import { useAuth } from '../../context/auth-context'
 
 function cn(...inputs) {
   return inputs.filter(Boolean).join(' ')
@@ -27,6 +28,7 @@ export default function AppShell({
 }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const { language, setLanguage, t } = useAuth()
 
   return (
     <div className="min-h-screen bg-zinc-50/60">
@@ -66,6 +68,18 @@ export default function AppShell({
           </nav>
 
           <div className="flex items-center justify-self-end gap-2">
+            {user?.role === 'gm' ? (
+              <button
+                type="button"
+                onClick={() => setLanguage(language === 'zh' ? 'en' : 'zh')}
+                className="rounded-md border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+                aria-label={t('ui.toggle_language')}
+                title={t('ui.toggle_language')}
+              >
+                {language === 'zh' ? 'EN' : '中文'}
+              </button>
+            ) : null}
+
             {headerCounts.length > 0 && (
               <div className="hidden items-center gap-2 lg:flex">
                 {headerCounts.map((item) => (
@@ -137,7 +151,7 @@ export default function AppShell({
                 <div className="absolute right-0 top-12 z-30 w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg">
                   <div className="border-b border-zinc-200 px-4 py-3">
                     <p className="truncate text-sm font-medium text-zinc-900">{user?.name}</p>
-                    <p className="truncate text-xs text-zinc-400">{formatRole(user?.role)}</p>
+                    <p className="truncate text-xs text-zinc-400">{t(`role.${user?.role}`, formatRole(user?.role))}</p>
                   </div>
                   <button
                     onClick={onLogout}

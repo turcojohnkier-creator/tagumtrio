@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAppData } from '../../../context/app-data-context'
+import { useAuth } from '../../../context/auth-context'
 import { DEPARTMENTS } from '../../../constants/departments'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Card from '../../../shared/ui/Card'
@@ -8,6 +9,7 @@ import EmptyState from '../../../shared/ui/EmptyState'
 
 export default function RateManagement() {
   const { rates = [], createRate, updateRate, removeRate } = useAppData()
+  const { t } = useAuth()
   const [department, setDepartment] = useState(DEPARTMENTS[0] || '')
   const [product, setProduct] = useState('')
   const [pricePerUnit, setPricePerUnit] = useState('')
@@ -28,19 +30,19 @@ export default function RateManagement() {
       setPricePerUnit('')
     } catch (err) {
       console.error(err)
-      alert('Failed to add rate')
+      alert(t('gm.rate.fail_add'))
     } finally {
       setSubmitting(false)
     }
   }
 
   async function handleDelete(rate) {
-    if (!window.confirm(`Remove rate for ${rate.department} • ${rate.product}?`)) return
+    if (!window.confirm(`${t('gm.rate.confirm_remove_prefix')} ${rate.department} • ${rate.product}?`)) return
     try {
       await removeRate(rate.id)
     } catch (err) {
       console.error(err)
-      alert('Failed to remove rate')
+      alert(t('gm.rate.fail_remove'))
     }
   }
 
@@ -53,12 +55,12 @@ export default function RateManagement() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Rate Management" description="Set the price per piece/unit for each department's products. Leadman reports look up these rates automatically." />
+      <PageHeader title={t('gm.rate.title')} description={t('gm.rate.desc')} />
 
       <form onSubmit={handleCreate} className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
         <div className="border-b border-zinc-200 bg-zinc-50/70 px-5 py-4">
-          <p className="text-xs uppercase tracking-wide text-zinc-400">Add rate</p>
-          <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">New department rate</h3>
+          <p className="text-xs uppercase tracking-wide text-zinc-400">{t('gm.rate.add_label')}</p>
+          <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{t('gm.rate.new')}</h3>
         </div>
         <div className="grid gap-4 p-5 sm:grid-cols-3">
           <select value={department} onChange={(e) => setDepartment(e.target.value)} className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 focus:border-emerald-500 focus:outline-none">
@@ -66,18 +68,18 @@ export default function RateManagement() {
               <option key={dept} value={dept}>{dept}</option>
             ))}
           </select>
-          <input value={product} onChange={(e) => setProduct(e.target.value)} placeholder="Product / size (e.g. Sizer16mm/18mm)" className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-500 focus:border-emerald-500 focus:outline-none" />
-          <input value={pricePerUnit} onChange={(e) => setPricePerUnit(e.target.value)} type="number" step="0.01" min="0" placeholder="Price per unit" className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-500 focus:border-emerald-500 focus:outline-none" />
+          <input value={product} onChange={(e) => setProduct(e.target.value)} placeholder={t('gm.rate.product_placeholder')} className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-500 focus:border-emerald-500 focus:outline-none" />
+          <input value={pricePerUnit} onChange={(e) => setPricePerUnit(e.target.value)} type="number" step="0.01" min="0" placeholder={t('gm.rate.price_placeholder')} className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-zinc-900 placeholder:text-zinc-500 focus:border-emerald-500 focus:outline-none" />
         </div>
         <div className="flex items-center justify-end gap-3 px-5 pb-5">
-          <Button type="submit" disabled={submitting}>{submitting ? 'Adding…' : 'Add rate'}</Button>
+          <Button type="submit" disabled={submitting}>{submitting ? t('gm.rate.adding') : t('gm.rate.add_btn')}</Button>
         </div>
       </form>
 
       <Card>
-        <h3 className="font-heading text-lg font-bold text-zinc-900 mb-4">Rates by department</h3>
+        <h3 className="font-heading text-lg font-bold text-zinc-900 mb-4">{t('gm.rate.by_dept')}</h3>
         {rates.length === 0 ? (
-          <EmptyState title="No rates configured yet" />
+          <EmptyState title={t('gm.rate.none')} />
         ) : (
           <div className="space-y-6">
             {Object.entries(grouped).map(([dept, deptRates]) => (
@@ -87,9 +89,9 @@ export default function RateManagement() {
                   <table className="w-full text-left text-sm">
                     <thead className="bg-emerald-50/70 text-emerald-800">
                       <tr>
-                        <th className="px-4 py-2 font-medium">Product / Size</th>
-                        <th className="px-4 py-2 font-medium">Price / unit</th>
-                        <th className="px-4 py-2 font-medium text-right">Actions</th>
+                        <th className="px-4 py-2 font-medium">{t('gm.rate.col_product')}</th>
+                        <th className="px-4 py-2 font-medium">{t('gm.rate.col_price')}</th>
+                        <th className="px-4 py-2 font-medium text-right">{t('gm.rate.col_actions')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-100">
@@ -106,7 +108,7 @@ export default function RateManagement() {
                                     setEditingId(null)
                                   } catch (err) {
                                     console.error(err)
-                                    alert('Failed to save rate')
+                                    alert(t('gm.rate.fail_save'))
                                   } finally {
                                     setEditSubmitting(false)
                                   }
@@ -120,8 +122,8 @@ export default function RateManagement() {
                                 </select>
                                 <input value={editProduct} onChange={(e) => setEditProduct(e.target.value)} className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none" />
                                 <input value={editPrice} onChange={(e) => setEditPrice(e.target.value)} type="number" step="0.01" min="0" className="w-32 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none" />
-                                <Button type="button" variant="secondary" size="sm" onClick={() => setEditingId(null)}>Cancel</Button>
-                                <Button type="submit" size="sm" disabled={editSubmitting}>{editSubmitting ? 'Saving…' : 'Save'}</Button>
+                                <Button type="button" variant="secondary" size="sm" onClick={() => setEditingId(null)}>{t('gm.rate.cancel')}</Button>
+                                <Button type="submit" size="sm" disabled={editSubmitting}>{editSubmitting ? t('gm.rate.saving') : t('gm.rate.save')}</Button>
                               </form>
                             </td>
                           </tr>
@@ -140,10 +142,10 @@ export default function RateManagement() {
                                 }}
                                 className="mr-3 text-xs font-medium text-zinc-700 hover:text-zinc-900"
                               >
-                                Edit
+                                {t('gm.rate.edit')}
                               </button>
                               <button type="button" onClick={() => handleDelete(rate)} className="text-xs font-medium text-rose-700 hover:text-rose-800">
-                                Delete
+                                {t('gm.rate.delete')}
                               </button>
                             </td>
                           </tr>

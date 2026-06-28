@@ -4,6 +4,7 @@ import { useDialog } from './dialog-context'
 import { AppDataContext } from './app-data-context'
 import { DEPARTMENTS } from '../constants/departments'
 import { buildDepartmentReportSummary } from '../constants/department-report-fields'
+import { toManilaDateKey } from '../lib/datetime'
 
 // Local storage keys and defaults
 const STORAGE_KEY = 'triops-app-data-state'
@@ -184,7 +185,7 @@ export function AppDataProvider({ children }) {
       const employeeRoles = new Set(['hr', 'production_incharge', 'leadman', 'admin', 'gm'])
       const loadPayrollPayments = paymentRoles.has(user?.role)
       const loadEmployees = employeeRoles.has(user?.role)
-      const loadReports = payrollRoles.has(user?.role) || user?.role === 'leadman'
+      const loadReports = payrollRoles.has(user?.role) || user?.role === 'leadman' || user?.role === 'employee'
 
       if (loadEmployees) setEmployeesLoading(true)
       const [remoteEmployees, remotePayments, remoteProduction, remoteDailyReports, remoteLeaveRequests] = await Promise.allSettled([
@@ -891,9 +892,9 @@ export function AppDataProvider({ children }) {
   function getEmployeeTotals(employeeId) {
     const records = getFinanceRecords().filter((record) => String(record.employeeId) === String(employeeId))
     const totalAmount = records.reduce((sum, record) => sum + Number(record.amount || 0), 0)
-    const todayKey = new Date().toISOString().slice(0, 10)
+    const todayKey = toManilaDateKey()
     const totalToday = records
-      .filter((record) => new Date(record.reportDate).toISOString().slice(0, 10) === todayKey)
+      .filter((record) => toManilaDateKey(record.reportDate) === todayKey)
       .reduce((sum, record) => sum + Number(record.amount || 0), 0)
     const latestRecord = records[0] || null
     return {

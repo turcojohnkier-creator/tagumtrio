@@ -38,41 +38,69 @@ function getAuthHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
+const DEFAULT_TIMEOUT_MS = 20000
+const MAX_RETRIES = 2
+const RETRY_BASE_DELAY_MS = 1000
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 async function apiRequest(path, options = {}) {
-  let res
-  try {
-    res = await fetch(`${BASE_API_URL}${path}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders(),
-        ...(options.headers || {}),
-      },
-      ...options,
-    })
-  } catch (error) {
-    const networkError = new Error('Network error. Check backend server and CORS settings.')
-    networkError.code = 'NETWORK_ERROR'
-    throw networkError
-  }
+  const { timeoutMs = DEFAULT_TIMEOUT_MS, ...fetchOptions } = options
 
-  if (!res.ok) {
-    const payload = await res.json().catch(() => null)
-    const apiError = new Error(payload?.detail || payload?.message || res.statusText || 'API request failed.')
-    apiError.status = res.status
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
-    if (res.status === 401 && typeof window !== 'undefined') {
-      clearAuthToken()
-      window.dispatchEvent(new Event('triops-auth-unauthorized'))
+    let res
+    try {
+      res = await fetch(`${BASE_API_URL}${path}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+          ...(fetchOptions.headers || {}),
+        },
+        ...fetchOptions,
+        signal: controller.signal,
+      })
+    } catch (error) {
+      clearTimeout(timeoutId)
+      const isTimeout = error?.name === 'AbortError'
+      if (attempt < MAX_RETRIES) {
+        await wait(RETRY_BASE_DELAY_MS * (attempt + 1))
+        continue
+      }
+      const networkError = new Error(
+        isTimeout
+          ? 'Request timed out. Check your connection and try again.'
+          : 'Network error. Check backend server and CORS settings.'
+      )
+      networkError.code = isTimeout ? 'TIMEOUT' : 'NETWORK_ERROR'
+      throw networkError
+    }
+    clearTimeout(timeoutId)
+
+    if (!res.ok) {
+      const payload = await res.json().catch(() => null)
+      const apiError = new Error(payload?.detail || payload?.message || res.statusText || 'API request failed.')
+      apiError.status = res.status
+
+      if (res.status === 401 && typeof window !== 'undefined') {
+        clearAuthToken()
+        window.dispatchEvent(new Event('triops-auth-unauthorized'))
+      }
+
+      // Real response from the server — not a connectivity problem, so never retry.
+      throw apiError
     }
 
-    throw apiError
-  }
+    if (res.status === 204) {
+      return null
+    }
 
-  if (res.status === 204) {
-    return null
+    return res.json()
   }
-
-  return res.json()
 }
 
 function persistSession(user, token) {
@@ -145,6 +173,7 @@ export async function submitDailyReportApi(payload) {
   return apiRequest('/v1/daily-reports', {
     method: 'POST',
     body: JSON.stringify(payload),
+    timeoutMs: 45000,
   })
 }
 
@@ -159,6 +188,7 @@ export async function resubmitDailyReportApi(reportId, payload) {
   return apiRequest(`/v1/daily-reports/${encodeURIComponent(reportId)}/resubmit`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
+    timeoutMs: 45000,
   })
 }
 

@@ -108,7 +108,7 @@ export default function ProductionReports() {
   )
 
   const reviewedReports = useMemo(
-    () => filteredDailyReports.filter((report) => ['leadman_verified', 'compiled', 'gm_submitted', 'approved', 'rejected'].includes(normalizeText(report.status))),
+    () => filteredDailyReports.filter((report) => normalizeText(report.status) === 'leadman_verified'),
     [filteredDailyReports]
   )
 
@@ -246,7 +246,7 @@ export default function ProductionReports() {
           onClick={() => setActiveTab('reviewed')}
           className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'reviewed' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
         >
-          Reviewed ({reviewedReports.length})
+          Verified ({reviewedReports.length})
         </button>
       </div>
 
@@ -258,7 +258,7 @@ export default function ProductionReports() {
             pendingReports.map((report) => <ReportCard key={report.id} report={report} />)
           )
         ) : reviewedReports.length === 0 ? (
-          <EmptyState title="No reviewed reports yet" />
+          <EmptyState title="No verified reports yet" />
         ) : (
           reviewedReports.map((report) => <ReportCard key={report.id} report={report} />)
         )}

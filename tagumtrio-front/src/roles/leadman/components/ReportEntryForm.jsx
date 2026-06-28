@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { X } from 'lucide-react'
+import { Camera, Image as ImageIcon, X } from 'lucide-react'
 import Portal from '../../../shared/ui/Portal'
 import Button from '../../../shared/ui/Button'
 import { useAppData } from '../../../context/app-data-context'
@@ -29,6 +29,31 @@ function buildInitialValues(spec, department, overrides = {}) {
 }
 
 const EMPTY_PHOTOS = { photo1: null, photo2: null, photo3: null, photo4: null }
+
+// Downscale + re-encode before staging so a slow connection has far less to
+// upload — phone camera photos can be several MB each; this brings them down
+// to a few hundred KB without a visible quality loss in the verification photo.
+function compressImageFile(file, { maxDimension = 1600, quality = 0.7 } = {}) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(reader.error || new Error('Unable to read image file.'))
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = () => reject(new Error('Unable to load image file.'))
+      img.onload = () => {
+        const scale = Math.min(1, maxDimension / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(img.width * scale)
+        canvas.height = Math.round(img.height * scale)
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.src = reader.result
+    }
+    reader.readAsDataURL(file)
+  })
+}
 
 function EmployeePickerModal({ open, department, employeeOptions, selectedEmployeeIds, onToggleEmployee, onClose }) {
   if (!open) return null
@@ -161,12 +186,15 @@ export default function ReportEntryForm({
     }
 
     setPhotos((current) => ({ ...current, [photoIndex]: file }))
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      setPhotoPreview((current) => ({ ...current, [photoIndex]: e.target.result }))
-    }
-    reader.readAsDataURL(file)
     setSubmissionError('')
+    compressImageFile(file)
+      .then((dataUrl) => {
+        setPhotoPreview((current) => ({ ...current, [photoIndex]: dataUrl }))
+      })
+      .catch(() => {
+        setSubmissionError('Unable to process that photo. Please try a different image.')
+        setPhotos((current) => ({ ...current, [photoIndex]: null }))
+      })
   }
 
   const selectedEmployees = validEmployeeOptions.filter((employee) => selectedEmployeeIds.includes(employee.normalizedEmployeeId))
@@ -271,8 +299,9 @@ export default function ReportEntryForm({
     Promise.resolve(onSubmit(payloads)).then(() => {
       setIsSubmitting(false)
       resetForm()
-    }).catch(() => {
+    }).catch((error) => {
       setIsSubmitting(false)
+      setSubmissionError(error?.message || 'Failed to submit. Please check your connection and try again.')
     })
   }
 
@@ -372,33 +401,39 @@ export default function ReportEntryForm({
                 <input
                   type="file"
                   accept="image/*"
+                  capture="environment"
                   onChange={(e) => handlePhotoChange(photoKey, e.target.files?.[0] || null)}
                   className="hidden"
-                  id={`photo-${num}`}
+                  id={`photo-camera-${num}`}
                 />
-                <label htmlFor={`photo-${num}`} className="flex-1 flex items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 p-3 cursor-pointer hover:border-emerald-500/50 hover:bg-white transition-colors">
-                  {photoPreview[photoKey] ? (
-                    <div className="relative w-full h-24 rounded">
-                      <img src={photoPreview[photoKey]} alt={`Preview ${num}`} className="w-full h-full object-cover rounded" />
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          handlePhotoChange(photoKey, null)
-                        }}
-                        className="absolute top-1 right-1 bg-rose-500 rounded-full p-1 text-white hover:bg-rose-600"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <div className="text-2xl mb-1">📷</div>
-                      <div className="text-xs text-zinc-500">Upload photo</div>
-                    </div>
-                  )}
-                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handlePhotoChange(photoKey, e.target.files?.[0] || null)}
+                  className="hidden"
+                  id={`photo-gallery-${num}`}
+                />
+                {photoPreview[photoKey] ? (
+                  <div className="relative flex-1 w-full h-24 rounded-xl overflow-hidden border-2 border-zinc-300">
+                    <img src={photoPreview[photoKey]} alt={`Preview ${num}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => handlePhotoChange(photoKey, null)}
+                      className="absolute top-1 right-1 bg-rose-500 rounded-full p-1 text-white hover:bg-rose-600"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 p-3">
+                    <label htmlFor={`photo-camera-${num}`} className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors">
+                      <Camera className="w-3.5 h-3.5" /> Take photo
+                    </label>
+                    <label htmlFor={`photo-gallery-${num}`} className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs font-medium text-zinc-600 hover:border-emerald-500/50 hover:text-zinc-900 transition-colors">
+                      <ImageIcon className="w-3.5 h-3.5" /> Gallery
+                    </label>
+                  </div>
+                )}
               </div>
             )
           })}

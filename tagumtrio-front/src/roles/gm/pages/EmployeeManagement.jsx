@@ -62,17 +62,17 @@ export default function EmployeeManagement() {
           <table className="w-full text-left text-sm">
             <thead className="bg-emerald-50/70 text-emerald-800">
               <tr>
-                <th className="px-4 py-3 font-medium">Employee ID</th>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Department</th>
-                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">{t('gm.employee.col_id')}</th>
+                <th className="px-4 py-3 font-medium">{t('gm.employee.col_name')}</th>
+                <th className="px-4 py-3 font-medium">{t('gm.employee.col_department')}</th>
+                <th className="px-4 py-3 font-medium">{t('gm.employee.col_status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {filtered.map((emp, index) => {
                 const id = emp.employeeId || emp.id || emp.employee_id || '—'
-                const name = emp.employeeName || emp.name || emp.employee_name || 'Unknown'
-                const department = emp.department || emp.dept || emp.departmentName || 'Unassigned'
+                const name = emp.employeeName || emp.name || emp.employee_name || t('gm.modal.unknown')
+                const department = emp.department || emp.dept || emp.departmentName || t('gm.modal.unassigned')
                 const isActive = emp.is_active !== false
                 return (
                   <tr key={id} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
@@ -80,7 +80,7 @@ export default function EmployeeManagement() {
                     <td className="px-4 py-3 text-zinc-900">{name}</td>
                     <td className="px-4 py-3">{department}</td>
                     <td className="px-4 py-3">
-                      <Badge variant={isActive ? 'success' : 'neutral'}>{isActive ? 'Active' : 'Inactive'}</Badge>
+                      <Badge variant={isActive ? 'success' : 'neutral'}>{isActive ? t('gm.employee.active') : t('gm.employee.inactive')}</Badge>
                     </td>
                   </tr>
                 )

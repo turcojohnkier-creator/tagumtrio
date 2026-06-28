@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Image as ImageIcon, Users, X } from 'lucide-react'
 import Portal from '../ui/Portal'
+import { useAuth } from '../../context/auth-context'
 import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from './report-entry-utils'
 
 function resolveEntryDepartment(entry, fallbackDepartment) {
@@ -45,14 +46,15 @@ function groupIntoBatches(entries, fallbackDepartment) {
 }
 
 function EmployeeListPopup({ open, entries, onClose }) {
+  const { t } = useAuth()
   if (!open) return null
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4">
+      <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/60 p-4">
         <div className="w-full max-w-lg rounded-xl border border-zinc-200 bg-white shadow-sm max-h-[80vh] overflow-auto">
           <div className="flex items-center justify-between gap-4 border-b border-zinc-200 px-5 py-4">
-            <h4 className="font-heading text-base font-semibold text-zinc-900">Employees involved ({entries.length})</h4>
+            <h4 className="font-heading text-base font-semibold text-zinc-900">{t('table.employees_involved')} ({entries.length})</h4>
             <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
               <X className="h-4 w-4" />
             </button>
@@ -60,7 +62,7 @@ function EmployeeListPopup({ open, entries, onClose }) {
           <ul className="divide-y divide-zinc-100">
             {entries.map((entry, index) => (
               <li key={entry.id || `${getEntryIdentifier(entry)}-${index}`} className="px-5 py-3">
-                <p className="font-medium text-zinc-900">{getEntryLabel(entry) || 'Unknown employee'}</p>
+                <p className="font-medium text-zinc-900">{getEntryLabel(entry) || t('table.unknown_employee')}</p>
                 <p className="text-xs text-zinc-400">{getEntryIdentifier(entry) || '-'}</p>
               </li>
             ))}
@@ -72,14 +74,15 @@ function EmployeeListPopup({ open, entries, onClose }) {
 }
 
 function PhotoGridPopup({ open, photos, onClose }) {
+  const { t } = useAuth()
   if (!open) return null
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4">
+      <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/60 p-4">
         <div className="w-full max-w-2xl rounded-xl border border-zinc-200 bg-white shadow-sm max-h-[80vh] overflow-auto">
           <div className="flex items-center justify-between gap-4 border-b border-zinc-200 px-5 py-4">
-            <h4 className="font-heading text-base font-semibold text-zinc-900">Evidence photos ({photos.length})</h4>
+            <h4 className="font-heading text-base font-semibold text-zinc-900">{t('table.evidence_photos')} ({photos.length})</h4>
             <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
               <X className="h-4 w-4" />
             </button>
@@ -98,6 +101,7 @@ function PhotoGridPopup({ open, photos, onClose }) {
 }
 
 export default function DailyReportTable({ entries = [], fallbackDepartment = '' }) {
+  const { t } = useAuth()
   const [employeePopupBatch, setEmployeePopupBatch] = useState(null)
   const [photoPopupBatch, setPhotoPopupBatch] = useState(null)
 
@@ -107,7 +111,7 @@ export default function DailyReportTable({ entries = [], fallbackDepartment = ''
   }, [entries, fallbackDepartment])
 
   if (batches.length === 0) {
-    return <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 text-sm text-zinc-500">No report entries yet.</div>
+    return <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 text-sm text-zinc-500">{t('table.no_entries')}</div>
   }
 
   return (
@@ -116,13 +120,13 @@ export default function DailyReportTable({ entries = [], fallbackDepartment = ''
         <table className="w-full text-left text-sm">
           <thead className="bg-emerald-50/70 text-emerald-800">
             <tr>
-              <th className="px-4 py-3 font-medium">Department</th>
-              <th className="px-4 py-3 font-medium">Product</th>
-              <th className="px-4 py-3 font-medium">Quantity</th>
-              <th className="px-4 py-3 font-medium">Date</th>
-              <th className="px-4 py-3 font-medium">Amount</th>
-              <th className="px-4 py-3 font-medium">Employees</th>
-              <th className="px-4 py-3 font-medium">Photos</th>
+              <th className="px-4 py-3 font-medium">{t('table.department')}</th>
+              <th className="px-4 py-3 font-medium">{t('table.product')}</th>
+              <th className="px-4 py-3 font-medium">{t('table.quantity')}</th>
+              <th className="px-4 py-3 font-medium">{t('table.date')}</th>
+              <th className="px-4 py-3 font-medium">{t('table.amount')}</th>
+              <th className="px-4 py-3 font-medium">{t('table.employees')}</th>
+              <th className="px-4 py-3 font-medium">{t('table.photos')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100 bg-white">

@@ -207,6 +207,7 @@ export default function ProductionDashboard() {
   const [selectedPhotos, setSelectedPhotos] = useState([])
   const [showPhotosModal, setShowPhotosModal] = useState(false)
   const [compilingReportId, setCompilingReportId] = useState('')
+  const [activeTab, setActiveTab] = useState('pending')
 
   if (user?.role === 'gm') {
     return <Navigate to="/app/production/consolidated" replace />
@@ -302,6 +303,16 @@ export default function ProductionDashboard() {
     })
   }, [reportCards, searchText, selectedDate, selectedDepartment])
 
+  const pendingReports = useMemo(
+    () => filteredReports.filter((report) => String(report.status || '').trim().toLowerCase() === 'submitted'),
+    [filteredReports]
+  )
+  const verifiedReports = useMemo(
+    () => filteredReports.filter((report) => isVerifiedReportStatus(report.status)),
+    [filteredReports]
+  )
+  const visibleReports = activeTab === 'verified' ? verifiedReports : pendingReports
+
   const selectedReport = useMemo(() => filteredReports.find((report) => report.id === selectedReportId) || null, [filteredReports, selectedReportId])
 
   const totals = useMemo(() => {
@@ -356,15 +367,32 @@ export default function ProductionDashboard() {
           </div>
         </div>
 
+        <div className="flex gap-2 border-b border-zinc-200">
+          <button
+            type="button"
+            onClick={() => setActiveTab('pending')}
+            className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'pending' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
+          >
+            Pending ({pendingReports.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('verified')}
+            className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'verified' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
+          >
+            Verified ({verifiedReports.length})
+          </button>
+        </div>
+
         {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
         {loading ? <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">Loading submitted reports...</div> : null}
-        {!loading && filteredReports.length === 0 ? (
-          <EmptyState title="No submitted reports yet" />
+        {!loading && visibleReports.length === 0 ? (
+          <EmptyState title={activeTab === 'verified' ? 'No verified reports yet' : 'No pending reports'} />
         ) : null}
 
-        {!loading && filteredReports.length > 0 ? (
+        {!loading && visibleReports.length > 0 ? (
           <div className="space-y-3">
-            {filteredReports.map((report) => (
+            {visibleReports.map((report) => (
               <button
                 key={report.id}
                 type="button"

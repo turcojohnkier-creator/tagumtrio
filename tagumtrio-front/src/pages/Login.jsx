@@ -20,10 +20,10 @@ export default function Login() {
   // ... (Keep your useEffect for localStorage as is)
 
   const validationMessage = useMemo(() => {
-    if (!identifier.trim()) return 'Enter your username.'
-    if (password.length < 6) return 'Password must be at least 6 characters.'
+    if (!identifier.trim()) return t('login.validation_username')
+    if (password.length < 6) return t('login.validation_password')
     return ''
-  }, [identifier, password])
+  }, [identifier, password, t])
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -34,7 +34,7 @@ export default function Login() {
     loginWithCredentials({ identifier: identifier.trim(), password })
       .then((result) => {
         if (!result.ok) {
-          setFormError(result.error || 'Unable to sign in.')
+          setFormError(result.error || t('login.error_generic'))
           setSubmitting(false)
           return
         }
@@ -52,7 +52,7 @@ export default function Login() {
         }
       })
       .catch((error) => {
-        setFormError(error.message || 'Unable to sign in.')
+        setFormError(error.message || t('login.error_generic'))
         setSubmitting(false)
       })
   }
@@ -64,14 +64,14 @@ export default function Login() {
           <section className="relative hidden lg:block">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(16,185,129,0.22),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(56,189,248,0.16),transparent_55%)]" />
             <div className="relative h-full p-10">
-              <p className="text-xs uppercase tracking-wide text-emerald-700">TriOPS Workforce</p>
-              <h1 className="mt-5 max-w-md text-2xl font-semibold leading-tight text-zinc-900">Operations, attendance, and payroll in one production flow.</h1>
-              <p className="mt-5 max-w-sm text-sm text-zinc-700">Sign in with your registered account to access your dedicated dashboard and workflows.</p>
+              <p className="text-xs uppercase tracking-wide text-emerald-700">{t('login.hero_eyebrow')}</p>
+              <h1 className="mt-5 max-w-md text-2xl font-semibold leading-tight text-zinc-900">{t('login.hero_title')}</h1>
+              <p className="mt-5 max-w-sm text-sm text-zinc-700">{t('login.hero_desc')}</p>
 
               <div className="mt-10 space-y-3 text-sm text-zinc-800">
-                <p className="rounded-lg border border-zinc-300/70 bg-white/70 px-4 py-3">Department routing and approvals</p>
-                <p className="rounded-lg border border-zinc-300/70 bg-white/70 px-4 py-3">Live scan verification chain</p>
-                <p className="rounded-lg border border-zinc-300/70 bg-white/70 px-4 py-3">Payroll and payslip visibility</p>
+                <p className="rounded-lg border border-zinc-300/70 bg-white/70 px-4 py-3">{t('login.hero_feature1')}</p>
+                <p className="rounded-lg border border-zinc-300/70 bg-white/70 px-4 py-3">{t('login.hero_feature2')}</p>
+                <p className="rounded-lg border border-zinc-300/70 bg-white/70 px-4 py-3">{t('login.hero_feature3')}</p>
               </div>
             </div>
           </section>
@@ -108,7 +108,7 @@ export default function Login() {
                     value={identifier}
                     onChange={(event) => setIdentifier(event.target.value)}
                     className="w-full rounded-xl border border-zinc-300 bg-zinc-50 py-3 pl-10 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none"
-                    placeholder="e.g. juan.delacruz"
+                    placeholder={t('login.username_placeholder')}
                   />
                 </div>
               </div>
@@ -123,13 +123,13 @@ export default function Login() {
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     className="w-full rounded-xl border border-zinc-300 bg-zinc-50 py-3 pl-10 pr-12 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none"
-                    placeholder="Enter your password"
+                    placeholder={t('login.password_placeholder')}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((value) => !value)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showPassword ? t('login.hide_password') : t('login.show_password')}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -146,7 +146,7 @@ export default function Login() {
                   />
                   {t('login.remember')}
                 </label>
-                <button type="button" className="text-cyan-700 hover:text-cyan-700" onClick={() => setFormError(t('login.forgot') + ' Password reset will be connected to backend email flow.')}>{t('login.forgot')}</button>
+                <button type="button" className="text-cyan-700 hover:text-cyan-700" onClick={() => setFormError(`${t('login.forgot')} ${t('login.forgot_note')}`)}>{t('login.forgot')}</button>
               </div>
 
               {(formError || validationMessage) && (
@@ -161,11 +161,11 @@ export default function Login() {
                 disabled={submitting || Boolean(validationMessage)}
                 className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400"
               >
-                {submitting ? (language === 'zh' ? '登录中…' : 'Signing in...') : t('login.signin')}
+                {submitting ? t('login.signing_in') : t('login.signin')}
               </button>
 
               <p className="text-center text-sm text-zinc-500">
-                Account creation is managed by HR. Please contact your administrator to provision access.
+                {t('login.hr_note')}
               </p>
             </form>
           </section>

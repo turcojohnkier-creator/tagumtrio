@@ -3,14 +3,9 @@ import { Download, Eye, FileText, ArrowLeft, Receipt, Clock, ListChecks, X } fro
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
+import { toManilaDateKey } from '../../../lib/datetime'
 import Button from '../../../shared/ui/Button'
 import EmptyState from '../../../shared/ui/EmptyState'
-
-function toDateKey(value) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  return date.toISOString().slice(0, 10)
-}
 
 export default function MyPayslips() {
   const navigate = useNavigate()
@@ -22,10 +17,10 @@ export default function MyPayslips() {
 
   const periods = useMemo(() => getPayslipPeriods(user?.id), [getPayslipPeriods, user?.id])
   const totals = useMemo(() => getEmployeeTotals(user?.id), [getEmployeeTotals, user?.id])
-  const todayKey = new Date().toISOString().slice(0, 10)
+  const todayKey = toManilaDateKey()
   const allRecords = totals?.records || []
   const todaysRecords = useMemo(() => {
-    return allRecords.filter((record) => toDateKey(record.scannedAt || record.reportDate || record.createdAt) === todayKey)
+    return allRecords.filter((record) => toManilaDateKey(record.scannedAt || record.reportDate || record.createdAt) === todayKey)
   }, [allRecords, todayKey])
   const todaysSalary = useMemo(() => {
     return todaysRecords.reduce((sum, record) => sum + Number(record.amount || 0), 0)

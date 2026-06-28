@@ -16,6 +16,8 @@ const ROLE_OPTIONS = [
 ]
 
 function RoleTargetPicker({ selected, onChange }) {
+  const { t } = useAuth()
+
   function toggleRole(roleKey) {
     if (selected.includes(roleKey)) {
       onChange(selected.filter((role) => role !== roleKey))
@@ -26,14 +28,14 @@ function RoleTargetPicker({ selected, onChange }) {
 
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Visible to</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t('gm.announce.visible_to')}</p>
       <div className="mt-2 flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => onChange([])}
           className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${selected.length === 0 ? 'bg-emerald-600 text-white shadow-sm' : 'border border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300'}`}
         >
-          All roles
+          {t('gm.announce.all_roles')}
         </button>
         {ROLE_OPTIONS.map((role) => (
           <button
@@ -42,7 +44,7 @@ function RoleTargetPicker({ selected, onChange }) {
             onClick={() => toggleRole(role.key)}
             className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${selected.includes(role.key) ? 'bg-emerald-600 text-white shadow-sm' : 'border border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300'}`}
           >
-            {role.label}
+            {t(`role.${role.key}`, role.label)}
           </button>
         ))}
       </div>
@@ -50,10 +52,10 @@ function RoleTargetPicker({ selected, onChange }) {
   )
 }
 
-function targetRolesLabel(targetRoles) {
-  if (!Array.isArray(targetRoles) || targetRoles.length === 0) return 'All roles'
+function targetRolesLabel(targetRoles, t) {
+  if (!Array.isArray(targetRoles) || targetRoles.length === 0) return t('gm.announce.all_roles')
   return targetRoles
-    .map((roleKey) => ROLE_OPTIONS.find((role) => role.key === roleKey)?.label || roleKey)
+    .map((roleKey) => t(`role.${roleKey}`, ROLE_OPTIONS.find((role) => role.key === roleKey)?.label || roleKey))
     .join(', ')
 }
 
@@ -186,7 +188,7 @@ export default function Announcements() {
                   <>
                     <AnnouncementPost announcement={a} showActions={false} onTogglePin={handleTogglePin} />
                     <div className="flex flex-wrap items-center justify-between gap-3 px-1">
-                      <span className="text-xs text-zinc-400">Visible to: {targetRolesLabel(a.targetRoles)}</span>
+                      <span className="text-xs text-zinc-400">{t('gm.announce.visible_to')}: {targetRolesLabel(a.targetRoles, t)}</span>
                       <div className="flex gap-3">
                         <button
                           type="button"

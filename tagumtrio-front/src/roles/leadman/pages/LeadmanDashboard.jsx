@@ -24,7 +24,7 @@ export default function LeadmanDashboard() {
     return (Array.isArray(employees) ? employees : [])
       .filter((employee) => (employee.department || '').toLowerCase() === selectedDepartment.toLowerCase())
       .map((employee) => ({
-        employeeId: employee.identifier,
+        employeeId: employee.employeeId,
         employeeName: employee.name,
         department: employee.department || selectedDepartment,
       }))

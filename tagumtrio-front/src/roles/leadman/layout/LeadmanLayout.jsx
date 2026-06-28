@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useNavigate } from 'react-router-dom'
-import { ClipboardList, FileText, ScanLine, Users } from 'lucide-react'
+import { ClipboardList, FileText, History, ScanLine, Users } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
 import PageTransition from '../../../shared/ui/PageTransition'
@@ -29,7 +29,7 @@ export default function LeadmanLayout() {
     { name: t('leadman.incoming_reports', 'Incoming Reports'), href: '/app/leadman/reports', icon: ClipboardList, hasUnread: Number(notificationCounts.daily_report_incoming || 0) > 0 },
     { name: t('leadman.deployed_workers', 'Deployed Workers'), href: '/app/leadman/workers', icon: Users },
     { name: t('leadman.daily_report', 'Daily Report'), href: '/app/leadman/report', icon: FileText },
-    { name: t('leadman.history', 'History'), href: '/app/leadman/history', icon: FileText, hasUnread: Number(notificationCounts.daily_report_rejected || 0) > 0 },
+    { name: t('leadman.history', 'History'), href: '/app/leadman/history', icon: History, hasUnread: Number(notificationCounts.daily_report_rejected || 0) > 0 },
   ]
 
   return (

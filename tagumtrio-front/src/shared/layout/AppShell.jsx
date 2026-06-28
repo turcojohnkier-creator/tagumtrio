@@ -31,7 +31,7 @@ export default function AppShell({
   return (
     <div className="min-h-screen bg-zinc-50/60">
       <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-        <div className="mx-auto grid h-16 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-6 md:h-20">
+        <div className="mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:px-6 md:h-20">
           <div className="flex items-center gap-2.5 justify-self-start">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm shadow-emerald-500/30 md:h-11 md:w-11">
               <LayoutGrid className="h-4.5 w-4.5 text-white md:h-5 md:w-5" />

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Bell, ChevronDown, LayoutGrid, LogOut, X } from 'lucide-react'
+import { ChevronDown, LayoutGrid, LogOut } from 'lucide-react'
 import { useState } from 'react'
 import { formatRole } from '../../lib/roles'
 import { useAuth } from '../../context/auth-context'
@@ -23,10 +23,8 @@ export default function AppShell({
   portalLabel,
   onLogout,
   headerCounts = [],
-  notificationItems = [],
   children,
 }) {
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const { language, setLanguage, t } = useAuth()
 
@@ -92,50 +90,7 @@ export default function AppShell({
 
             <div className="relative">
               <button
-                onClick={() => { setNotificationsOpen((open) => !open); setUserMenuOpen(false) }}
-                className="relative rounded-md p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
-                aria-expanded={notificationsOpen}
-                aria-label="Toggle notifications"
-              >
-                <Bell className="h-4.5 w-4.5" />
-                {notificationItems.length > 0 && (
-                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-emerald-500" />
-                )}
-              </button>
-
-              {notificationsOpen && (
-                <div className="absolute right-0 top-12 z-30 w-[320px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg">
-                  <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
-                    <div>
-                      <p className="text-sm font-medium text-zinc-900">Notifications</p>
-                      <p className="text-xs text-zinc-400">Pending items and latest updates</p>
-                    </div>
-                    <button onClick={() => setNotificationsOpen(false)} className="text-zinc-400 hover:text-zinc-900">
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <div className="max-h-80 overflow-y-auto">
-                    {notificationItems.length === 0 ? (
-                      <div className="px-4 py-6 text-sm text-zinc-500">No pending notifications.</div>
-                    ) : (
-                      <div className="divide-y divide-zinc-100">
-                        {notificationItems.map((item, index) => (
-                          <div key={`${item.title}-${index}`} className="px-4 py-3 transition-colors hover:bg-zinc-50">
-                            <p className="text-sm font-medium text-zinc-900">{item.title}</p>
-                            <p className="mt-1 text-xs text-zinc-500">{item.detail}</p>
-                            <p className="mt-1 text-[11px] text-zinc-400">{new Date(item.meta).toLocaleString()}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="relative">
-              <button
-                onClick={() => { setUserMenuOpen((open) => !open); setNotificationsOpen(false) }}
+                onClick={() => setUserMenuOpen((open) => !open)}
                 className="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-zinc-100"
                 aria-expanded={userMenuOpen}
                 aria-label="Toggle account menu"

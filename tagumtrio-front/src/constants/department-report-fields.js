@@ -1,113 +1,27 @@
-const COMMON_AUTO_FIELDS = []
-
-const FIELD_SETS = {
-  Sundry: [
-    { key: 'department', label: 'Department', type: 'text', placeholder: 'Department' },
-    { key: 'dateIn', label: 'Date in', type: 'datetime-local', placeholder: 'Date in' },
-    { key: 'thickness', label: 'Thickness', type: 'text', placeholder: 'Thickness' },
-    { key: 'tent', label: 'Tent', type: 'text', placeholder: 'Tent' },
-    { key: 'cratePieces', label: 'Crates/Pieces', type: 'text', placeholder: 'Crates/Pieces' },
-    { key: 'dateHarvest', label: 'Date Harvest', type: 'date', placeholder: 'Date Harvest' },
-  ],
-  Repair: [
-    { key: 'department', label: 'Department', type: 'text', placeholder: 'Department' },
-    { key: 'thickness', label: 'Thickness', type: 'text', placeholder: 'Thickness' },
-    { key: 'crates', label: 'Crates', type: 'text', placeholder: 'Crates' },
-    { key: 'date', label: 'Date', type: 'date', placeholder: 'Date' },
-  ],
-  Packing: [
-    { key: 'department', label: 'Department', type: 'text', placeholder: 'Department' },
-    { key: 'thickness', label: 'Thickness', type: 'text', placeholder: 'Thickness' },
-    { key: 'crates', label: 'Crates', type: 'text', placeholder: 'Crates' },
-    { key: 'date', label: 'Date', type: 'date', placeholder: 'Date' },
-  ],
-  Spreader: [
-    { key: 'department', label: 'Department', type: 'text', placeholder: 'Department' },
-    { key: 'thickness', label: 'Thickness', type: 'text', placeholder: 'Thickness' },
-    { key: 'crates', label: 'Crates', type: 'text', placeholder: 'Crates' },
-    { key: 'date', label: 'Date', type: 'date', placeholder: 'Date' },
-  ],
-  Veneering: [
-    { key: 'department', label: 'Department', type: 'text', placeholder: 'Department' },
-    { key: 'thickness', label: 'Thickness', type: 'text', placeholder: 'Thickness' },
-    { key: 'cratePieces', label: 'Crate/Pieces', type: 'text', placeholder: 'Crate/Pieces' },
-    { key: 'date', label: 'Date', type: 'date', placeholder: 'Date' },
-  ],
-  'Core Builder': [
-    { key: 'department', label: 'Department', type: 'text', placeholder: 'Department' },
-    { key: 'thickness', label: 'Thickness', type: 'text', placeholder: 'Thickness' },
-    { key: 'crates', label: 'Crates', type: 'text', placeholder: 'Crates' },
-    { key: 'date', label: 'Date', type: 'date', placeholder: 'Date' },
-  ],
-  Classifying: [
-    { key: 'department', label: 'Department', type: 'text', placeholder: 'Department' },
-    { key: 'thickness', label: 'Thickness', type: 'text', placeholder: 'Thickness' },
-    { key: 'cratePieces', label: 'Crate/Pieces', type: 'text', placeholder: 'Crate/Pieces' },
-    { key: 'date', label: 'Date', type: 'date', placeholder: 'Date' },
-  ],
-  Putty: [
-    { key: 'department', label: 'Department', type: 'text', placeholder: 'Department' },
-    { key: 'thickness', label: 'Thickness', type: 'text', placeholder: 'Thickness' },
-    { key: 'cratePieces', label: 'Crate/Pieces', type: 'text', placeholder: 'Crate/Pieces' },
-    { key: 'date', label: 'Date', type: 'date', placeholder: 'Date' },
-  ],
-  Sizer: [
-    { key: 'department', label: 'Department', type: 'text', placeholder: 'Department' },
-    { key: 'thickness', label: 'Thickness', type: 'text', placeholder: 'Thickness' },
-    { key: 'cratePieces', label: 'Crate/Pieces', type: 'text', placeholder: 'Crate/Pieces' },
-    { key: 'date', label: 'Date', type: 'date', placeholder: 'Date' },
-  ],
-  Rotary: [
-    { key: 'department', label: 'Department', type: 'text', placeholder: 'Department' },
-    { key: 'thickness', label: 'Thickness', type: 'text', placeholder: 'Thickness' },
-    { key: 'cratePieces', label: 'Crate/Pieces', type: 'text', placeholder: 'Crate/Pieces' },
-    { key: 'date', label: 'Date', type: 'date', placeholder: 'Date' },
-  ],
-  Sorting: [
-    { key: 'department', label: 'Department', type: 'text', placeholder: 'Department' },
-    { key: 'thickness', label: 'Thickness', type: 'text', placeholder: 'Thickness' },
-    { key: 'cratePieces', label: 'Crate/Pieces', type: 'text', placeholder: 'Crate/Pieces' },
-    { key: 'date', label: 'Date', type: 'date', placeholder: 'Date' },
-  ],
-  Hotpress: [
-    { key: 'department', label: 'Department', type: 'text', placeholder: 'Department' },
-    { key: 'thickness', label: 'Thickness', type: 'text', placeholder: 'Thickness' },
-    { key: 'cratePieces', label: 'Crate/Pieces', type: 'text', placeholder: 'Crate/Pieces' },
-    { key: 'date', label: 'Date', type: 'date', placeholder: 'Date' },
-  ],
-  Assembly: [
-    { key: 'department', label: 'Department', type: 'text', placeholder: 'Department' },
-    { key: 'thickness', label: 'Thickness', type: 'text', placeholder: 'Thickness' },
-    { key: 'cratePieces', label: 'Crate/Pieces', type: 'text', placeholder: 'Crate/Pieces' },
-    { key: 'date', label: 'Date', type: 'date', placeholder: 'Date' },
-  ],
-}
+import { DEPARTMENTS } from './departments'
 
 const ALIASES = {
-  'Packing/Classifying': 'Packing',
-  Spreadersizer: 'Spreader',
-  Hotpress: 'Hotpress',
   'Hot Press': 'Hotpress',
-  'Core builder': 'Core Builder',
-  packing: 'Packing',
-  spreader: 'Spreader',
   hotpress: 'Hotpress',
-  'core builder': 'Core Builder',
-  classifying: 'Classifying',
   rotary: 'Rotary',
-  sizer: 'Sizer',
-  assembly: 'Assembly',
-  repair: 'Repair',
   sorting: 'Sorting',
-  putty: 'Putty',
-  veneering: 'Veneering',
+  assembly: 'Assembly',
+  'assembly8.5&10': 'Assembly8.5&10',
   sundry: 'Sundry',
-}
-
-function toLocalDateTimeValue(value = new Date()) {
-  const date = value instanceof Date ? value : new Date(value)
-  const pad = (input) => String(input).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+  repair: 'Repair',
+  packing: 'Packing',
+  'packing/classifying': 'Packing',
+  classifying: 'Packing',
+  spreader: 'Spreader',
+  spreadersizer: 'Spreader',
+  'core builder': 'Core Builder',
+  putty: 'Putty',
+  sizer: 'Sizer',
+  sander: 'Sander',
+  'sand paper': 'Sand Paper',
+  'paint black': 'Paint Black',
+  bundle: 'Bundle',
+  logo: 'Logo',
 }
 
 function toLocalDateValue(value = new Date()) {
@@ -116,17 +30,26 @@ function toLocalDateValue(value = new Date()) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
-function normalizeDepartmentName(department) {
-  return ALIASES[department] || department || 'Sundry'
+export function normalizeDepartmentName(department) {
+  if (!department) return DEPARTMENTS[0]
+  if (DEPARTMENTS.includes(department)) return department
+  return ALIASES[department] || ALIASES[String(department).toLowerCase()] || department
 }
 
 export function getDepartmentReportFieldSpec(department) {
   const resolvedDepartment = normalizeDepartmentName(department)
-  const fields = FIELD_SETS[resolvedDepartment] || FIELD_SETS.Sundry
+
+  const fields = [
+    { key: 'department', label: 'Department', type: 'text' },
+    { key: 'product', label: 'Product / Size', type: 'select', placeholder: 'Select product' },
+    { key: 'quantity', label: 'Quantity', type: 'number', placeholder: 'e.g. 100' },
+    { key: 'date', label: 'Date', type: 'date' },
+  ]
+
   return {
     department: resolvedDepartment,
     label: resolvedDepartment,
-    fields: [...COMMON_AUTO_FIELDS, ...fields],
+    fields,
   }
 }
 
@@ -136,12 +59,6 @@ export function buildDepartmentReportFieldDefaults(department) {
       accumulator[field.key] = toLocalDateValue()
       return accumulator
     }
-
-    if (field.type === 'datetime-local') {
-      accumulator[field.key] = toLocalDateTimeValue()
-      return accumulator
-    }
-
     accumulator[field.key] = ''
     return accumulator
   }, {})

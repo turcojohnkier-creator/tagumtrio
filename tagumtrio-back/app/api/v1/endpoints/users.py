@@ -8,17 +8,18 @@ from app.deps import get_current_user
 from app import crud, schemas
 from app.models.user import User
 from app.schemas.user import UserPublic
+from app.services.notification_service import create_notification, notify_leadmen_for_department
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 
-# HR provisions accounts for floor/production staff only; GM, HR, and Finance
+# HR provisions accounts for floor/production staff only; GM and HR
 # accounts are not self-service and are not in scope for HR's create-account flow.
 HR_CREATABLE_ROLES = {"employee", "leadman", "production_incharge"}
 
 
 @router.get("", response_model=list[UserPublic])
 def list_employees(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    if current_user.role not in {"finance", "hr", "production_incharge", "leadman", "admin", "gm"}:
+    if current_user.role not in {"hr", "production_incharge", "leadman", "admin", "gm"}:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     return db.query(User).order_by(User.name.asc()).all()
 
@@ -49,8 +50,32 @@ def patch_employee(employee_id: int, payload: dict, db: Session = Depends(get_db
     # Only leadman (for their team), production head, GM, or admin can update employee assignments
     if current_user.role not in {"leadman", "production_incharge", "hr", "admin", "gm"}:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+    existing = db.get(User, employee_id)
+    old_department = existing.department if existing else None
+
     try:
         user = crud.update_user(db, employee_id, payload)
-        return user
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    new_department = payload.get("department")
+    if new_department and new_department != old_department:
+        create_notification(
+            db,
+            user.id,
+            "reassignment_employee",
+            "Department reassigned",
+            f"You were reassigned from {old_department or 'no department'} to {new_department}.",
+            "/app/portal",
+        )
+        notify_leadmen_for_department(
+            db,
+            new_department,
+            "reassignment_leadman",
+            "Employee reassigned to your department",
+            f"{user.name} was reassigned to {new_department}.",
+            "/app/leadman/workers",
+        )
+
+    return user

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from './auth-context'
+import { useDialog } from './dialog-context'
 import { AppDataContext } from './app-data-context'
 import { DEPARTMENTS } from '../constants/departments'
 import { buildDepartmentReportSummary } from '../constants/department-report-fields'
@@ -7,28 +8,30 @@ import { buildDepartmentReportSummary } from '../constants/department-report-fie
 // Local storage keys and defaults
 const STORAGE_KEY = 'triops-app-data-state'
 const LEADMAN_DEPARTMENT_KEY_PREFIX = 'triops-leadman-dept:'
-// Optional per-department rates; missing entries fall back to 70
-const DEPARTMENT_RATES = {}
 import {
-  fetchDepartmentRequestsApi,
   fetchEmployeesApi,
   fetchDailyReportsApi,
   fetchPayrollPaymentsApi,
-  fetchPayrollCyclesApi,
   fetchProductionApi,
-  createDepartmentRequestApi,
-  approveDepartmentRequestApi,
-  redirectDepartmentRequestApi,
   submitLeaveRequestApi,
   fetchLeaveRequestsApi,
   approveLeaveRequestApi,
   rejectLeaveRequestApi,
   submitDailyReportApi,
   updateDailyReportApi,
+  resubmitDailyReportApi,
+  approveDailyReportApi,
   fetchAnnouncementsApi,
   createAnnouncementApi,
   updateAnnouncementApi,
   deleteAnnouncementApi,
+  fetchRatesApi,
+  createRateApi,
+  updateRateApi,
+  deleteRateApi,
+  fetchNotificationUnreadCountsApi,
+  fetchNotificationsApi,
+  markNotificationsReadByTypeApi,
   hasAuthToken,
 } from '../lib/api'
 
@@ -85,15 +88,11 @@ function mergeEmployees(remoteEmployees = []) {
 
 // Demo builders removed. Fallbacks below use empty arrays to avoid showing demo data.
 const DEFAULT_STATE = {
-  departmentRequests: [],
   payments: [],
   leaveRequests: [],
   announcements: [],
   schedules: [],
 }
-
-const REASSIGNMENT_STORAGE_KEY = 'triops-reassignment-notifications'
-const REASSIGNMENT_SEEN_KEY_PREFIX = 'triops-reassignment-seen:'
 
 function loadState() {
   if (typeof window === 'undefined') return DEFAULT_STATE
@@ -102,7 +101,6 @@ function loadState() {
     if (!raw) return DEFAULT_STATE
     const parsed = JSON.parse(raw)
     return {
-      departmentRequests: Array.isArray(parsed.departmentRequests) ? parsed.departmentRequests : DEFAULT_STATE.departmentRequests,
       payments: Array.isArray(parsed.payments) ? parsed.payments : DEFAULT_STATE.payments,
       leaveRequests: Array.isArray(parsed.leaveRequests) ? parsed.leaveRequests : DEFAULT_STATE.leaveRequests,
       announcements: Array.isArray(parsed.announcements) ? parsed.announcements : DEFAULT_STATE.announcements,
@@ -110,39 +108,6 @@ function loadState() {
     }
   } catch {
     return DEFAULT_STATE
-  }
-}
-
-function loadReassignmentNotifications() {
-  if (typeof window === 'undefined') return []
-  try {
-    const raw = window.localStorage.getItem(REASSIGNMENT_STORAGE_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
-
-function loadReassignmentSeenIds(userId) {
-  if (typeof window === 'undefined') return []
-  try {
-    const raw = window.localStorage.getItem(`${REASSIGNMENT_SEEN_KEY_PREFIX}${String(userId)}`)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
-
-function saveReassignmentSeenIds(userId, ids = []) {
-  if (typeof window === 'undefined') return
-  try {
-    window.localStorage.setItem(`${REASSIGNMENT_SEEN_KEY_PREFIX}${String(userId)}`, JSON.stringify(Array.from(new Set(ids))))
-  } catch {
-    // ignore localStorage failures
   }
 }
 
@@ -182,12 +147,13 @@ function getAssignedLeadmanDepartments(user) {
 
 export function AppDataProvider({ children }) {
   const { user } = useAuth()
+  const dialog = useDialog()
   const initialState = loadState()
-  const [departmentRequests, setDepartmentRequests] = useState(initialState.departmentRequests)
   const [dailyReportDrafts, setDailyReportDrafts] = useState({})
   const [payments, setPayments] = useState(initialState.payments || [])
   const [announcements, setAnnouncements] = useState(initialState.announcements || [])
-  const [reassignmentNotifications, setReassignmentNotifications] = useState(loadReassignmentNotifications)
+  const [rates, setRates] = useState([])
+  const [notificationCounts, setNotificationCounts] = useState({})
   // schedules feature removed; keep empty state to avoid breaking callers
   const [schedules, setSchedules] = useState([])
   const [leaveRequests, setLeaveRequests] = useState(initialState.leaveRequests || [])
@@ -195,7 +161,6 @@ export function AppDataProvider({ children }) {
   const [employeesLoading, setEmployeesLoading] = useState(false)
   const [dailyReports, setDailyReports] = useState([])
   const [productionRecords, setProductionRecords] = useState([])
-  const [payrollCycles, setPayrollCycles] = useState([])
   const [selectedLeadmanDepartment, setSelectedLeadmanDepartment] = useState('')
 
   // device id for offline records
@@ -209,31 +174,23 @@ export function AppDataProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem(REASSIGNMENT_STORAGE_KEY, JSON.stringify(reassignmentNotifications))
-  }, [reassignmentNotifications])
-
-  useEffect(() => {
     if (!user) return
     if (!hasAuthToken()) return
     let cancelled = false
 
     async function loadRemoteData() {
-      const payrollRoles = new Set(['finance', 'hr', 'production_incharge', 'admin'])
-      const paymentRoles = new Set(['finance', 'hr', 'admin'])
-      const employeeRoles = new Set(['finance', 'hr', 'production_incharge', 'leadman', 'admin', 'gm'])
-      const loadPayrollCycles = payrollRoles.has(user?.role)
+      const payrollRoles = new Set(['hr', 'production_incharge', 'admin'])
+      const paymentRoles = new Set(['hr', 'admin'])
+      const employeeRoles = new Set(['hr', 'production_incharge', 'leadman', 'admin', 'gm'])
       const loadPayrollPayments = paymentRoles.has(user?.role)
       const loadEmployees = employeeRoles.has(user?.role)
       const loadReports = payrollRoles.has(user?.role) || user?.role === 'leadman'
 
       if (loadEmployees) setEmployeesLoading(true)
-      const [remoteEmployees, remoteDepartmentRequests, remotePayments, remoteProduction, remotePayrollCycles, remoteDailyReports, remoteLeaveRequests] = await Promise.allSettled([
+      const [remoteEmployees, remotePayments, remoteProduction, remoteDailyReports, remoteLeaveRequests] = await Promise.allSettled([
         loadEmployees ? fetchEmployeesApi() : Promise.resolve([]),
-        fetchDepartmentRequestsApi(),
         loadPayrollPayments ? fetchPayrollPaymentsApi() : Promise.resolve([]),
         fetchProductionApi(),
-        loadPayrollCycles ? fetchPayrollCyclesApi() : Promise.resolve([]),
         loadReports ? fetchDailyReportsApi() : Promise.resolve([]),
         fetchLeaveRequestsApi(),
       ])
@@ -244,15 +201,8 @@ export function AppDataProvider({ children }) {
         setEmployees(mergeEmployees(Array.isArray(remoteEmployees.value) ? remoteEmployees.value : []))
       }
 
-      if (remoteDepartmentRequests.status === 'fulfilled' && Array.isArray(remoteDepartmentRequests.value)) {
-        setDepartmentRequests(remoteDepartmentRequests.value)
-      }
-
       if (remotePayments.status === 'fulfilled' && Array.isArray(remotePayments.value) && remotePayments.value.length > 0) {
         setPayments(remotePayments.value)
-      }
-      if (remotePayrollCycles.status === 'fulfilled' && Array.isArray(remotePayrollCycles.value) && remotePayrollCycles.value.length > 0) {
-        setPayrollCycles(remotePayrollCycles.value)
       }
 
       if (remoteProduction.status === 'fulfilled' && Array.isArray(remoteProduction.value) && remoteProduction.value.length > 0) {
@@ -270,6 +220,11 @@ export function AppDataProvider({ children }) {
       try {
         const remoteAnnouncements2 = await fetchAnnouncementsApi().catch(() => [])
         if (Array.isArray(remoteAnnouncements2)) setAnnouncements(remoteAnnouncements2)
+      } catch (e) { /* ignore */ }
+
+      try {
+        const remoteRates = await fetchRatesApi().catch(() => [])
+        if (Array.isArray(remoteRates)) setRates(remoteRates)
       } catch (e) { /* ignore */ }
       if (!cancelled) setEmployeesLoading(false)
 
@@ -334,35 +289,6 @@ export function AppDataProvider({ children }) {
     }
   }
 
-  function getReportsByStatuses(statuses = [], department = null) {
-    const statusSet = new Set((Array.isArray(statuses) ? statuses : [statuses]).filter(Boolean))
-    return dedupeBy(
-      (Array.isArray(dailyReports) ? dailyReports : []).filter((report) => {
-        if (statusSet.size > 0 && !statusSet.has(String(report.status || '').toLowerCase())) return false
-        if (department && String(report.department || '').toLowerCase() !== String(department || '').toLowerCase()) return false
-        return true
-      }),
-      (report) => String(report.id),
-      (left, right) => new Date(right.createdAt || right.created_at || right.reportDate || 0) - new Date(left.createdAt || left.created_at || left.reportDate || 0)
-    )
-  }
-
-  function getProductionPendingReports() {
-    return getReportsByStatuses(['submitted'])
-  }
-
-  function getProductionReviewedReports() {
-    return getReportsByStatuses(['production_verified', 'leadman_verified', 'gm_submitted', 'rejected'])
-  }
-
-  function getLeadmanIncomingReports(department = null) {
-    return getReportsByStatuses(['production_verified'], department)
-  }
-
-  function getLeadmanVerifiedReports(department = null) {
-    return getReportsByStatuses(['leadman_verified', 'gm_submitted'], department)
-  }
-
   // Poll announcements and schedules for updates every 10s
   useEffect(() => {
     if (!user) return
@@ -414,50 +340,6 @@ export function AppDataProvider({ children }) {
     if (!hasAuthToken()) return
     let cancelled = false
     let interval
-    let consecutiveFailures = 0
-
-    async function refreshDepartmentRequests() {
-      try {
-        const remoteDepartmentRequests = await fetchDepartmentRequestsApi()
-        if (!cancelled && Array.isArray(remoteDepartmentRequests)) {
-          setDepartmentRequests(remoteDepartmentRequests)
-        }
-        consecutiveFailures = 0
-      } catch (error) {
-        const status = Number(error?.status || 0)
-        const message = String(error?.message || '').toLowerCase()
-        consecutiveFailures += 1
-
-        // Stop polling on auth failure to avoid noisy request loops.
-        if (status === 401 || message.includes('could not validate credentials') || message.includes('unauthorized')) {
-          cancelled = true
-          if (interval) clearInterval(interval)
-          return
-        }
-
-        // Stop polling after repeated network/CORS failures.
-        if (error?.code === 'NETWORK_ERROR' || message.includes('cors') || message.includes('failed to fetch')) {
-          if (consecutiveFailures >= 3) {
-            cancelled = true
-            if (interval) clearInterval(interval)
-          }
-        }
-      }
-    }
-
-    refreshDepartmentRequests()
-    interval = setInterval(refreshDepartmentRequests, 5000)
-    return () => {
-      cancelled = true
-      if (interval) clearInterval(interval)
-    }
-  }, [user?.id])
-
-  useEffect(() => {
-    if (!user) return
-    if (!hasAuthToken()) return
-    let cancelled = false
-    let interval
 
     async function refreshLeaveRequests() {
       try {
@@ -476,96 +358,73 @@ export function AppDataProvider({ children }) {
     }
   }, [user?.id])
 
+  // Poll unread notification counts (drives nav red dots) and pop up a blocking
+  // dialog the moment a reassignment notification arrives, regardless of which
+  // page the user is currently on.
+  useEffect(() => {
+    if (!user) return
+    if (!hasAuthToken()) return
+    let cancelled = false
+    let interval
+    let hadReassignment = false
+
+    const reassignmentType = user.role === 'leadman' ? 'reassignment_leadman' : 'reassignment_employee'
+
+    async function refreshNotificationCounts() {
+      try {
+        const counts = await fetchNotificationUnreadCountsApi()
+        if (cancelled || !counts || typeof counts !== 'object') return
+
+        const hasReassignment = Number(counts[reassignmentType] || 0) > 0
+
+        setNotificationCounts(counts)
+
+        if (!hadReassignment && hasReassignment) {
+          const unread = await fetchNotificationsApi(true).catch(() => [])
+          const items = Array.isArray(unread) ? unread.filter((item) => item.type === reassignmentType) : []
+          if (items.length > 0) {
+            dialog.success({
+              title: items[0].title || 'Department reassigned',
+              message: items.map((item) => item.message).join(' '),
+            })
+            await markNotificationsReadByTypeApi(reassignmentType).catch(() => {})
+            setNotificationCounts((current) => ({ ...current, [reassignmentType]: 0 }))
+            hadReassignment = false
+          } else {
+            hadReassignment = true
+          }
+        } else {
+          hadReassignment = hasReassignment
+        }
+      } catch (error) {
+        // ignore transient failures
+      }
+    }
+
+    refreshNotificationCounts()
+    interval = setInterval(refreshNotificationCounts, 5000)
+    return () => {
+      cancelled = true
+      if (interval) clearInterval(interval)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, user?.role])
+
+  async function markNotificationsSeen(type) {
+    setNotificationCounts((current) => ({ ...current, [type]: 0 }))
+    try {
+      await markNotificationsReadByTypeApi(type)
+    } catch (error) {
+      // ignore — local state already cleared, next poll will reconcile
+    }
+  }
+
   useEffect(() => {
     if (typeof window === 'undefined') return
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ departmentRequests, payments, leaveRequests, announcements, schedules }))
-  }, [departmentRequests, payments, leaveRequests])
-
-  async function submitDepartmentRequest(record) {
-    const tempId = `REQ-${Date.now()}`
-    const payload = {
-      id: tempId,
-      ...record,
-      status: 'pending',
-      requestedAt: new Date().toISOString(),
-    }
-    setDepartmentRequests((current) => [payload, ...current])
-    try {
-      const created = await createDepartmentRequestApi({
-        employeeId: payload.employeeId,
-        employeeName: payload.employeeName,
-        requestedDepartment: payload.requestedDepartment,
-      })
-
-      setDepartmentRequests((current) => {
-        const updated = current.map((request) => {
-          if (request.id === tempId) {
-            return { ...created, status: 'pending' }
-          }
-          return request
-        })
-
-        if (!updated.some((request) => request.id === created.id)) {
-          return [created, ...updated.filter((request) => request.id !== tempId)]
-        }
-
-        return updated
-      })
-      return created.id
-    } catch (error) {
-      setDepartmentRequests((current) => current.filter((request) => request.id !== tempId))
-      throw error
-    }
-  }
-
-  async function approveDepartmentRequest(id, leadmanId) {
-  try {
-    const approvedRequest = await approveDepartmentRequestApi(id, leadmanId);
-
-    // Update the request status
-    setDepartmentRequests((current) => current.map((request) => (
-      request.id === id ? { ...request, ...approvedRequest, status: 'approved' } : request
-    )));
-
-    // IMPORTANT: Update the employees list directly so the UI refreshes
-    setEmployees((currentEmployees) => currentEmployees.map((employee) => (
-      String(employee.employeeId) === String(approvedRequest.employeeId)
-        ? { ...employee, department: approvedRequest.requestedDepartment }
-        : employee
-    )));
-
-    return approvedRequest;
-  } catch (error) {
-    throw error;
-  }
-}
-
-  async function redirectDepartmentRequest(id, targetDepartment, leadmanId, note) {
-    try {
-      const redirectedRequest = await redirectDepartmentRequestApi(
-        id,
-        {
-          targetDepartment,
-          note,
-        },
-        leadmanId
-      )
-      setDepartmentRequests((current) => {
-        const updatedSource = current.map((request) => (
-          request.id === id
-            ? { ...request, status: 'redirected', leadmanId, leadmanAt: redirectedRequest.leadmanAt || new Date().toISOString(), note: redirectedRequest.note || note || `Redirected to ${targetDepartment} by leadman.` }
-            : request
-        ))
-        return [{ ...redirectedRequest, status: 'pending' }, ...updatedSource]
-      })
-      return redirectedRequest
-    } catch (error) {
-      throw error
-    }
-  }
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ payments, leaveRequests, announcements, schedules }))
+  }, [payments, leaveRequests])
 
   function addReportEntry(record) {
-    const departmentRate = DEPARTMENT_RATES[record.department || record.dept || record.raw?.department] ?? 70
     const rawEmployeeId = record.employeeId ?? record.id ?? record.employee_id ?? record.identifier ?? record.raw?.employeeId ?? record.raw?.employee_id ?? ''
     let employeeId = Number(rawEmployeeId)
     if (Number.isNaN(employeeId)) employeeId = undefined
@@ -578,11 +437,21 @@ export function AppDataProvider({ children }) {
     const batchCapturedAt = record.batchCapturedAt || record.raw?.batchCapturedAt || capturedAt
     const batchEmployeeCount = Number(record.batchEmployeeCount || record.raw?.batchEmployeeCount || 1)
     const notes = record.notes || buildDepartmentReportSummary(department, reportFields) || null
-    const raw = record.raw || {
+    const product = String(record.product || '').trim()
+    const quantity = Number(record.quantity || 0)
+    const pricePerUnit = Number(record.pricePerUnit || 0)
+    const amount = Number(record.amount || 0)
+    const targetDepartment = String(record.targetDepartment || '').trim()
+    const photos = record.photos || {}
+    const raw = {
+      ...(record.raw || {}),
       department,
       employeeId,
       employeeName,
-      loggedHours: Number(record.loggedHours || 0),
+      product,
+      quantity,
+      pricePerUnit,
+      targetDepartment,
       reportFields,
       reportSummary: record.qrSummary || notes,
       capturedAt,
@@ -590,13 +459,11 @@ export function AppDataProvider({ children }) {
       batchCapturedAt,
       batchEmployeeCount,
     }
-    const rate = record.rate ?? departmentRate
-    const amount = Number(record.loggedHours || 0) * Number(rate)
 
     try {
       setDailyReportDrafts((cur) => {
         const key = `${department}:${new Date(capturedAt).toISOString().slice(0, 10)}`
-        const draft = cur[key] || { department, reportDate: new Date(capturedAt).toISOString().slice(0, 10), entries: [], summary: '', totalHours: 0, totalAmount: 0 }
+        const draft = cur[key] || { department, reportDate: new Date(capturedAt).toISOString().slice(0, 10), entries: [], summary: '', totalAmount: 0 }
         const entry = {
           id,
           batchId,
@@ -604,15 +471,18 @@ export function AppDataProvider({ children }) {
           batchEmployeeCount,
           employeeId,
           employeeName,
+          department,
+          targetDepartment,
           scannedAt: capturedAt,
-          loggedHours: record.loggedHours,
-          rate,
+          product,
+          quantity,
+          pricePerUnit,
           amount,
+          photos,
           raw,
           notes,
         }
         draft.entries = [entry, ...draft.entries]
-        draft.totalHours = (draft.totalHours || 0) + Number(entry.loggedHours || 0)
         draft.totalAmount = (draft.totalAmount || 0) + Number(entry.amount || 0)
         return { ...cur, [key]: draft }
       })
@@ -629,77 +499,17 @@ export function AppDataProvider({ children }) {
     )))
   }
 
-  function addReassignmentNotification(notification) {
-    if (!notification || !notification.employeeId || !notification.targetDepartment) return
-    const id = notification.id || `${notification.employeeId}:${notification.targetDepartment}:${notification.createdAt || new Date().toISOString()}`
-    setReassignmentNotifications((current) => {
-      if (current.some((item) => String(item.id) === String(id))) return current
-      return [{ ...notification, id, createdAt: notification.createdAt || new Date().toISOString() }, ...current]
-    })
-  }
-
-  function getReassignmentNotifications() {
-    return dedupeBy(
-      reassignmentNotifications,
-      (notification) => String(notification.id),
-      (left, right) => new Date(right.createdAt || 0) - new Date(left.createdAt || 0)
-    )
-  }
-
-  function getEmployeeReassignmentNotifications(employeeId) {
-    return getReassignmentNotifications().filter((notification) => String(notification.employeeId) === String(employeeId))
-  }
-
-  function getUnseenLeadmanReassignmentNotifications(departments = []) {
-    const departmentSet = new Set((Array.isArray(departments) ? departments : [departments]).map((value) => String(value || '').trim()))
-    return getReassignmentNotifications().filter((notification) => departmentSet.has(String(notification.targetDepartment || '').trim()))
-  }
-
-  function getUnseenEmployeeReassignmentNotifications(userId, employeeId) {
-    const seenIds = loadReassignmentSeenIds(userId)
-    return getEmployeeReassignmentNotifications(employeeId).filter((notification) => !seenIds.includes(String(notification.id)))
-  }
-
-  function getUnseenLeadmanReassignmentNotifications(userId, departments = []) {
-    const seenIds = loadReassignmentSeenIds(userId)
-    return getUnseenLeadmanReassignmentNotifications(departments).filter((notification) => !seenIds.includes(String(notification.id)))
-  }
-
-  function markReassignmentNotificationsSeen(userId, notificationIds = []) {
-    if (!userId) return
-    const currentSeen = loadReassignmentSeenIds(userId)
-    saveReassignmentSeenIds(userId, [...currentSeen, ...notificationIds])
-  }
 
   function clearAll() {
-    setDepartmentRequests([])
     setPayments([])
     setLeaveRequests([])
   }
 
   function getEmployeeDepartment(employeeId) {
-  // Filter for approved requests for this specific employee
-  const approvedRequests = departmentRequests
-    .filter((request) => String(request.employeeId) === String(employeeId) && request.status === 'approved')
-    // Sort by the date they were approved/assigned
-    .sort((a, b) => new Date(b.leadmanAt || b.requestedAt) - new Date(a.leadmanAt || a.requestedAt));
-
-  // If a recent approved request exists, return that department
-  if (approvedRequests.length > 0) {
-    return approvedRequests[0].requestedDepartment;
-  }
-
-  // Otherwise, fallback to the base employee profile
-  const employee = employees.find((item) => String(item.employeeId) === String(employeeId));
-  return employee?.department || null;
-}
-
-  function getEmployeeDepartmentRequests(employeeId) {
-    return dedupeBy(
-      departmentRequests.filter((request) => String(request.employeeId) === String(employeeId)),
-      (request) => String(request.id || `${request.employeeId}-${request.requestedDepartment}-${request.status}-${request.requestedAt}`),
-      (left, right) => new Date(right.requestedAt || right.createdAt || 0) - new Date(left.requestedAt || left.createdAt || 0)
-    )
+    // GM reassigns employees by editing `department` directly, and that's the
+    // only path that changes it — so the live employee record is authoritative.
+    const employee = employees.find((item) => String(item.employeeId) === String(employeeId));
+    return employee?.department || null;
   }
 
   function getEmployeeLeaveRequests(employeeId) {
@@ -805,6 +615,57 @@ export function AppDataProvider({ children }) {
     }
   }
 
+  // Piece rate management
+  function getRateFor(department, product) {
+    const match = (rates || []).find((rate) => (
+      String(rate.department || '').trim().toLowerCase() === String(department || '').trim().toLowerCase()
+      && String(rate.product || '').trim().toLowerCase() === String(product || '').trim().toLowerCase()
+    ))
+    return match ? Number(match.pricePerUnit || 0) : null
+  }
+
+  function getRatesForDepartment(department) {
+    return (rates || []).filter((rate) => String(rate.department || '').trim().toLowerCase() === String(department || '').trim().toLowerCase())
+  }
+
+  async function createRate(record) {
+    const tempId = `RATE-${Date.now()}`
+    const payload = { id: tempId, ...record }
+    setRates((cur) => [...cur, payload])
+    try {
+      const created = await createRateApi({ department: record.department, product: record.product, pricePerUnit: record.pricePerUnit })
+      setRates((cur) => cur.map((r) => (r.id === tempId ? created : r)))
+      return created
+    } catch (e) {
+      setRates((cur) => cur.filter((r) => r.id !== tempId))
+      throw e
+    }
+  }
+
+  async function updateRate(id, updates) {
+    const prev = rates.slice()
+    setRates((cur) => cur.map((r) => (r.id === id ? { ...r, ...updates } : r)))
+    try {
+      const updated = await updateRateApi(id, updates)
+      setRates((cur) => cur.map((r) => (r.id === id ? updated : r)))
+      return updated
+    } catch (e) {
+      setRates(prev)
+      throw e
+    }
+  }
+
+  async function removeRate(id) {
+    const prev = rates.slice()
+    setRates((cur) => cur.filter((r) => r.id !== id))
+    try {
+      await deleteRateApi(id)
+    } catch (e) {
+      setRates(prev)
+      throw e
+    }
+  }
+
   // Schedules feature removed from backend; keep stubs for compatibility
   async function createSchedule() { throw new Error('Schedules feature unavailable') }
   async function updateSchedule() { throw new Error('Schedules feature unavailable') }
@@ -835,34 +696,6 @@ export function AppDataProvider({ children }) {
     return () => clearInterval(interval)
   }, [user?.id, announcements, schedules])
 
-  function getLeadmanDepartmentRequests(department) {
-    return dedupeBy(
-      departmentRequests.filter((request) => request.status === 'pending' && request.requestedDepartment === department),
-      (request) => String(request.id || `${request.employeeId}-${request.requestedDepartment}-${request.status}`),
-      (left, right) => new Date(right.requestedAt || right.createdAt || 0) - new Date(left.requestedAt || left.createdAt || 0)
-    )
-  }
-
-  function getLeadmanDeployedEmployees(department) {
-    const approvedRequests = departmentRequests.filter((request) => request.status === 'approved' && request.requestedDepartment === department)
-    const latestByEmployee = new Map()
-
-    approvedRequests.forEach((request) => {
-      const key = String(request.employeeId || request.employeeName || request.id || '')
-      if (!key) return
-
-      const current = latestByEmployee.get(key)
-      const currentDate = new Date(current?.leadmanAt || current?.requestedAt || 0).getTime()
-      const nextDate = new Date(request.leadmanAt || request.requestedAt || 0).getTime()
-
-      if (!current || nextDate >= currentDate) {
-        latestByEmployee.set(key, request)
-      }
-    })
-
-    return Array.from(latestByEmployee.values()).sort((left, right) => new Date(right.leadmanAt || right.requestedAt || 0) - new Date(left.leadmanAt || left.requestedAt || 0))
-  }
-
   function resolveEmployeeRecord(employeeId, employeeName) {
     const byId = employees.find((employee) => String(employee.employeeId) === String(employeeId))
     if (byId) return byId
@@ -884,7 +717,6 @@ export function AppDataProvider({ children }) {
         const employeeId = entry.employeeId ?? resolvedEmployee?.employeeId ?? null
         const employeeName = entry.employeeName || resolvedEmployee?.employeeName || 'Unknown'
         const department = entry.department || resolvedEmployee?.department || report.department || 'Unknown'
-        const loggedHours = Number(entry.loggedHours || 0)
         const amount = Number(entry.amount || 0)
 
         return {
@@ -892,12 +724,13 @@ export function AppDataProvider({ children }) {
           employeeId,
           employeeName,
           department,
-          loggedHours,
+          product: entry.product || '',
+          quantity: Number(entry.quantity || 0),
+          pricePerUnit: Number(entry.pricePerUnit || 0),
           scannedAt: createdAt,
           reportDate,
           reportId: report.id,
           summary: report.summary || '',
-          rate: loggedHours > 0 ? amount / loggedHours : Number(entry.rate || 0),
           amount,
           notes: entry.notes || report.summary || '',
           raw: entry.raw || entry,
@@ -919,44 +752,6 @@ export function AppDataProvider({ children }) {
     return getFinanceAttendance().slice().sort((a, b) => new Date(b.scannedAt) - new Date(a.scannedAt))
   }
 
-  function getFinanceEmployees() {
-    const records = getFinanceAttendance()
-    const aggregate = new Map()
-
-    employees.forEach((employee) => {
-      aggregate.set(String(employee.employeeId), {
-        employeeId: employee.employeeId,
-        employeeName: employee.employeeName,
-        department: employee.department || null,
-        logs: 0,
-        totalHours: 0,
-        totalAmount: 0,
-      })
-    })
-
-    records.forEach((record) => {
-      const key = String(record.employeeId || record.employeeName)
-      const current = aggregate.get(key) || {
-        employeeId: record.employeeId,
-        employeeName: record.employeeName,
-        department: record.department || null,
-        logs: 0,
-        totalHours: 0,
-        totalAmount: 0,
-      }
-      current.logs += 1
-      current.totalHours += Number(record.loggedHours || 0)
-      current.totalAmount += Number(record.amount || 0)
-      if (!current.department && record.department) current.department = record.department
-      aggregate.set(key, current)
-    })
-
-    return Array.from(aggregate.values()).sort((a, b) => a.employeeName.localeCompare(b.employeeName))
-  }
-
-  function getFinanceEmployeeHistory(employeeId) {
-    return getFinanceRecords().filter((record) => String(record.employeeId) === String(employeeId))
-  }
 
   function getDailyReportDraft(department, reportDate) {
     const key = `${department}:${new Date(reportDate).toISOString().slice(0, 10)}`
@@ -968,7 +763,6 @@ export function AppDataProvider({ children }) {
         reportDate: new Date(reportDate).toISOString().slice(0, 10),
         entries: [],
         summary: '',
-        totalHours: 0,
         totalAmount: 0,
       }
     }
@@ -978,7 +772,6 @@ export function AppDataProvider({ children }) {
       reportDate: draft.reportDate || new Date(reportDate).toISOString().slice(0, 10),
       entries: Array.isArray(draft.entries) ? draft.entries : [],
       summary: draft.summary || '',
-      totalHours: Number(draft.totalHours || 0),
       totalAmount: Number(draft.totalAmount || 0),
     }
   }
@@ -1000,50 +793,10 @@ export function AppDataProvider({ children }) {
       next[key] = {
         ...draft,
         entries: remainingEntries,
-        totalHours: remainingEntries.reduce((sum, entry) => sum + Number(entry.loggedHours || 0), 0),
         totalAmount: remainingEntries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0),
       }
       return next
     })
-  }
-
-  function getFinancePayrollCycles() {
-    // Prefer server-side cycles when available
-    if (Array.isArray(payrollCycles) && payrollCycles.length > 0) return payrollCycles
-
-    const grouped = getFinanceAttendance().reduce((accumulator, record) => {
-      const key = payrollCycleKey(record.scannedAt || record.reportDate || new Date().toISOString())
-      if (!accumulator[key]) {
-        accumulator[key] = {
-          key,
-          label: payrollCycleLabel(record.scannedAt || record.reportDate || new Date().toISOString()),
-          records: [],
-        }
-      }
-      accumulator[key].records.push(record)
-      return accumulator
-    }, {})
-
-    return Object.values(grouped)
-      .map((cycle) => ({
-        ...cycle,
-        totalHours: cycle.records.reduce((sum, record) => sum + Number(record.loggedHours || 0), 0),
-        totalAmount: cycle.records.reduce((sum, record) => sum + Number(record.amount || 0), 0),
-        employeeCount: new Set(cycle.records.map((record) => record.employeeId)).size,
-        latestDate: cycle.records[0]?.scannedAt,
-      }))
-      .sort((a, b) => new Date(b.latestDate || 0) - new Date(a.latestDate || 0))
-  }
-
-  function getFinancePayrollCycle(key) {
-    const records = getFinanceAttendance().filter((record) => payrollCycleKey(record.scannedAt || record.reportDate || new Date().toISOString()) === key)
-    return {
-      key,
-      records: records.slice().sort((a, b) => new Date(b.scannedAt || b.reportDate || 0) - new Date(a.scannedAt || a.reportDate || 0)),
-      totalHours: records.reduce((sum, record) => sum + Number(record.loggedHours || 0), 0),
-      totalAmount: records.reduce((sum, record) => sum + Number(record.amount || 0), 0),
-      employeeCount: new Set(records.map((record) => String(record.employeeId || record.employeeName || ''))).size,
-    }
   }
 
   function getPayslipPeriods(employeeId) {
@@ -1059,11 +812,9 @@ export function AppDataProvider({ children }) {
 
     return Object.values(grouped)
       .map((period) => {
-        const totalHours = period.records.reduce((sum, record) => sum + Number(record.loggedHours || 0), 0)
         const totalAmount = period.records.reduce((sum, record) => sum + Number(record.amount || 0), 0)
         return {
           ...period,
-          totalHours,
           totalAmount,
           recordCount: period.records.length,
           latestDate: period.records[0]?.scannedAt,
@@ -1072,53 +823,18 @@ export function AppDataProvider({ children }) {
       .sort((a, b) => new Date(b.latestDate || 0) - new Date(a.latestDate || 0))
   }
 
-  function markPayslipReleased(employeeId, periodCycleKey, financeId) {
-    const period = getPayslipPeriod(employeeId, periodCycleKey)
-    const amount = period.totalAmount || 0
-    const id = `PAY-${Date.now()}`
-    const payload = {
-      id,
-      employeeId,
-      period: periodCycleKey,
-      amount,
-      releasedAt: new Date().toISOString(),
-      releasedBy: financeId,
-    }
-    setPayments((cur) => [payload, ...cur])
-    releasePayrollApi({
-      employeeId,
-      periodKey: periodCycleKey,
-      periodLabel: payrollCycleLabel(new Date()),
-      amount,
-      releasedAt: new Date().toISOString(),
-      releasedBy: financeId,
-    }).catch(() => {})
-    return id
-  }
-
-  function isPayslipReleased(employeeId, periodCycleKey) {
-    return payments.some((p) => p.employeeId === employeeId && p.period === periodCycleKey)
-  }
-
-  function getEmployeePayments(employeeId) {
-    return payments.filter((p) => p.employeeId === employeeId)
-  }
-
-  function getFinancePayments() {
-    return payments.slice().sort((a, b) => new Date(b.releasedAt) - new Date(a.releasedAt))
-  }
-
   async function submitDailyReport(department, reportDate, submittedBy, submittedByName, summary = '', entries = null) {
     const key = `${department}:${new Date(reportDate).toISOString().slice(0, 10)}`
     const draft = dailyReportDrafts[key]
     const resolvedEntries = Array.isArray(entries) ? entries : (draft?.entries || [])
     if (!draft && resolvedEntries.length === 0) throw new Error('No draft for selected department/date')
+    const targetDepartment = resolvedEntries[0]?.targetDepartment || resolvedEntries[0]?.raw?.targetDepartment || undefined
     const payload = {
       department: draft?.department || department,
+      targetDepartment,
       reportDate: draft?.reportDate || new Date(reportDate).toISOString().slice(0, 10),
       submittedBy,
       submittedByName,
-      status: 'submitted',
       summary,
       entries: resolvedEntries,
     }
@@ -1142,7 +858,6 @@ export function AppDataProvider({ children }) {
         next[key] = {
           ...existingDraft,
           entries: remainingEntries,
-          totalHours: remainingEntries.reduce((sum, entry) => sum + Number(entry.loggedHours || 0), 0),
           totalAmount: remainingEntries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0),
         }
         return next
@@ -1153,23 +868,37 @@ export function AppDataProvider({ children }) {
     }
   }
 
+  async function resubmitDailyReport(reportId, payload) {
+    const result = await resubmitDailyReportApi(reportId, payload)
+    setDailyReports((current) => current.map((report) => (String(report.id) === String(reportId) ? result : report)))
+    return result
+  }
+
+  async function approveDailyReport(reportId) {
+    const result = await approveDailyReportApi(reportId)
+    setDailyReports((current) => current.map((report) => (String(report.id) === String(reportId) ? result : report)))
+    return result
+  }
+
   function getPayslipPeriod(employeeId, period) {
     const records = getFinanceRecords().filter((record) => String(record.employeeId) === String(employeeId) && payrollCycleKey(record.scannedAt || record.reportDate || new Date().toISOString()) === period)
     return {
       records,
-      totalHours: records.reduce((sum, record) => sum + Number(record.loggedHours || 0), 0),
       totalAmount: records.reduce((sum, record) => sum + Number(record.amount || 0), 0),
     }
   }
 
   function getEmployeeTotals(employeeId) {
     const records = getFinanceRecords().filter((record) => String(record.employeeId) === String(employeeId))
-    const totalHours = records.reduce((sum, record) => sum + Number(record.loggedHours || 0), 0)
     const totalAmount = records.reduce((sum, record) => sum + Number(record.amount || 0), 0)
+    const todayKey = new Date().toISOString().slice(0, 10)
+    const totalToday = records
+      .filter((record) => new Date(record.reportDate).toISOString().slice(0, 10) === todayKey)
+      .reduce((sum, record) => sum + Number(record.amount || 0), 0)
     const latestRecord = records[0] || null
     return {
-      totalHours,
       totalAmount,
+      totalToday,
       latestRecord,
       currentDepartment: getEmployeeDepartment(employeeId),
       records,
@@ -1179,41 +908,25 @@ export function AppDataProvider({ children }) {
   return (
     <AppDataContext.Provider
       value={{
-        departmentRequests,
         leaveRequests,
-        approveDepartmentRequest,
         submitLeaveRequest,
         approveLeaveRequest,
         addReportEntry,
         clearAll,
         getEmployeeDepartment,
         getEmployeeLeaveRequests,
-        getLeadmanDepartmentRequests,
-        getLeadmanDeployedEmployees,
-        addReassignmentNotification,
-        getReassignmentNotifications,
-        getEmployeeReassignmentNotifications,
-        getUnseenLeadmanReassignmentNotifications,
-        getUnseenEmployeeReassignmentNotifications,
-        markReassignmentNotificationsSeen,
         updateEmployeeRecord,
         getFinanceAttendance,
         getFinanceRecords,
-        getFinanceEmployees,
-        getFinanceEmployeeHistory,
         refreshDailyReports,
         getDailyReportDraft,
         removeDailyReportBatch,
-        getFinancePayrollCycles,
-        getFinancePayrollCycle,
+        resubmitDailyReport,
+        approveDailyReport,
         getPayslipPeriods,
         getPayslipPeriod,
         getEmployeeTotals,
         payments,
-        markPayslipReleased,
-        isPayslipReleased,
-        getEmployeePayments,
-        getFinancePayments,
         formatDateTime,
         periodLabel,
         periodKey,
@@ -1221,12 +934,19 @@ export function AppDataProvider({ children }) {
         payrollCycleLabel,
         employeesLoading,
         DEPARTMENTS,
-        DEPARTMENT_RATES,
         buildDepartmentReportSummary,
         announcements,
         createAnnouncement,
         updateAnnouncement,
         removeAnnouncement,
+        rates,
+        getRateFor,
+        getRatesForDepartment,
+        createRate,
+        updateRate,
+        removeRate,
+        notificationCounts,
+        markNotificationsSeen,
         schedules,
         createSchedule,
         updateSchedule,
@@ -1239,14 +959,9 @@ export function AppDataProvider({ children }) {
         dailyReportDrafts,
         submitDailyReport,
         updateDailyReportStatus,
-        getProductionPendingReports,
-        getProductionReviewedReports,
-        getLeadmanIncomingReports,
-        getLeadmanVerifiedReports,
         rejectLeaveRequest,
         selectedLeadmanDepartment,
         setSelectedLeadmanDepartment,
-        redirectDepartmentRequest,
         refreshEmployees,
       }}
     >

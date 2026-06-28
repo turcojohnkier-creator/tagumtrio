@@ -102,17 +102,6 @@ export async function loginApi({ identifier, password }) {
   return result
 }
 
-export async function registerApi(payload) {
-  const normalizedPayload = {
-    ...payload,
-    identifier: normalizeIdentifier(payload.identifier),
-  }
-  return apiRequest('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify(normalizedPayload),
-  })
-}
-
 export async function meApi() {
   return apiRequest('/auth/me')
 }
@@ -138,36 +127,11 @@ export async function fetchEmployeesByDepartmentApi(department) {
 }
 
 
-export async function fetchDepartmentRequestsApi() {
-  return apiRequest('/v1/department-requests')
-}
-
-export async function createDepartmentRequestApi(payload) {
-  return apiRequest('/v1/department-requests', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-
-export async function approveDepartmentRequestApi(requestId, leadmanId) {
-  const q = leadmanId ? `?leadmanId=${encodeURIComponent(leadmanId)}` : ''
-  return apiRequest(`/v1/department-requests/${requestId}/approve${q}`, {
-    method: 'PATCH',
-  })
-}
-
-export async function redirectDepartmentRequestApi(requestId, payload, leadmanId) {
-  const q = leadmanId ? `?leadmanId=${encodeURIComponent(leadmanId)}` : ''
-  return apiRequest(`/v1/department-requests/${requestId}/redirect${q}`, {
-    method: 'PATCH',
-    body: JSON.stringify(payload),
-  })
-}
-
 export async function fetchDailyReportsApi(params = {}) {
   const query = new URLSearchParams()
   if (params.department) query.set('department', params.department)
   if (params.reportDate) query.set('reportDate', params.reportDate)
+  if (params.targetDepartment) query.set('targetDepartment', params.targetDepartment)
 
   try {
     return await apiRequest(`/v1/daily-reports${query.toString() ? `?${query.toString()}` : ''}`)
@@ -191,23 +155,21 @@ export async function updateDailyReportApi(reportId, payload) {
   })
 }
 
-export async function fetchPayrollCyclesApi() {
-  return apiRequest('/v1/payroll/cycles')
+export async function resubmitDailyReportApi(reportId, payload) {
+  return apiRequest(`/v1/daily-reports/${encodeURIComponent(reportId)}/resubmit`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
 }
 
-export async function fetchPayrollCycleDetailsApi(cycleKey) {
-  return apiRequest(`/v1/payroll/cycles/${encodeURIComponent(cycleKey)}`)
+export async function approveDailyReportApi(reportId) {
+  return apiRequest(`/v1/daily-reports/${encodeURIComponent(reportId)}/approve`, {
+    method: 'PATCH',
+  })
 }
 
 export async function fetchPayrollPaymentsApi() {
   return apiRequest('/v1/payroll/payments')
-}
-
-export async function releasePayrollApi(payload) {
-  return apiRequest('/v1/payroll/release', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
 }
 
 export async function fetchProductionApi() {
@@ -282,3 +244,50 @@ export async function deleteAnnouncementApi(id) {
 }
 
 // Schedules API removed (not used). Frontend no longer calls /v1/schedules.
+
+// Piece rates API
+export async function fetchRatesApi() {
+  return apiRequest('/v1/rates')
+}
+
+export async function createRateApi(payload) {
+  return apiRequest('/v1/rates', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function updateRateApi(id, payload) {
+  return apiRequest(`/v1/rates/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function deleteRateApi(id) {
+  return apiRequest(`/v1/rates/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  })
+}
+
+// Notifications API
+export async function fetchNotificationUnreadCountsApi() {
+  return apiRequest('/v1/notifications/unread-counts')
+}
+
+export async function fetchNotificationsApi(unreadOnly = false) {
+  const q = unreadOnly ? '?unread=true' : ''
+  return apiRequest(`/v1/notifications${q}`)
+}
+
+export async function markNotificationReadApi(id) {
+  return apiRequest(`/v1/notifications/${encodeURIComponent(id)}/read`, {
+    method: 'PATCH',
+  })
+}
+
+export async function markNotificationsReadByTypeApi(type) {
+  return apiRequest(`/v1/notifications/read-all?type=${encodeURIComponent(type)}`, {
+    method: 'PATCH',
+  })
+}

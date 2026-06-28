@@ -8,7 +8,6 @@ import MainLayout from './shared/layout/MainLayout'
 import EmployeeLayout from './roles/employee/layout/EmployeeLayout'
 
 const Login = lazy(() => import('./pages/Login'))
-const Register = lazy(() => import('./pages/Register'))
 const Landing = lazy(() => import('./pages/Landing'))
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard'))
 const LeadmanDashboard = lazy(() => import('./roles/leadman/pages/LeadmanDashboard'))
@@ -20,14 +19,12 @@ const ProductionDashboard = lazy(() => import('./roles/production/pages/Producti
 const ProductionReports = lazy(() => import('./roles/production/pages/ProductionReports'))
 const ProductionCompiledReports = lazy(() => import('./roles/production/pages/ProductionCompiledReports'))
 const ProductionConsolidatedReports = lazy(() => import('./roles/production/pages/ProductionConsolidatedReports'))
-const FinanceHome = lazy(() => import('./roles/finance/pages/FinanceHome'))
-const FinanceProductionReports = lazy(() => import('./roles/finance/pages/FinanceProductionReports'))
-const FinanceDepartmentEmployees = lazy(() => import('./roles/finance/pages/FinanceDepartmentEmployees'))
 // GMOversight removed — GMOverview will be the main GM entry
 const HRCreateAccount = lazy(() => import('./roles/hr/pages/HRCreateAccount'))
 const HREmployeeDirectory = lazy(() => import('./roles/hr/pages/EmployeeDirectory'))
 const GMEmployeeManagement = lazy(() => import('./roles/gm/pages/EmployeeManagement'))
 const GMAnnouncements = lazy(() => import('./roles/gm/pages/Announcements'))
+const GMRateManagement = lazy(() => import('./roles/gm/pages/RateManagement'))
 const GMOverview = lazy(() => import('./roles/gm/pages/GMOverview'))
 const EmployeeDashboard = lazy(() => import('./roles/employee/pages/EmployeeDashboard'))
 const EmployeeAnnouncements = lazy(() => import('./roles/employee/pages/Announcements'))
@@ -49,7 +46,6 @@ export default function App() {
             <Suspense fallback={<RouteLoadingFallback />}>
               <Routes>
                 <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
                 <Route path="/" element={<Landing />} />
 
                 <Route path="/app/portal/*" element={<EmployeeLayout />}>
@@ -70,15 +66,12 @@ export default function App() {
                   <Route path="production/compiled" element={<ProductionCompiledReports />} />
                   <Route path="production/consolidated" element={<ProductionConsolidatedReports />} />
 
-                  <Route path="payroll" element={<FinanceHome />} />
-                  <Route path="payroll/production" element={<FinanceProductionReports />} />
-                  <Route path="payroll/employees" element={<FinanceDepartmentEmployees />} />
-
                   <Route path="hr" element={<Navigate to="/app/hr/employees" replace />} />
                   <Route path="hr/create-account" element={<HRCreateAccount />} />
                   <Route path="hr/employees" element={<HREmployeeDirectory />} />
                   <Route path="gm/employees" element={<GMEmployeeManagement />} />
                   <Route path="gm/announcements" element={<GMAnnouncements />} />
+                  <Route path="gm/rates" element={<GMRateManagement />} />
                   <Route path="gm" element={<GMOverview />} />
                   <Route path="gm/overview" element={<GMOverview />} />
                   <Route path="requests" element={<Requests />} />
@@ -96,7 +89,6 @@ export default function App() {
 
                 <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
                 <Route path="/production" element={<Navigate to="/app/production" replace />} />
-                <Route path="/payroll" element={<Navigate to="/app/payroll" replace />} />
                 <Route path="/employees" element={<Navigate to="/app/gm/employees" replace />} />
                 <Route path="/requests" element={<Navigate to="/app/requests" replace />} />
                 <Route path="/portal" element={<Navigate to="/app/portal" replace />} />

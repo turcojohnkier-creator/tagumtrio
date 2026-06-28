@@ -4,7 +4,7 @@ import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
 import DailyReportTable from '../../../shared/reports/DailyReportTable'
 import { useDialog } from '../../../context/dialog-context'
-import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from '../../../shared/reports/report-entry-utils'
+import { getEntryIdentifier, getEntryLabel, hasMeaningfulEntry } from '../../../shared/reports/report-entry-utils'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Card, { SectionTitle } from '../../../shared/ui/Card'
 import Button from '../../../shared/ui/Button'
@@ -23,10 +23,6 @@ function formatReportDate(value) {
   }).format(date)
 }
 
-function getFieldValue(entry, key) {
-  return entry?.raw?.qrFields?.[key] ?? entry?.qrFields?.[key] ?? entry?.[key] ?? ''
-}
-
 function groupReportEntries(entries = []) {
   const groups = new Map()
 
@@ -34,8 +30,8 @@ function groupReportEntries(entries = []) {
     const batchKey = String(entry.batchId || entry.raw?.batchId || entry.id || `${entry.department || 'report'}-${index}`)
     const scannedAt = entry.batchCapturedAt || entry.scannedAt || entry.raw?.batchCapturedAt || entry.raw?.capturedAt || entry.createdAt || entry.reportDate
     const department = String(entry.department || entry.raw?.department || '')
-    const thickness = String(getFieldValue(entry, 'thickness') || '')
-    const cratesPieces = String(getFieldValue(entry, 'cratePieces') || getFieldValue(entry, 'crates') || '')
+    const product = String(entry.product || entry.raw?.product || '')
+    const quantity = entry.quantity || entry.raw?.quantity || ''
 
     if (!groups.has(batchKey)) {
       groups.set(batchKey, {
@@ -43,8 +39,8 @@ function groupReportEntries(entries = []) {
         batchId: batchKey,
         department,
         scannedAt,
-        thickness,
-        cratesPieces,
+        product,
+        quantity,
         entries: [],
       })
     }
@@ -53,15 +49,14 @@ function groupReportEntries(entries = []) {
     group.entries.push(entry)
     group.department = group.department || department
     group.scannedAt = group.scannedAt || scannedAt
-    group.thickness = group.thickness || thickness
-    group.cratesPieces = group.cratesPieces || cratesPieces
+    group.product = group.product || product
+    group.quantity = group.quantity || quantity
   })
 
   return Array.from(groups.values())
     .map((group) => ({
       ...group,
       employeeCount: new Set(group.entries.map((entry) => String(getEntryIdentifier(entry) || getEntryLabel(entry) || entry.id || ''))).size,
-      totalHours: group.entries.reduce((sum, entry) => sum + Number(entry.loggedHours || 0), 0),
       totalAmount: group.entries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0),
     }))
     .sort((a, b) => new Date(b.scannedAt || 0) - new Date(a.scannedAt || 0))
@@ -100,12 +95,12 @@ function ReportDetailModal({ batch, onClose, onSubmit, onDelete, isSubmitting })
               <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{batch.department || '-'}</p>
             </div>
             <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-zinc-400">Thickness</p>
-              <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{batch.thickness || '-'}</p>
+              <p className="text-xs uppercase tracking-wide text-zinc-400">Product</p>
+              <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{batch.product || '-'}</p>
             </div>
             <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-zinc-400">Crates / Pieces</p>
-              <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{batch.cratesPieces || '-'}</p>
+              <p className="text-xs uppercase tracking-wide text-zinc-400">Quantity</p>
+              <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{batch.quantity || '-'}</p>
             </div>
           </div>
 
@@ -175,7 +170,7 @@ export default function LeadmanDailyReport() {
 
     const shouldSubmit = await dialog.confirm({
       title: 'Submit daily report?',
-      message: `Submit consolidated report for ${selectedDepartment}? This will merge all scanned cards into one daily table and send it to Production In-Charge and Finance.`,
+      message: `Submit consolidated report for ${selectedDepartment}? This will merge all scanned cards into one daily table and send it for verification.`,
       confirmText: 'Submit consolidated',
       cancelText: 'Cancel',
     })
@@ -189,7 +184,7 @@ export default function LeadmanDailyReport() {
       const submittedBy = user?.id || null
       const submittedByName = user?.name || null
       const totalPieces = consolidatedEntries.reduce((sum, entry) => {
-        const pieces = Number(entry.pieces || entry.raw?.qrFields?.cratePieces || entry.qrFields?.cratePieces || entry.raw?.qrFields?.crates || entry.qrFields?.crates || 0)
+        const pieces = Number(entry.quantity || entry.pieces || entry.raw?.qrFields?.pieces || entry.qrFields?.pieces || entry.raw?.qrFields?.cratePieces || entry.qrFields?.cratePieces || entry.raw?.qrFields?.crates || entry.qrFields?.crates || 0)
         return sum + (Number.isFinite(pieces) ? pieces : 0)
       }, 0)
       const totalAmount = consolidatedEntries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0)
@@ -223,7 +218,7 @@ export default function LeadmanDailyReport() {
       const submittedByName = user?.name || null
       const validEntries = (Array.isArray(batch.entries) ? batch.entries : []).filter(hasMeaningfulEntry)
       const totalPieces = validEntries.reduce((sum, entry) => {
-        const pieces = Number(entry.pieces || entry.raw?.qrFields?.cratePieces || entry.qrFields?.cratePieces || entry.raw?.qrFields?.crates || entry.qrFields?.crates || 0)
+        const pieces = Number(entry.quantity || entry.pieces || entry.raw?.qrFields?.pieces || entry.qrFields?.pieces || entry.raw?.qrFields?.cratePieces || entry.qrFields?.cratePieces || entry.raw?.qrFields?.crates || entry.qrFields?.crates || 0)
         return sum + (Number.isFinite(pieces) ? pieces : 0)
       }, 0)
       const totalAmount = validEntries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0)
@@ -332,12 +327,12 @@ export default function LeadmanDailyReport() {
                       <p className="mt-1 text-sm font-semibold text-zinc-900">{batch.employeeCount}</p>
                     </div>
                     <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
-                      <p className="text-[11px] text-zinc-400">Thickness</p>
-                      <p className="mt-1 text-sm font-semibold text-zinc-900">{batch.thickness || '-'}</p>
+                      <p className="text-[11px] text-zinc-400">Product</p>
+                      <p className="mt-1 text-sm font-semibold text-zinc-900">{batch.product || '-'}</p>
                     </div>
                     <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
-                      <p className="text-[11px] text-zinc-400">Crates / Pieces</p>
-                      <p className="mt-1 text-sm font-semibold text-zinc-900">{batch.cratesPieces || '-'}</p>
+                      <p className="text-[11px] text-zinc-400">Quantity</p>
+                      <p className="mt-1 text-sm font-semibold text-zinc-900">{batch.quantity || '-'}</p>
                     </div>
                   </div>
 

@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { ArrowLeft, CheckCircle2, Hourglass, XCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/auth-context'
@@ -9,9 +9,13 @@ import Badge from '../../../shared/ui/Badge'
 
 export default function MyLeaves() {
   const { user } = useAuth()
-  const { getEmployeeLeaveRequests, getEmployeeTotals, formatDateTime } = useAppData()
+  const { getEmployeeLeaveRequests, getEmployeeTotals, formatDateTime, markNotificationsSeen } = useAppData()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('approved-leaves')
+
+  useEffect(() => {
+    markNotificationsSeen('leave_request_status')
+  }, [])
 
   const leaveRequests = getEmployeeLeaveRequests(user?.id)
   const totals = getEmployeeTotals(user?.id)

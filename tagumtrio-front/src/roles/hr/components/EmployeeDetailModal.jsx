@@ -1,6 +1,7 @@
 import { X, File, Info } from 'lucide-react'
 import { DEPARTMENTS } from '../../../constants/departments'
 import Button from '../../../shared/ui/Button'
+import Portal from '../../../shared/ui/Portal'
 
 export default function EmployeeDetailModal({ employee, onClose, onToggleActive, actionLoading = false }) {
   if (!employee) return null
@@ -10,12 +11,12 @@ export default function EmployeeDetailModal({ employee, onClose, onToggleActive,
   const dept = employee.department || employee.dept || employee.departmentName || '—'
   const role = employee.role || '—'
   const contact = employee.contact || employee.phone || employee.mobile || '—'
-  const email = employee.email || employee.employeeEmail || '—'
   const isActive = employee.is_active !== false
   const toggleLabel = isActive ? 'Archive account' : 'Reactivate account'
 
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+    <Portal>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative w-full max-w-3xl mx-auto bg-zinc-50 border border-zinc-200 rounded-lg overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-zinc-200">
@@ -55,10 +56,6 @@ export default function EmployeeDetailModal({ employee, onClose, onToggleActive,
                 <div>
                   <p className="text-[11px] text-zinc-500">Contact</p>
                   <p className="text-sm font-medium text-zinc-900">{contact}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] text-zinc-500">Email</p>
-                  <p className="text-sm font-medium text-zinc-900">{email}</p>
                 </div>
               </div>
             </div>
@@ -128,5 +125,6 @@ export default function EmployeeDetailModal({ employee, onClose, onToggleActive,
         </div>
       </div>
     </div>
+    </Portal>
   )
 }

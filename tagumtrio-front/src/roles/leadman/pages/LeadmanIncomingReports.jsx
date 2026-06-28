@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Check, CircleAlert, ChevronDown, Image as ImageIcon } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 import { useDialog } from '../../../context/dialog-context'
 import { useAppData } from '../../../context/app-data-context'
+import { fetchDailyReportsApi, updateDailyReportApi } from '../../../lib/api'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Button from '../../../shared/ui/Button'
 import Badge from '../../../shared/ui/Badge'
@@ -21,10 +22,10 @@ function normalizeText(value) {
 
 function getStatusLabel(status) {
   switch (normalizeText(status)) {
-    case 'production_verified':
-      return 'Ready for leadman verify'
+    case 'submitted':
+      return 'Awaiting your verification'
     case 'leadman_verified':
-      return 'Leadman verified'
+      return 'Verified by you'
     case 'gm_submitted':
       return 'Forwarded to GM'
     case 'rejected':
@@ -36,7 +37,6 @@ function getStatusLabel(status) {
 
 function getStatusVariant(status) {
   switch (normalizeText(status)) {
-    case 'production_verified':
     case 'leadman_verified':
       return 'success'
     case 'gm_submitted':
@@ -48,65 +48,99 @@ function getStatusVariant(status) {
   }
 }
 
+function getReportPhotos(report) {
+  const entries = Array.isArray(report?.entries) ? report.entries : []
+  return entries.flatMap((entry) => {
+    if (Array.isArray(entry?.photos)) return entry.photos
+    if (entry?.photos && typeof entry.photos === 'object') return Object.values(entry.photos)
+    return entry?.photoUrls || entry?.imageUrls || []
+  }).filter(Boolean)
+}
+
 export default function LeadmanIncomingReports() {
   const { user } = useAuth()
   const dialog = useDialog()
-  const {
-    selectedLeadmanDepartment,
-    dailyReports = [],
-    refreshDailyReports,
-    updateDailyReportStatus,
-    formatDateTime: formatProviderDateTime,
-  } = useAppData()
+  const { selectedLeadmanDepartment, setSelectedLeadmanDepartment, formatDateTime: formatProviderDateTime, markNotificationsSeen } = useAppData()
+
+  useEffect(() => {
+    markNotificationsSeen('daily_report_incoming')
+  }, [])
+
+  const assignedDepartments = useMemo(() => {
+    if (Array.isArray(user?.departments) && user.departments.length > 0) return user.departments
+    if (user?.department) return [user.department]
+    return []
+  }, [user?.department, user?.departments])
+
+  const currentDepartment = selectedLeadmanDepartment || assignedDepartments[0] || ''
 
   const [activeTab, setActiveTab] = useState('incoming')
+  const [reports, setReports] = useState([])
+  const [loading, setLoading] = useState(true)
   const [expandedReportId, setExpandedReportId] = useState(null)
   const [showPhotoModal, setShowPhotoModal] = useState(false)
   const [selectedPhotos, setSelectedPhotos] = useState([])
   const [verificationNotes, setVerificationNotes] = useState({})
   const [actionLoadingId, setActionLoadingId] = useState('')
 
-  const currentDepartment = selectedLeadmanDepartment || user?.department || user?.departments?.[0] || ''
+  const loadReports = useCallback(async () => {
+    if (!currentDepartment) {
+      setReports([])
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    try {
+      const remote = await fetchDailyReportsApi({ targetDepartment: currentDepartment })
+      setReports(Array.isArray(remote) ? remote : [])
+    } finally {
+      setLoading(false)
+    }
+  }, [currentDepartment])
+
+  useEffect(() => {
+    loadReports()
+  }, [loadReports])
 
   const incomingReports = useMemo(
-    () => (Array.isArray(dailyReports) ? dailyReports : []).filter((report) => normalizeText(report.status) === 'production_verified'),
-    [dailyReports]
+    () => reports.filter((report) => normalizeText(report.status) === 'submitted'),
+    [reports]
   )
 
   const verifiedReports = useMemo(
-    () => (Array.isArray(dailyReports) ? dailyReports : []).filter((report) => ['leadman_verified', 'gm_submitted'].includes(normalizeText(report.status))),
-    [dailyReports]
+    () => reports.filter((report) => ['leadman_verified', 'gm_submitted'].includes(normalizeText(report.status))),
+    [reports]
   )
 
   async function patchReport(report, status, notes = '') {
     if (!report?.id) return
 
     const confirmed = await dialog.confirm({
-      title: status === 'rejected' ? 'Flag this report?' : 'Verify this report?',
+      title: status === 'rejected' ? 'Reject this report?' : 'Verify this report?',
       message: status === 'rejected'
-        ? 'Flag this report for correction and send it back to production.'
-        : `Mark report ${report.id} as leadman verified?`,
-      confirmText: status === 'rejected' ? 'Flag' : 'Verify',
+        ? 'Reject this report and send it back to the original leadman for correction.'
+        : `Mark report ${report.id} as verified?`,
+      confirmText: status === 'rejected' ? 'Reject' : 'Verify',
       cancelText: 'Cancel',
     })
     if (!confirmed) return
 
     setActionLoadingId(report.id)
     try {
-      await updateDailyReportStatus(report.id, {
+      await updateDailyReportApi(report.id, {
         status,
         verifiedBy: user?.id || null,
         verifiedByName: user?.name || null,
         notes,
       })
-      await refreshDailyReports()
+      await loadReports()
       dialog.success({
         title: 'Report updated',
         message: `Report ${report.id} has been updated to ${getStatusLabel(status)}.`,
       })
     } catch (error) {
       dialog.error({
-        title: 'Verification failed',
+        title: status === 'rejected' ? 'Rejection failed' : 'Verification failed',
         message: error?.message || 'Unable to update report status.',
       })
     } finally {
@@ -117,9 +151,8 @@ export default function LeadmanIncomingReports() {
   const ReportCard = ({ report }) => {
     const isExpanded = expandedReportId === report.id
     const entries = Array.isArray(report.entries) ? report.entries : []
-    const photos = entries.flatMap((entry) => entry?.photos || entry?.photoUrls || entry?.imageUrls || []).filter(Boolean)
+    const photos = getReportPhotos(report)
     const status = normalizeText(report.status)
-    const notes = verificationNotes[report.id] || ''
 
     return (
       <div className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 transition-colors hover:border-zinc-300">
@@ -147,7 +180,7 @@ export default function LeadmanIncomingReports() {
           <div className="border-t border-zinc-200 bg-white/40 p-4 space-y-4">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-zinc-400">Department</p>
+                <p className="text-xs uppercase tracking-wide text-zinc-400">From department</p>
                 <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{report.department || '—'}</p>
               </div>
               <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
@@ -186,14 +219,14 @@ export default function LeadmanIncomingReports() {
               <p className="mt-2 text-sm text-zinc-800">{report.summary || 'No notes provided.'}</p>
             </div>
 
-            {status === 'production_verified' ? (
+            {status === 'submitted' ? (
               <div className="grid gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
                 <div>
                   <label className="text-xs uppercase tracking-wide text-zinc-400">Verification notes</label>
                   <textarea
                     value={verificationNotes[report.id] || ''}
                     onChange={(event) => setVerificationNotes((current) => ({ ...current, [report.id]: event.target.value }))}
-                    placeholder="Add verification notes before approving this report."
+                    placeholder="Required when rejecting — explain what needs to be corrected."
                     className="mt-2 min-h-[96px] w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-500"
                   />
                 </div>
@@ -209,19 +242,19 @@ export default function LeadmanIncomingReports() {
                   <Button
                     type="button"
                     variant="danger"
-                    disabled={actionLoadingId === report.id}
+                    disabled={actionLoadingId === report.id || !verificationNotes[report.id]}
                     onClick={() => patchReport(report, 'rejected', verificationNotes[report.id] || '')}
                   >
                     <CircleAlert className="h-4 w-4" />
-                    Flag issue
+                    Reject (note required)
                   </Button>
                 </div>
               </div>
-            ) : report.status === 'leadman_verified' || report.status === 'gm_submitted' ? (
+            ) : (
               <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
                 This report has already been verified and moved forward.
               </div>
-            ) : null}
+            )}
           </div>
         ) : null}
       </div>
@@ -233,14 +266,18 @@ export default function LeadmanIncomingReports() {
       <PageHeader
         eyebrow="Leadman verification"
         title="Incoming Reports"
-        description="Review production-verified reports before starting the next department step."
+        description="Reports from the previous department, awaiting your verification before moving forward."
+        actions={(
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+            <p className="text-xs uppercase tracking-wider text-zinc-400">Department</p>
+            <select value={currentDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-1.5 min-w-[220px] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none">
+              {assignedDepartments.map((department) => (
+                <option key={department} value={department}>{department}</option>
+              ))}
+            </select>
+          </div>
+        )}
       />
-
-      {currentDepartment ? (
-        <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm text-zinc-700">
-          Active department: <span className="font-semibold text-emerald-700">{currentDepartment}</span>
-        </div>
-      ) : null}
 
       <div className="flex gap-2 border-b border-zinc-200">
         <button
@@ -260,9 +297,11 @@ export default function LeadmanIncomingReports() {
       </div>
 
       <div className="space-y-3">
-        {activeTab === 'incoming' ? (
+        {loading ? (
+          <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">Loading reports...</div>
+        ) : activeTab === 'incoming' ? (
           incomingReports.length === 0 ? (
-            <EmptyState title="No incoming reports" description="No incoming reports are ready for leadman verification." />
+            <EmptyState title="No incoming reports" description="No reports from the previous department are awaiting your verification." />
           ) : (
             incomingReports.map((report) => <ReportCard key={report.id} report={report} />)
           )
@@ -282,9 +321,8 @@ export default function LeadmanIncomingReports() {
             </div>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {selectedPhotos.map((photo, index) => (
-                <div key={`${photo}-${index}`} className="aspect-square rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-center text-sm text-zinc-500">
-                  <ImageIcon className="mx-auto mb-2 h-8 w-8" />
-                  <p className="truncate">{photo}</p>
+                <div key={index} className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
+                  <img src={photo} alt={`Verification ${index + 1}`} className="h-40 w-full object-cover" />
                 </div>
               ))}
             </div>

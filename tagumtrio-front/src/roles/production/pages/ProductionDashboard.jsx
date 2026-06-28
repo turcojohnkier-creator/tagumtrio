@@ -5,7 +5,7 @@ import { useAuth } from '../../../context/auth-context'
 import { useDialog } from '../../../context/dialog-context'
 import { useAppData } from '../../../context/app-data-context'
 import { fetchDailyReportsApi } from '../../../lib/api'
-import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from '../../../shared/reports/report-entry-utils'
+import { getEntryIdentifier, getEntryLabel, hasMeaningfulEntry } from '../../../shared/reports/report-entry-utils'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Card from '../../../shared/ui/Card'
 import Button, { LinkButton } from '../../../shared/ui/Button'
@@ -32,27 +32,24 @@ function toDateKey(value) {
   return date.toISOString().slice(0, 10)
 }
 
-function getFieldValue(entry, key) {
-  return entry?.raw?.qrFields?.[key] ?? entry?.qrFields?.[key] ?? entry?.[key] ?? ''
-}
-
 function resolveEntryDepartment(entry, fallbackDepartment) {
   return entry?.department
     || entry?.raw?.department
-    || entry?.raw?.qrFields?.department
-    || entry?.qrFields?.department
     || fallbackDepartment
     || '-'
 }
 
 function getReportPhotos(report) {
   const entries = Array.isArray(report?.entries) ? report.entries : []
-  return entries.flatMap((entry) => entry?.photos || entry?.photoUrls || entry?.imageUrls || []).filter(Boolean)
+  return entries.flatMap((entry) => {
+    if (Array.isArray(entry?.photos)) return entry.photos
+    if (entry?.photos && typeof entry.photos === 'object') return Object.values(entry.photos)
+    return entry?.photoUrls || entry?.imageUrls || []
+  }).filter(Boolean)
 }
 
 function isVerifiedReportStatus(status) {
-  const normalized = String(status || '').trim().toLowerCase()
-  return ['production_verified', 'leadman_verified', 'gm_submitted', 'compiled', 'verified'].includes(normalized)
+  return String(status || '').trim().toLowerCase() === 'leadman_verified'
 }
 
 function buildReportCards(reports = []) {
@@ -61,17 +58,8 @@ function buildReportCards(reports = []) {
     const reportDate = report.reportDate || report.report_date || report.createdAt || report.created_at || new Date().toISOString()
     const firstEntry = entries[0] || {}
     const department = report.department || firstEntry.department || 'Unknown Department'
-    const thickness = firstEntry.raw?.qrFields?.thickness || firstEntry.qrFields?.thickness || firstEntry.thickness || '-'
-    const cratesPieces = firstEntry.raw?.qrFields?.cratePieces
-      || firstEntry.qrFields?.cratePieces
-      || firstEntry.raw?.qrFields?.crates
-      || firstEntry.qrFields?.crates
-      || firstEntry.raw?.qrFields?.pieces
-      || firstEntry.qrFields?.pieces
-      || firstEntry.cratePieces
-      || firstEntry.crates
-      || firstEntry.pieces
-      || '-'
+    const product = firstEntry.product || firstEntry.raw?.product || '-'
+    const quantity = firstEntry.quantity || firstEntry.raw?.quantity || '-'
     const scannedAt = report.createdAt || report.created_at || reportDate
     const employeeCount = new Set(entries.map((entry) => String(getEntryIdentifier(entry) || getEntryLabel(entry) || entry.id || ''))).size
     const photos = getReportPhotos(report)
@@ -84,8 +72,8 @@ function buildReportCards(reports = []) {
       reportDate,
       scannedAt,
       employeeCount,
-      thickness,
-      cratesPieces,
+      product,
+      quantity,
       entries,
       photos,
       status: report.status || '',
@@ -124,8 +112,8 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
                 <tr>
                   <th className="px-4 py-3 font-medium">Employee</th>
                   <th className="px-4 py-3 font-medium">Department</th>
-                  <th className="px-4 py-3 font-medium">Thickness</th>
-                  <th className="px-4 py-3 font-medium">Crates / Pieces</th>
+                  <th className="px-4 py-3 font-medium">Product</th>
+                  <th className="px-4 py-3 font-medium">Quantity</th>
                   <th className="px-4 py-3 font-medium">Date</th>
                   <th className="px-4 py-3 font-medium">Amount</th>
                 </tr>
@@ -138,9 +126,9 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
                       <div className="text-xs text-zinc-400">{getEntryIdentifier(entry) || '-'}</div>
                     </td>
                     <td className="px-4 py-4 text-zinc-700">{resolveEntryDepartment(entry, report.department)}</td>
-                    <td className="px-4 py-4 text-zinc-700">{getFieldValue(entry, 'thickness') || report.thickness || '-'}</td>
-                    <td className="px-4 py-4 text-zinc-700">{getEntryPieces(entry) || report.cratesPieces || '-'}</td>
-                    <td className="px-4 py-4 text-zinc-700">{getFieldValue(entry, 'date') || getFieldValue(entry, 'dateIn') || formatReportDate(entry.scannedAt || report.scannedAt)}</td>
+                    <td className="px-4 py-4 text-zinc-700">{entry.product || entry.raw?.product || report.product || '-'}</td>
+                    <td className="px-4 py-4 text-zinc-700">{entry.quantity || entry.raw?.quantity || report.quantity || '-'}</td>
+                    <td className="px-4 py-4 text-zinc-700">{formatReportDate(entry.scannedAt || report.scannedAt)}</td>
                     <td className="px-4 py-4 font-semibold text-zinc-900">₱{Number(entry.amount || 0).toLocaleString()}</td>
                   </tr>
                 ))}
@@ -305,8 +293,8 @@ export default function ProductionDashboard() {
         report.department,
         report.submittedBy,
         report.summary,
-        report.thickness,
-        report.cratesPieces,
+        report.product,
+        report.quantity,
         report.scannedAt,
       ]
         .filter(Boolean)
@@ -346,7 +334,7 @@ export default function ProductionDashboard() {
                 type="text"
                 value={searchText}
                 onChange={(event) => setSearchText(event.target.value)}
-                placeholder="Search department, thickness, or submitted by..."
+                placeholder="Search department, product, or submitted by..."
                 className="w-full rounded-lg border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-300/40"
               />
             </div>
@@ -396,12 +384,12 @@ export default function ProductionDashboard() {
                       <p className="mt-1 text-sm font-semibold text-zinc-900">{report.employeeCount}</p>
                     </div>
                     <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
-                      <p className="text-[11px] text-zinc-400">Thickness</p>
-                      <p className="mt-1 text-sm font-semibold text-zinc-900">{report.thickness || '-'}</p>
+                      <p className="text-[11px] text-zinc-400">Product</p>
+                      <p className="mt-1 text-sm font-semibold text-zinc-900">{report.product || '-'}</p>
                     </div>
                     <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
-                      <p className="text-[11px] text-zinc-400">Crates / Pieces</p>
-                      <p className="mt-1 text-sm font-semibold text-zinc-900">{report.cratesPieces || '-'}</p>
+                      <p className="text-[11px] text-zinc-400">Quantity</p>
+                      <p className="mt-1 text-sm font-semibold text-zinc-900">{report.quantity || '-'}</p>
                     </div>
                     <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
                       <p className="text-[11px] text-zinc-400">Status</p>

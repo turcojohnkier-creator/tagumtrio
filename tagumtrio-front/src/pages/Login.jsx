@@ -20,7 +20,7 @@ export default function Login() {
   // ... (Keep your useEffect for localStorage as is)
 
   const validationMessage = useMemo(() => {
-    if (!identifier.trim()) return 'Enter your work email or employee ID.'
+    if (!identifier.trim()) return 'Enter your username.'
     if (password.length < 6) return 'Password must be at least 6 characters.'
     return ''
   }, [identifier, password])
@@ -108,7 +108,7 @@ export default function Login() {
                     value={identifier}
                     onChange={(event) => setIdentifier(event.target.value)}
                     className="w-full rounded-xl border border-zinc-300 bg-zinc-50 py-3 pl-10 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none"
-                    placeholder="e.g. leadman@triops.local or EMP-001"
+                    placeholder="e.g. juan.delacruz"
                   />
                 </div>
               </div>
@@ -166,10 +166,6 @@ export default function Login() {
 
               <p className="text-center text-sm text-zinc-500">
                 Account creation is managed by HR. Please contact your administrator to provision access.
-              </p>
-
-              <p className="text-[11px] text-zinc-400 text-center">
-                Demo starter accounts still work: admin@triops.local, leadman@triops.local, employee@triops.local.
               </p>
             </form>
           </section>

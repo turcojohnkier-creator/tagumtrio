@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { useAppData } from '../../../context/app-data-context'
 import { updateEmployeeApi } from '../../../lib/api'
+import { formatRole } from '../../../lib/roles'
 import EmployeeCard from '../../../roles/hr/components/EmployeeCard'
 import EmployeeDetailModal from '../../../roles/hr/components/EmployeeDetailModal'
 import PageHeader from '../../../shared/ui/PageHeader'
@@ -157,7 +158,7 @@ export default function EmployeeDirectory() {
             className="bg-zinc-50 border border-zinc-200 text-zinc-700 text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
           >
             {roleOptions.map((role) => (
-              <option key={role} value={role}>{role}</option>
+              <option key={role} value={role}>{role === 'All Roles' ? role : formatRole(role)}</option>
             ))}
           </select>
 

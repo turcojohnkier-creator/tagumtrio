@@ -1,4 +1,5 @@
 import { CalendarDays } from 'lucide-react'
+import { formatRole } from '../../../lib/roles'
 
 export default function EmployeeCard({
   employee,
@@ -10,7 +11,7 @@ export default function EmployeeCard({
 }) {
   const id = employee.employeeId || employee.id || employee.employee_id || ''
   const name = employee.employeeName || employee.name || employee.employee_name || 'Unknown'
-  const role = employee.role || '—'
+  const role = employee.role ? formatRole(employee.role) : '—'
   const department = employee.department || employee.dept || employee.departmentName || '—'
   const status = statusLabel || employee.status || 'Active'
   const isActive = employee.is_active !== false

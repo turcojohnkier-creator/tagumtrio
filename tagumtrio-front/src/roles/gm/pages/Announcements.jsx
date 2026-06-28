@@ -10,10 +10,9 @@ import EmptyState from '../../../shared/ui/EmptyState'
 const ROLE_OPTIONS = [
   { key: 'employee', label: 'Employee' },
   { key: 'leadman', label: 'Leadman' },
-  { key: 'gm', label: 'GM' },
-  { key: 'hr', label: 'HR' },
-  { key: 'finance', label: 'Finance' },
-  { key: 'production_incharge', label: 'Production' },
+  { key: 'gm', label: 'General Manager' },
+  { key: 'hr', label: 'Human Resource' },
+  { key: 'production_incharge', label: 'Production In-Charge' },
 ]
 
 function RoleTargetPicker({ selected, onChange }) {

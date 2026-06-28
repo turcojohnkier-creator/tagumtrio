@@ -45,9 +45,9 @@ export default function ViewPayslip() {
               <tr>
                 <th className="px-4 py-3 font-medium">Report Time</th>
                 <th className="px-4 py-3 font-medium">Department</th>
-                <th className="px-4 py-3 font-medium">Rate</th>
+                <th className="px-4 py-3 font-medium">Product</th>
+                <th className="px-4 py-3 font-medium">Quantity</th>
                 <th className="px-4 py-3 font-medium">Amount</th>
-                <th className="px-4 py-3 font-medium">Head Verified</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -60,9 +60,9 @@ export default function ViewPayslip() {
                   <tr key={record.id} className="text-zinc-700">
                     <td className="px-4 py-3">{formatDateTime(record.scannedAt)}</td>
                     <td className="px-4 py-3">{record.department}</td>
-                    <td className="px-4 py-3 tabular-nums">₱{Number(record.rate || 0).toLocaleString()}/hr</td>
+                    <td className="px-4 py-3">{record.product || '-'}</td>
+                    <td className="px-4 py-3 tabular-nums">{Number(record.quantity || 0).toLocaleString()}</td>
                     <td className="px-4 py-3 font-medium tabular-nums text-zinc-900">₱{Number(record.amount || 0).toLocaleString()}</td>
-                    <td className="px-4 py-3 text-zinc-500">{formatDateTime(record.headVerifiedAt)}</td>
                   </tr>
                 ))
               )}

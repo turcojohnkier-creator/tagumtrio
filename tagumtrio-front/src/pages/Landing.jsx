@@ -31,7 +31,7 @@ export default function Landing() {
             </div>
 
             <h1 className="mx-auto mt-6 max-w-4xl text-2xl font-semibold leading-tight text-zinc-900 sm:text-6xl">
-              One flow for employees, leadman, Production In-Charge, HR/Admin, and finance.
+              One flow for employees, leadman, Production In-Charge, HR/Admin, and GM.
             </h1>
 
             <p className="mx-auto mt-6 max-w-3xl text-lg text-zinc-700">

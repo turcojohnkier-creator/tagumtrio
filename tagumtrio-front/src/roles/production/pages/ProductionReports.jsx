@@ -1,12 +1,16 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, Check, CircleAlert, Image as ImageIcon, Send } from 'lucide-react'
-import { useAuth } from '../../../context/auth-context'
-import { useDialog } from '../../../context/dialog-context'
+import { ChevronDown, Image as ImageIcon } from 'lucide-react'
 import { useAppData } from '../../../context/app-data-context'
 import PageHeader from '../../../shared/ui/PageHeader'
-import Button from '../../../shared/ui/Button'
 import Badge from '../../../shared/ui/Badge'
 import EmptyState from '../../../shared/ui/EmptyState'
+
+function toDateKey(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toISOString().slice(0, 10)
+}
 
 function formatDateTime(value) {
   if (!value) return '—'
@@ -23,16 +27,26 @@ function extractEntries(report) {
   return Array.isArray(report?.entries) ? report.entries : []
 }
 
+function getReportPhotos(report) {
+  return extractEntries(report).flatMap((entry) => {
+    if (Array.isArray(entry?.photos)) return entry.photos
+    if (entry?.photos && typeof entry.photos === 'object') return Object.values(entry.photos)
+    return entry?.photoUrls || entry?.imageUrls || []
+  }).filter(Boolean)
+}
+
 function getStatusLabel(status) {
   switch (normalizeText(status)) {
     case 'submitted':
-      return 'Pending review'
-    case 'production_verified':
-      return 'Production verified'
+      return 'Awaiting leadman verification'
     case 'leadman_verified':
-      return 'Leadman verified'
+      return 'Leadman verified — ready to compile'
+    case 'compiled':
+      return 'Compiled'
     case 'gm_submitted':
       return 'Sent to GM'
+    case 'approved':
+      return 'Approved — payroll released'
     case 'rejected':
       return 'Rejected'
     default:
@@ -44,8 +58,9 @@ function getStatusVariant(status) {
   switch (normalizeText(status)) {
     case 'submitted':
       return 'warning'
-    case 'production_verified':
     case 'leadman_verified':
+    case 'compiled':
+    case 'approved':
       return 'success'
     case 'gm_submitted':
       return 'info'
@@ -57,74 +72,50 @@ function getStatusVariant(status) {
 }
 
 export default function ProductionReports() {
-  const { user } = useAuth()
-  const dialog = useDialog()
-  const {
-    dailyReports = [],
-    refreshDailyReports,
-    updateDailyReportStatus,
-    formatDateTime: formatProviderDateTime,
-  } = useAppData()
+  const { dailyReports = [], formatDateTime: formatProviderDateTime } = useAppData()
 
-  const [activeTab, setActiveTab] = useState('reviewed')
+  const [activeTab, setActiveTab] = useState('pending')
   const [expandedReportId, setExpandedReportId] = useState(null)
   const [showPhotoModal, setShowPhotoModal] = useState(false)
   const [selectedPhotos, setSelectedPhotos] = useState([])
-  const [verificationNotes, setVerificationNotes] = useState({})
-  const [actionLoadingId, setActionLoadingId] = useState('')
+  const [selectedDepartment, setSelectedDepartment] = useState('All Departments')
+  const [selectedDate, setSelectedDate] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState('all')
+
+  const departments = useMemo(() => {
+    const list = Array.isArray(dailyReports) ? dailyReports : []
+    return ['All Departments', ...Array.from(new Set(list.map((report) => report.department).filter(Boolean))).sort()]
+  }, [dailyReports])
+
+  const statusOptions = useMemo(() => {
+    const list = Array.isArray(dailyReports) ? dailyReports : []
+    return Array.from(new Set(list.map((report) => normalizeText(report.status)).filter(Boolean)))
+  }, [dailyReports])
+
+  const filteredDailyReports = useMemo(() => {
+    const list = Array.isArray(dailyReports) ? dailyReports : []
+    return list.filter((report) => {
+      const matchesDepartment = selectedDepartment === 'All Departments' || report.department === selectedDepartment
+      const matchesDate = !selectedDate || toDateKey(report.reportDate || report.report_date || report.createdAt || report.created_at) === selectedDate
+      const matchesStatus = selectedStatus === 'all' || normalizeText(report.status) === selectedStatus
+      return matchesDepartment && matchesDate && matchesStatus
+    })
+  }, [dailyReports, selectedDepartment, selectedDate, selectedStatus])
 
   const pendingReports = useMemo(
-    () => (Array.isArray(dailyReports) ? dailyReports : []).filter((report) => normalizeText(report.status) === 'submitted'),
-    [dailyReports]
+    () => filteredDailyReports.filter((report) => normalizeText(report.status) === 'submitted'),
+    [filteredDailyReports]
   )
 
   const reviewedReports = useMemo(
-    () => (Array.isArray(dailyReports) ? dailyReports : []).filter((report) => ['production_verified', 'leadman_verified', 'gm_submitted', 'rejected'].includes(normalizeText(report.status))),
-    [dailyReports]
+    () => filteredDailyReports.filter((report) => ['leadman_verified', 'compiled', 'gm_submitted', 'approved', 'rejected'].includes(normalizeText(report.status))),
+    [filteredDailyReports]
   )
-
-  async function patchReport(report, status, notes = '') {
-    if (!report?.id) return
-
-    const confirmed = await dialog.confirm({
-      title: status === 'rejected' ? 'Reject this report?' : 'Update report status?',
-      message: status === 'rejected'
-        ? 'Reject this report and send it back for correction?'
-        : `Update report ${report.id} to ${getStatusLabel(status)}?`,
-      confirmText: status === 'rejected' ? 'Reject' : 'Update',
-      cancelText: 'Cancel',
-    })
-    if (!confirmed) return
-
-    setActionLoadingId(report.id)
-    try {
-      await updateDailyReportStatus(report.id, {
-        status,
-        verifiedBy: user?.id || null,
-        verifiedByName: user?.name || null,
-        notes,
-      })
-      await refreshDailyReports()
-      dialog.success({
-        title: 'Report updated',
-        message: `Report ${report.id} is now marked as ${getStatusLabel(status)}.`,
-      })
-    } catch (error) {
-      dialog.error({
-        title: 'Update failed',
-        message: error?.message || 'Unable to update report status.',
-      })
-    } finally {
-      setActionLoadingId('')
-    }
-  }
 
   const ReportCard = ({ report }) => {
     const isExpanded = expandedReportId === report.id
     const entries = extractEntries(report)
-    const photos = entries.flatMap((entry) => entry?.photos || entry?.photoUrls || entry?.imageUrls || []).filter(Boolean)
-    const status = normalizeText(report.status)
-    const notes = verificationNotes[report.id] || ''
+    const photos = getReportPhotos(report)
 
     return (
       <div className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 transition-colors hover:border-zinc-300">
@@ -143,6 +134,7 @@ export default function ProductionReports() {
             </p>
             <p className="mt-1 text-sm text-zinc-400">
               {entries.length} entr{entries.length === 1 ? 'y' : 'ies'} • {report.summary || 'No summary provided'}
+              {report.targetDepartment ? <> • Heading to {report.targetDepartment}</> : null}
             </p>
           </div>
           <ChevronDown className={`h-5 w-5 shrink-0 text-zinc-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
@@ -199,50 +191,8 @@ export default function ProductionReports() {
             </div>
 
             {normalizeText(report.status) === 'submitted' ? (
-              <div className="grid gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
-                <div>
-                  <label className="text-xs uppercase tracking-wide text-zinc-400">Verification notes</label>
-                  <textarea
-                    value={verificationNotes[report.id] || ''}
-                    onChange={(event) => setVerificationNotes((current) => ({ ...current, [report.id]: event.target.value }))}
-                    placeholder="Add notes before marking this report as verified."
-                    className="mt-2 min-h-[96px] w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-500"
-                  />
-                </div>
-                <div className="flex flex-col gap-2 lg:w-[220px]">
-                  <Button
-                    type="button"
-                    disabled={actionLoadingId === report.id}
-                    onClick={() => patchReport(report, 'production_verified', verificationNotes[report.id] || '')}
-                  >
-                    <Check className="h-4 w-4" />
-                    {actionLoadingId === report.id ? 'Updating...' : 'Verify report'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="danger"
-                    disabled={actionLoadingId === report.id}
-                    onClick={() => patchReport(report, 'rejected', verificationNotes[report.id] || '')}
-                  >
-                    <CircleAlert className="h-4 w-4" />
-                    Reject report
-                  </Button>
-                </div>
-              </div>
-            ) : normalizeText(report.status) === 'production_verified' || normalizeText(report.status) === 'leadman_verified' ? (
-              <div className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-zinc-400">Ready for next step</p>
-                  <p className="mt-1 text-sm text-zinc-700">This report has already been verified and can be forwarded to GM.</p>
-                </div>
-                <Button
-                  type="button"
-                  disabled={actionLoadingId === report.id}
-                  onClick={() => patchReport(report, 'gm_submitted')}
-                >
-                  <Send className="h-4 w-4" />
-                  Submit to GM
-                </Button>
+              <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
+                Awaiting verification by {report.targetDepartment || 'the next department'}'s leadman. This view is read-only for production in-charge — once verified, it'll be ready to compile from the Production Dashboard.
               </div>
             ) : null}
           </div>
@@ -253,10 +203,44 @@ export default function ProductionReports() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Production in-charge" title="Production Reports" />
+      <PageHeader eyebrow="Production in-charge" title="Production Reports" description="Read-only monitoring of reports as they move through leadman verification." />
+
+      <div className="grid gap-3 sm:grid-cols-3 sm:max-w-2xl">
+        <select
+          value={selectedDepartment}
+          onChange={(event) => setSelectedDepartment(event.target.value)}
+          className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-300/40"
+        >
+          {departments.map((department) => (
+            <option key={department} value={department}>{department}</option>
+          ))}
+        </select>
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(event) => setSelectedDate(event.target.value)}
+          className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-300/40"
+        />
+        <select
+          value={selectedStatus}
+          onChange={(event) => setSelectedStatus(event.target.value)}
+          className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-300/40"
+        >
+          <option value="all">All Statuses</option>
+          {statusOptions.map((status) => (
+            <option key={status} value={status}>{getStatusLabel(status)}</option>
+          ))}
+        </select>
+      </div>
 
       <div className="flex gap-2 border-b border-zinc-200">
-
+        <button
+          type="button"
+          onClick={() => setActiveTab('pending')}
+          className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'pending' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
+        >
+          Pending ({pendingReports.length})
+        </button>
         <button
           type="button"
           onClick={() => setActiveTab('reviewed')}
@@ -269,7 +253,7 @@ export default function ProductionReports() {
       <div className="space-y-3">
         {activeTab === 'pending' ? (
           pendingReports.length === 0 ? (
-            <EmptyState title="No pending reports" description="No submitted reports waiting for production review." />
+            <EmptyState title="No pending reports" description="No submitted reports waiting on leadman verification." />
           ) : (
             pendingReports.map((report) => <ReportCard key={report.id} report={report} />)
           )
@@ -289,9 +273,8 @@ export default function ProductionReports() {
             </div>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {selectedPhotos.map((photo, index) => (
-                <div key={`${photo}-${index}`} className="aspect-square rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-center text-sm text-zinc-500">
-                  <ImageIcon className="mx-auto mb-2 h-8 w-8" />
-                  <p className="truncate">{photo}</p>
+                <div key={index} className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
+                  <img src={photo} alt={`Report ${index + 1}`} className="h-40 w-full object-cover" />
                 </div>
               ))}
             </div>

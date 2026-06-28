@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
-import { Bell, ChevronDown, LayoutGrid, LogOut, Menu, X } from 'lucide-react'
+import { Bell, ChevronDown, LayoutGrid, LogOut, X } from 'lucide-react'
 import { useState } from 'react'
+import { formatRole } from '../../lib/roles'
 
 function cn(...inputs) {
   return inputs.filter(Boolean).join(' ')
@@ -24,26 +25,19 @@ export default function AppShell({
   notificationItems = [],
   children,
 }) {
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
-
-  const closeMenus = () => {
-    setMobileNavOpen(false)
-    setNotificationsOpen(false)
-    setUserMenuOpen(false)
-  }
 
   return (
     <div className="min-h-screen bg-zinc-50/60">
       <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-        <div className="mx-auto grid h-16 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-6">
+        <div className="mx-auto grid h-16 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-6 md:h-20">
           <div className="flex items-center gap-2.5 justify-self-start">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm shadow-emerald-500/30">
-              <LayoutGrid className="h-4.5 w-4.5 text-white" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm shadow-emerald-500/30 md:h-11 md:w-11">
+              <LayoutGrid className="h-4.5 w-4.5 text-white md:h-5 md:w-5" />
             </div>
             <div className="min-w-0 leading-tight">
-              <h1 className="font-heading text-sm font-bold tracking-tight text-zinc-900">TriOPS</h1>
+              <h1 className="font-heading text-sm font-bold tracking-tight text-zinc-900 md:text-base">TriOPS</h1>
               {portalLabel ? <p className="hidden text-[11px] capitalize text-zinc-400 sm:block">{portalLabel}</p> : null}
             </div>
           </div>
@@ -54,15 +48,19 @@ export default function AppShell({
                 key={item.href}
                 to={item.href}
                 end={item.end}
+                title={item.name}
+                aria-label={item.name}
                 className={({ isActive }) => cn(
-                  'flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm transition-colors',
+                  'relative flex shrink-0 items-center justify-center rounded-full p-2.5 transition-colors md:p-3',
                   isActive
-                    ? 'bg-emerald-50 font-semibold text-emerald-700'
+                    ? 'bg-emerald-50 text-emerald-700'
                     : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
                 )}
               >
-                {item.icon ? <item.icon className="h-4 w-4" /> : null}
-                {item.name}
+                {item.icon ? <item.icon className="h-4 w-4 md:h-5 md:w-5" /> : null}
+                {item.hasUnread ? (
+                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-rose-500" />
+                ) : null}
               </NavLink>
             ))}
           </nav>
@@ -121,7 +119,7 @@ export default function AppShell({
               )}
             </div>
 
-            <div className="relative hidden sm:block">
+            <div className="relative">
               <button
                 onClick={() => { setUserMenuOpen((open) => !open); setNotificationsOpen(false) }}
                 className="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-zinc-100"
@@ -139,7 +137,7 @@ export default function AppShell({
                 <div className="absolute right-0 top-12 z-30 w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg">
                   <div className="border-b border-zinc-200 px-4 py-3">
                     <p className="truncate text-sm font-medium text-zinc-900">{user?.name}</p>
-                    <p className="truncate text-xs capitalize text-zinc-400">{(user?.role || '').replace('_', ' ')}</p>
+                    <p className="truncate text-xs text-zinc-400">{formatRole(user?.role)}</p>
                   </div>
                   <button
                     onClick={onLogout}
@@ -151,59 +149,34 @@ export default function AppShell({
                 </div>
               )}
             </div>
-
-            <button
-              onClick={() => setMobileNavOpen((open) => !open)}
-              className="inline-flex items-center justify-center rounded-md border border-zinc-200 p-2 text-zinc-600 md:hidden"
-              aria-label="Toggle navigation"
-            >
-              {mobileNavOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
           </div>
         </div>
-
-        {mobileNavOpen && (
-          <div className="border-t border-zinc-200 bg-white px-4 py-3 md:hidden">
-            <nav className="flex flex-col gap-1">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  end={item.end}
-                  onClick={closeMenus}
-                  className={({ isActive }) => cn(
-                    'flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm transition-colors',
-                    isActive
-                      ? 'bg-emerald-50 font-semibold text-emerald-700'
-                      : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
-                  )}
-                >
-                  {item.icon ? <item.icon className="h-4 w-4" /> : null}
-                  {item.name}
-                </NavLink>
-              ))}
-            </nav>
-            <div className="mt-3 flex items-center justify-between border-t border-zinc-200 pt-3">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200">
-                  {getInitials(user?.name)}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-zinc-900">{user?.name}</p>
-                  <p className="truncate text-xs capitalize text-zinc-400">{(user?.role || '').replace('_', ' ')}</p>
-                </div>
-              </div>
-              <button onClick={onLogout} className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-rose-700 hover:bg-rose-50" aria-label="Sign out">
-                <LogOut className="h-4 w-4" />
-                Sign out
-              </button>
-            </div>
-          </div>
-        )}
       </header>
 
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
+        <div className="flex items-center gap-1 rounded-full border border-zinc-200/70 bg-white/80 px-2 py-2 shadow-lg shadow-zinc-900/10 backdrop-blur-xl supports-[backdrop-filter]:bg-white/70">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.href}
+              to={item.href}
+              end={item.end}
+              className={({ isActive }) => cn(
+                'relative flex items-center justify-center rounded-full p-3 transition-colors',
+                isActive ? 'bg-emerald-500 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-900'
+              )}
+              aria-label={item.name}
+            >
+              {item.icon ? <item.icon className="h-5 w-5" /> : null}
+              {item.hasUnread ? (
+                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
+              ) : null}
+            </NavLink>
+          ))}
+        </div>
+      </nav>
+
       <main className="px-4 py-6 sm:px-6 sm:py-8 md:py-10">
-        <div className="mx-auto max-w-6xl pb-12">{children}</div>
+        <div className="mx-auto max-w-6xl pb-28 md:pb-12">{children}</div>
       </main>
     </div>
   )

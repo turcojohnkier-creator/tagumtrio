@@ -2,15 +2,6 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
-class PayrollCycleSummary(BaseModel):
-    key: str
-    label: str
-    totalHours: float = Field(alias='totalHours')
-    totalAmount: float = Field(alias='totalAmount')
-    employeeCount: int
-    latestDate: str
-
-
 class PayrollPaymentCreate(BaseModel):
     employeeId: int = Field(..., alias='employeeId')
     period: str

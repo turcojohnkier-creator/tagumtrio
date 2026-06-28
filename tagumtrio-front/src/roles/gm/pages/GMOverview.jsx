@@ -9,7 +9,7 @@ import PageHeader from '../../../shared/ui/PageHeader'
 
 export default function GMOverview() {
   const { t } = useAuth()
-  const { employees = [], employeesLoading, addReassignmentNotification, updateEmployeeRecord } = useAppData()
+  const { employees = [], employeesLoading, updateEmployeeRecord } = useAppData()
   const [selectedDept, setSelectedDept] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [sortOption, setSortOption] = useState('most')
@@ -62,7 +62,9 @@ export default function GMOverview() {
   }
 
   function handleEmployeeReassigned(notification) {
-    addReassignmentNotification(notification)
+    // The backend creates the reassignment notifications (for the employee and
+    // the target department's leadman) as a side effect of the PATCH already
+    // made in EmployeeListModal — just keep the local roster in sync here.
     if (notification?.employeeId) {
       updateEmployeeRecord(notification.employeeId, { department: notification.targetDepartment })
     }

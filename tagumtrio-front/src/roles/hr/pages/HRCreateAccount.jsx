@@ -18,7 +18,8 @@ export default function HRCreateAccount() {
   const { user } = useAuth()
   const dialog = useDialog()
 
-  const [name, setName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [identifier, setIdentifier] = useState('')
   const [role, setRole] = useState('employee')
   const [employeeDepartment, setEmployeeDepartment] = useState(DEPARTMENTS[0] || '')
@@ -39,7 +40,8 @@ export default function HRCreateAccount() {
   }
 
   const validationMessage = useMemo(() => {
-    if (!name.trim()) return 'Enter full name.'
+    if (!firstName.trim()) return 'Enter the first name.'
+    if (!lastName.trim()) return 'Enter the last name.'
     if (!identifier.trim()) return 'Enter a username.'
     if (identifier.trim().length < 3) return 'Username is too short.'
     if (/\s/.test(identifier.trim())) return 'Username cannot contain spaces.'
@@ -51,7 +53,7 @@ export default function HRCreateAccount() {
     if (password !== confirmPassword) return 'Passwords do not match.'
     if (!agree) return 'Please confirm the account policy.'
     return ''
-  }, [agree, confirmPassword, employeeDepartment, identifier, leadmanDepartments.length, name, password, role])
+  }, [agree, confirmPassword, employeeDepartment, firstName, identifier, lastName, leadmanDepartments.length, password, role])
 
   function toggleDepartment(department) {
     setLeadmanDepartments((current) => {
@@ -86,7 +88,7 @@ export default function HRCreateAccount() {
 
     try {
       const created = await createEmployeeAccountApi({
-        name: name.trim(),
+        name: `${firstName.trim()} ${lastName.trim()}`.trim(),
         identifier: identifier.trim(),
         password,
         role,
@@ -94,7 +96,8 @@ export default function HRCreateAccount() {
         departments: role === 'leadman' ? leadmanDepartments : undefined,
       })
 
-      setName('')
+      setFirstName('')
+      setLastName('')
       setIdentifier('')
       setRole('employee')
       setEmployeeDepartment(DEPARTMENTS[0] || '')
@@ -127,16 +130,30 @@ export default function HRCreateAccount() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <label className="text-sm text-zinc-700">Full name</label>
+            <div>
+              <label className="text-sm text-zinc-700">First name</label>
               <div className="mt-1.5 relative">
                 <UserCircle2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <input
                   type="text"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
+                  value={firstName}
+                  onChange={(event) => setFirstName(event.target.value)}
                   className="w-full rounded-xl border border-zinc-300 bg-zinc-50 py-3 pl-10 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none"
-                  placeholder="e.g. Juan Dela Cruz"
+                  placeholder="e.g. Juan"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm text-zinc-700">Last name</label>
+              <div className="mt-1.5 relative">
+                <UserCircle2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(event) => setLastName(event.target.value)}
+                  className="w-full rounded-xl border border-zinc-300 bg-zinc-50 py-3 pl-10 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none"
+                  placeholder="e.g. Dela Cruz"
                 />
               </div>
             </div>

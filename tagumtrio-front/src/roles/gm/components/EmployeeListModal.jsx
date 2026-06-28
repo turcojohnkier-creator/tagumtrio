@@ -5,6 +5,7 @@ import { updateEmployeeApi } from '../../../lib/api'
 import { DEPARTMENTS } from '../../../constants/departments'
 import Button from '../../../shared/ui/Button'
 import EmptyState from '../../../shared/ui/EmptyState'
+import Portal from '../../../shared/ui/Portal'
 
 export default function EmployeeListModal({ department, onClose, employees = [], onReassigned }) {
   const dialog = useDialog()
@@ -62,8 +63,9 @@ export default function EmployeeListModal({ department, onClose, employees = [],
   }
 
   return (
+    <Portal>
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
-      <div className="absolute inset-0 bg-zinc-50/70 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div className="relative z-10 w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-6xl overflow-hidden rounded-[2rem] border border-zinc-200 bg-zinc-50 shadow-sm max-h-[90vh]">
         <div className="flex flex-col justify-between gap-4 border-b border-zinc-200 bg-white px-6 py-5 sm:flex-row sm:items-center">
           <div>
@@ -150,5 +152,6 @@ export default function EmployeeListModal({ department, onClose, employees = [],
         </div>
       </div>
     </div>
+    </Portal>
   )
 }

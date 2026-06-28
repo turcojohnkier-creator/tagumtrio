@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AuthContext } from './auth-context'
-import { clearAuthToken, loginApi, registerApi, setAuthToken } from '../lib/api'
+import { clearAuthToken, loginApi, setAuthToken } from '../lib/api'
 import { DEPARTMENTS } from '../constants/departments'
 
 const AUTH_SESSION_KEY = 'triops-auth-session'
@@ -95,8 +95,8 @@ export function AuthProvider({ children }) {
   const translations = {
     en: {
       'login.welcome': 'Welcome back',
-      'login.description': 'Log in with your registered email or employee ID.',
-      'login.identifier': 'Email or Employee ID',
+      'login.description': 'Log in with your registered username.',
+      'login.identifier': 'Username',
       'login.password': 'Password',
       'login.remember': 'Remember me',
       'login.forgot': 'Forgot password?',
@@ -145,8 +145,8 @@ export function AuthProvider({ children }) {
     },
     zh: {
       'login.welcome': '欢迎回来',
-      'login.description': '使用您注册的邮箱或员工编号登录。',
-      'login.identifier': '邮箱或员工编号',
+      'login.description': '使用您注册的用户名登录。',
+      'login.identifier': '用户名',
       'login.password': '密码',
       'login.remember': '记住我',
       'login.forgot': '忘记密码？',
@@ -293,28 +293,12 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const registerUser = async ({ name, identifier, password, role, department, departments }) => {
-    try {
-      const created = await registerApi({
-        name: String(name || '').trim(),
-        identifier: normalizeIdentifier(identifier),
-        password,
-        role,
-        department,
-        departments,
-      })
-      return { ok: true, user: buildSessionUser(created) }
-    } catch (error) {
-      return { ok: false, error: error.message || 'Unable to register account.' }
-    }
-  }
-
   const logout = () => {
     clearAuthToken()
     setUser(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, users, login, loginWithCredentials, registerUser, logout, language, setLanguage, t }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, users, login, loginWithCredentials, logout, language, setLanguage, t }}>{children}</AuthContext.Provider>
   )
 }

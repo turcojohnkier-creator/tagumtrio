@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field, Extra
+from pydantic import BaseModel, ConfigDict, Field, Extra
 from typing import Any
 
 
@@ -18,10 +18,21 @@ class DailyReportEntry(BaseModel):
 
 class DailyReportCreate(BaseModel):
     department: str
+    targetDepartment: str | None = Field(default=None, alias="targetDepartment")
     reportDate: str
     submittedBy: int | None = Field(default=None, alias="submittedBy")
     submittedByName: str | None = Field(default=None, alias="submittedByName")
     status: str | None = Field(default='submitted')
+    summary: str | None = None
+    entries: list[DailyReportEntry] | list[dict] | Any
+
+    class Config:
+        extra = Extra.allow
+
+
+class DailyReportResubmit(BaseModel):
+    department: str
+    targetDepartment: str | None = Field(default=None, alias="targetDepartment")
     summary: str | None = None
     entries: list[DailyReportEntry] | list[dict] | Any
 
@@ -42,13 +53,13 @@ class DailyReportUpdate(BaseModel):
 class DailyReportPublic(BaseModel):
     id: str
     department: str
-    reportDate: str = Field(alias="report_date")
-    submittedBy: int | None = Field(default=None, alias="submitted_by")
-    submittedByName: str | None = Field(default=None, alias="submitted_by_name")
+    target_department: str | None = Field(default=None, alias="targetDepartment")
+    report_date: str = Field(alias="reportDate")
+    submitted_by: int | None = Field(default=None, alias="submittedBy")
+    submitted_by_name: str | None = Field(default=None, alias="submittedByName")
     status: str
     summary: str | None = None
     entries: list[dict]
-    createdAt: datetime = Field(alias="created_at")
+    created_at: datetime = Field(alias="createdAt")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)

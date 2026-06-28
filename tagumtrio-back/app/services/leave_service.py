@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.models.leave_request import LeaveRequest
 from app.schemas.leave_request import LeaveRequestCreate, LeaveRequestPublic
+from app.services.notification_service import create_notification, notify_role
 
 
 def list_leave_requests(db: Session, employee_id: int | None = None, status: str | None = None) -> list[LeaveRequestPublic]:
@@ -49,6 +50,16 @@ def create_leave_request(db: Session, payload: LeaveRequestCreate) -> LeaveReque
     db.add(record)
     db.commit()
     db.refresh(record)
+
+    notify_role(
+        db,
+        "gm",
+        "leave_request_new",
+        "New leave request",
+        f"{record.employee_name} requested {record.leave_type} leave.",
+        "/app/requests",
+    )
+
     data = {
         "id": record.id,
         "employeeId": record.employee_id,
@@ -75,6 +86,16 @@ def approve_leave_request(db: Session, request_id: str, approver_id: int | None 
     db.add(record)
     db.commit()
     db.refresh(record)
+
+    create_notification(
+        db,
+        record.employee_id,
+        "leave_request_status",
+        "Leave request approved",
+        f"Your {record.leave_type} leave request was approved.",
+        "/app/portal/leaves",
+    )
+
     data = {
         "id": record.id,
         "employeeId": record.employee_id,
@@ -101,6 +122,16 @@ def reject_leave_request(db: Session, request_id: str, approver_id: int | None =
     db.add(record)
     db.commit()
     db.refresh(record)
+
+    create_notification(
+        db,
+        record.employee_id,
+        "leave_request_status",
+        "Leave request rejected",
+        f"Your {record.leave_type} leave request was rejected.",
+        "/app/portal/leaves",
+    )
+
     data = {
         "id": record.id,
         "employeeId": record.employee_id,

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.models.announcement import Announcement
 from app.schemas.announcement import AnnouncementCreate, AnnouncementPublic, AnnouncementUpdate
+from app.services.notification_service import notify_role
 
 
 def _make_id(prefix: str = "ANN") -> str:
@@ -64,6 +65,18 @@ def create_announcement(db: Session, payload: AnnouncementCreate) -> Announcemen
     db.add(record)
     db.commit()
     db.refresh(record)
+
+    target_roles = payload.target_roles or ["employee"]
+    for role in target_roles:
+        notify_role(
+            db,
+            role,
+            "announcement_new",
+            "New announcement",
+            record.title,
+            "/app/portal/announcements",
+        )
+
     return _to_public(record)
 
 

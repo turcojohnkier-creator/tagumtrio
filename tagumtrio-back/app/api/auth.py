@@ -9,17 +9,6 @@ from app.security import create_access_token, verify_password
 router = APIRouter()
 
 
-@router.post("/register", response_model=schemas.UserPublic)
-def register(user_create: schemas.UserCreate, db: Session = Depends(get_db)):
-    existing = crud.get_user_by_identifier(db, user_create.identifier)
-    if existing:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Identifier already registered.")
-    try:
-        return crud.create_user(db, user_create)
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
-
-
 @router.post("/login", response_model=schemas.Token)
 def login(payload: schemas.UserLogin, db: Session = Depends(get_db)):
     user = crud.get_user_by_identifier(db, payload.identifier)

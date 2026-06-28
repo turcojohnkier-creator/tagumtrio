@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
 import AnnouncementPost from '../../../shared/ui/AnnouncementPost'
@@ -7,7 +8,11 @@ import EmptyState from '../../../shared/ui/EmptyState'
 
 export default function EmployeeAnnouncements() {
   const { user } = useAuth()
-  const { announcements = [], updateAnnouncement } = useAppData()
+  const { announcements = [], updateAnnouncement, markNotificationsSeen } = useAppData()
+
+  useEffect(() => {
+    markNotificationsSeen('announcement_new')
+  }, [])
 
   function handleTogglePin(announcement) {
     updateAnnouncement(announcement.id, { pinned: !announcement.pinned }).catch(() => {})

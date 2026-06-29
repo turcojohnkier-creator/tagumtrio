@@ -6,6 +6,8 @@ class LeaveRequestCreate(BaseModel):
     employee_id: int = Field(..., alias="employeeId")
     employee_name: str = Field(..., alias="employeeName")
     leave_type: str = Field(..., alias="leaveType")
+    start_date: str | None = Field(default=None, alias="startDate")
+    end_date: str | None = Field(default=None, alias="endDate")
     reason: str | None = None
 
 
@@ -18,6 +20,8 @@ class LeaveRequestPublic(BaseModel):
     employee_id: int = Field(..., alias="employeeId")
     employee_name: str = Field(..., alias="employeeName")
     leave_type: str = Field(..., alias="leaveType")
+    start_date: str | None = Field(default=None, alias="startDate")
+    end_date: str | None = Field(default=None, alias="endDate")
     reason: str | None = None
     status: str
     requested_at: datetime = Field(..., alias="requestedAt")

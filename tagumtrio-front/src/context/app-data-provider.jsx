@@ -567,12 +567,15 @@ export function AppDataProvider({ children }) {
         employeeId: record.employeeId,
         employeeName: record.employeeName,
         leaveType: record.leaveType,
+        startDate: record.startDate,
+        endDate: record.endDate,
         reason: record.reason,
       })
       setLeaveRequests((cur) => cur.map((r) => (r.id === tempId ? { ...created } : r)))
       return created.id
     } catch (error) {
-      // keep local copy and rethrow so UI can show error
+      // Roll back the optimistic entry — it never actually got created server-side.
+      setLeaveRequests((cur) => cur.filter((r) => r.id !== tempId))
       throw error
     }
   }

@@ -24,6 +24,8 @@ Base.metadata.create_all(bind=engine)
 with engine.begin() as connection:
     connection.execute(text("ALTER TABLE announcements ADD COLUMN IF NOT EXISTS target_roles VARCHAR(255)"))
     connection.execute(text("ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS target_department VARCHAR(128)"))
+    connection.execute(text("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS start_date VARCHAR(32)"))
+    connection.execute(text("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS end_date VARCHAR(32)"))
 
 app = FastAPI(title="TriOPS Backend")
 

@@ -29,7 +29,10 @@ def get_leave_requests(
 def post_leave_request(payload: LeaveRequestCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)) -> LeaveRequestPublic:
     if current_user.role not in {"employee", "hr", "admin"}:
         raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
-    return create_leave_request(db, payload)
+    try:
+        return create_leave_request(db, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
 @router.patch("/{request_id}/approve", response_model=LeaveRequestPublic)

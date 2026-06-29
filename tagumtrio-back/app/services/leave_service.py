@@ -26,6 +26,8 @@ def list_leave_requests(db: Session, employee_id: int | None = None, status: str
             "employeeId": row.employee_id,
             "employeeName": row.employee_name,
             "leaveType": row.leave_type,
+            "startDate": row.start_date,
+            "endDate": row.end_date,
             "reason": row.reason,
             "status": row.status,
             "requestedAt": row.requested_at,
@@ -37,15 +39,32 @@ def list_leave_requests(db: Session, employee_id: int | None = None, status: str
     return results
 
 
+MONTHLY_REQUEST_LIMIT = 3
+
+
 def create_leave_request(db: Session, payload: LeaveRequestCreate) -> LeaveRequestPublic:
+    now = datetime.now(timezone.utc)
+    existing_this_month = (
+        db.query(LeaveRequest)
+        .filter(
+            LeaveRequest.employee_id == int(payload.employee_id),
+            LeaveRequest.requested_at >= now.replace(day=1, hour=0, minute=0, second=0, microsecond=0),
+        )
+        .count()
+    )
+    if existing_this_month >= MONTHLY_REQUEST_LIMIT:
+        raise ValueError(f"You've reached the limit of {MONTHLY_REQUEST_LIMIT} leave requests this month.")
+
     record = LeaveRequest(
         id=_make_record_id("LEAVE"),
         employee_id=int(payload.employee_id),
         employee_name=payload.employee_name,
         leave_type=payload.leave_type,
+        start_date=payload.start_date,
+        end_date=payload.end_date,
         reason=payload.reason,
         status="pending",
-        requested_at=datetime.now(timezone.utc),
+        requested_at=now,
     )
     db.add(record)
     db.commit()
@@ -65,6 +84,8 @@ def create_leave_request(db: Session, payload: LeaveRequestCreate) -> LeaveReque
         "employeeId": record.employee_id,
         "employeeName": record.employee_name,
         "leaveType": record.leave_type,
+        "startDate": record.start_date,
+        "endDate": record.end_date,
         "reason": record.reason,
         "status": record.status,
         "requestedAt": record.requested_at,
@@ -101,6 +122,8 @@ def approve_leave_request(db: Session, request_id: str, approver_id: int | None 
         "employeeId": record.employee_id,
         "employeeName": record.employee_name,
         "leaveType": record.leave_type,
+        "startDate": record.start_date,
+        "endDate": record.end_date,
         "reason": record.reason,
         "status": record.status,
         "requestedAt": record.requested_at,
@@ -137,6 +160,8 @@ def reject_leave_request(db: Session, request_id: str, approver_id: int | None =
         "employeeId": record.employee_id,
         "employeeName": record.employee_name,
         "leaveType": record.leave_type,
+        "startDate": record.start_date,
+        "endDate": record.end_date,
         "reason": record.reason,
         "status": record.status,
         "requestedAt": record.requested_at,

@@ -14,6 +14,8 @@ class LeaveRequest(Base):
     employee_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     employee_name: Mapped[str] = mapped_column(String(255), nullable=False)
     leave_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    start_date: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    end_date: Mapped[str | None] = mapped_column(String(32), nullable=True)
     reason: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending", index=True)
     requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

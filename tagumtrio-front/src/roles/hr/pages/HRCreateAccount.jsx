@@ -125,7 +125,6 @@ export default function HRCreateAccount() {
         <div className="mb-6">
           <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">Manual user creation</p>
           <h3 className="mt-1 text-xl font-semibold text-zinc-900">Provision a new account</h3>
-          <p className="mt-2 text-sm text-zinc-500">The account fields match the public registration form, but only HR may create them.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">

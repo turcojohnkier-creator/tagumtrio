@@ -3,7 +3,6 @@ import { Search } from 'lucide-react'
 import { useAppData } from '../../../context/app-data-context'
 import { updateEmployeeApi } from '../../../lib/api'
 import { formatRole } from '../../../lib/roles'
-import EmployeeCard from '../../../roles/hr/components/EmployeeCard'
 import EmployeeDetailModal from '../../../roles/hr/components/EmployeeDetailModal'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Card from '../../../shared/ui/Card'
@@ -103,26 +102,58 @@ export default function EmployeeDirectory() {
           </Badge>
         </div>
 
-        <div className="grid grid-cols-1 gap-3">
-          {employeesList.map((emp) => {
-            const id = emp.employeeId || emp.id || emp.employee_id || emp.employeeName || emp.name || emp.employee_name || String(emp)
-            const statusLabel = emp.is_active === false ? 'Inactive' : 'Active'
-            return (
-              <EmployeeCard
-                key={id}
-                employee={emp}
-                onClick={() => setSelectedEmployee(emp)}
-                statusLabel={statusLabel}
-                onToggleActive={handleToggleActive}
-                actionLoading={actionLoading}
-              />
-            )
-          })}
-        </div>
-
         {employeesList.length === 0 ? (
           <EmptyState description={emptyMessage} />
-        ) : null}
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-emerald-50/70 text-emerald-800">
+                <tr>
+                  <th className="px-4 py-3 font-medium">ID</th>
+                  <th className="px-4 py-3 font-medium">Name</th>
+                  <th className="px-4 py-3 font-medium">Role</th>
+                  <th className="px-4 py-3 font-medium">Department</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {employeesList.map((emp, index) => {
+                  const id = emp.employeeId || emp.id || emp.employee_id || '—'
+                  const name = emp.employeeName || emp.name || emp.employee_name || 'Unknown'
+                  const department = emp.department || emp.dept || emp.departmentName || 'Unassigned'
+                  const isActive = emp.is_active !== false
+                  return (
+                    <tr key={id} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
+                      <td className="px-4 py-3 font-medium text-zinc-900">{id}</td>
+                      <td className="px-4 py-3 text-zinc-900">{name}</td>
+                      <td className="px-4 py-3">{formatRole(emp.role)}</td>
+                      <td className="px-4 py-3">{department}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant={isActive ? 'success' : 'neutral'}>{isActive ? 'Active' : 'Inactive'}</Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button type="button" variant="outline" size="sm" onClick={() => setSelectedEmployee(emp)}>
+                            View
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={actionLoading}
+                            onClick={() => handleToggleActive(emp)}
+                          >
+                            {isActive ? 'Archive' : 'Reactivate'}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     )
   }

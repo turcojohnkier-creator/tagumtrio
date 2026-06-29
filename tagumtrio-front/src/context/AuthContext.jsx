@@ -131,7 +131,6 @@ export function AuthProvider({ children }) {
       'gm.employee.active': 'Active',
       'gm.employee.inactive': 'Inactive',
       'gm.announce.title': 'Announcements',
-      'gm.announce.desc': 'Broadcast Facebook-style posts to all employees.',
       'gm.announce.create': 'Create broadcast',
       'gm.announce.post': 'Post to all employees',
       'gm.announce.what': "What's the announcement?",
@@ -171,7 +170,6 @@ export function AuthProvider({ children }) {
       'nav.requests': 'Requests',
 
       'gm.rate.title': 'Rate Management',
-      'gm.rate.desc': "Set the price per piece/unit for each department's products. Leadman reports look up these rates automatically.",
       'gm.rate.add_label': 'Add rate',
       'gm.rate.new': 'New department rate',
       'gm.rate.product_placeholder': 'Product / size (e.g. Sizer16mm/18mm)',
@@ -288,7 +286,6 @@ export function AuthProvider({ children }) {
 
       'gm.consolidated.eyebrow': 'Production consolidated',
       'gm.consolidated.title': 'Consolidated production report cards',
-      'gm.consolidated.desc': "Each card bundles a department's reports for one day. Opening a bundle reveals the individual reports inside it.",
       'gm.consolidated.all_statuses': 'All Statuses',
       'gm.consolidated.tab_all': 'All Reports',
       'gm.consolidated.tab_pending': 'Pending Approval',

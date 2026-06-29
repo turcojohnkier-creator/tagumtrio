@@ -117,7 +117,7 @@ export default function EmployeeDashboard() {
 
       <div className="mx-auto w-full max-w-2xl">
         <Card>
-          <SectionTitle icon={FileText}>Quick Actions</SectionTitle>
+          <SectionTitle icon={FileText}>File a Leave Request</SectionTitle>
           <FileLeaveForm user={user} onSubmit={submitLeaveRequest} />
         </Card>
       </div>

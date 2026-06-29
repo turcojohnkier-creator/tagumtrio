@@ -119,7 +119,7 @@ export default function HRCreateAccount() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="HR Account Provisioning" description="Create user accounts manually for employees, leadman, and production incharge." />
+      <PageHeader tone="brand" title="HR Account Provisioning" description="Create user accounts manually for employees, leadman, and production incharge." />
 
       <Card>
         <div className="mb-6">

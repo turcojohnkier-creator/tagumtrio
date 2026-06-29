@@ -35,12 +35,13 @@ export default function LeadmanWorkers() {
   return (
     <div className="space-y-6">
       <PageHeader
+        tone="brand"
         eyebrow="Leadman roster"
         title="Deployed Workers"
         description="Review the workers deployed under the selected department."
         actions={(
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Department</p>
+          <div className="rounded-lg border border-white/20 bg-white/10 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-50/90">Department</p>
             <select value={selectedDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-1.5 min-w-[220px] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none">
               {assignedDepartments.map((department) => (
                 <option key={department} value={department}>{department}</option>

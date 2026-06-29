@@ -3,7 +3,7 @@ const variantClasses = {
   danger: 'bg-rose-50 text-rose-700 ring-rose-200',
   warning: 'bg-amber-50 text-amber-700 ring-amber-200',
   info: 'bg-sky-50 text-sky-700 ring-sky-200',
-  neutral: 'bg-emerald-50/60 text-zinc-600 ring-zinc-200',
+  neutral: 'bg-zinc-100 text-zinc-600 ring-zinc-200',
 }
 
 export default function Badge({ variant = 'neutral', className = '', children }) {

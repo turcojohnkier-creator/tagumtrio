@@ -76,7 +76,7 @@ export default function Requests() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Requests & Submissions" description="Manage employee account submissions and leave requests." />
+      <PageHeader tone="brand" title="Requests & Submissions" description="Manage employee account submissions and leave requests." />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex overflow-hidden rounded-full border border-emerald-200 bg-emerald-50/60">

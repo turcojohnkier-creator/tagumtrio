@@ -203,7 +203,7 @@ export default function ProductionReports() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Production in-charge" title="Production Reports" description="Read-only monitoring of reports as they move through leadman verification." />
+      <PageHeader tone="brand" eyebrow="Production in-charge" title="Production Reports" description="Read-only monitoring of reports as they move through leadman verification." />
 
       <div className="grid gap-3 sm:grid-cols-3 sm:max-w-2xl">
         <select

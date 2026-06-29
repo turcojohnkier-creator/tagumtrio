@@ -129,24 +129,25 @@ export default function LeadmanHistory() {
   return (
     <div className="space-y-6">
       <PageHeader
+        tone="brand"
         eyebrow="History"
         title="Submitted Reports"
         description="View recent submitted reports and send a consolidated daily report."
         actions={(
           <div className="flex flex-wrap gap-3">
-            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 min-w-[200px] select-none">
-              <p className="text-xs font-semibold text-zinc-400">Department</p>
-              <p className="mt-1.5 text-zinc-900">{currentDepartment || 'Assigned department'}</p>
+            <div className="rounded-lg border border-white/20 bg-white/10 p-3 min-w-[200px] select-none">
+              <p className="text-xs font-semibold text-emerald-50/90">Department</p>
+              <p className="mt-1.5 text-white">{currentDepartment || 'Assigned department'}</p>
             </div>
-            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-              <p className="text-xs text-zinc-400">Date</p>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5 bg-transparent text-zinc-900 outline-none" />
+            <div className="rounded-lg border border-white/20 bg-white/10 p-3">
+              <p className="text-xs text-emerald-50/90">Date</p>
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5 bg-transparent text-white outline-none [color-scheme:dark]" />
             </div>
-            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-              <p className="text-xs text-zinc-400">Search</p>
+            <div className="rounded-lg border border-white/20 bg-white/10 p-3">
+              <p className="text-xs text-emerald-50/90">Search</p>
               <div className="relative mt-1.5">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search reports..." className="pl-9 bg-transparent text-zinc-900 outline-none" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-50/70" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search reports..." className="pl-9 bg-transparent text-white placeholder:text-emerald-50/60 outline-none" />
               </div>
             </div>
           </div>

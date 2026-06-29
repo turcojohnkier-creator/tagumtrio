@@ -162,12 +162,13 @@ export default function EmployeeDirectory() {
   return (
     <div className="space-y-6">
       <PageHeader
+        tone="brand"
         title="HR Accounts"
         description="View all created accounts, inspect details, and archive or restore inactive users."
         actions={(
-          <Badge variant="success" className="px-4 py-1.5 text-sm">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-emerald-700">
             {localEmployees.length} accounts
-          </Badge>
+          </span>
         )}
       />
 

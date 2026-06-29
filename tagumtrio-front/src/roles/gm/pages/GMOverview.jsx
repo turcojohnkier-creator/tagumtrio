@@ -96,22 +96,23 @@ export default function GMOverview() {
     <div className="space-y-6 pb-8">
       <div className="space-y-5">
         <PageHeader
+          tone="brand"
           eyebrow={`${departments.length} ${t('gm.overview.departments')}`}
           title={t('gm.overview.title')}
           description={t('gm.overview.desc')}
           actions={(
-            <div className="inline-flex gap-1 rounded-full bg-zinc-100 p-1">
+            <div className="inline-flex gap-1 rounded-full bg-white/15 p-1">
               <button
                 type="button"
                 onClick={() => setSortOption('most')}
-                className={`rounded-full px-3 py-2 text-sm font-medium transition ${sortOption === 'most' ? 'bg-white text-emerald-700 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}
+                className={`rounded-full px-3 py-2 text-sm font-medium transition ${sortOption === 'most' ? 'bg-white text-emerald-700 shadow-sm' : 'text-white/80 hover:text-white'}`}
               >
                 {t('gm.overview.most')}
               </button>
               <button
                 type="button"
                 onClick={() => setSortOption('least')}
-                className={`rounded-full px-3 py-2 text-sm font-medium transition ${sortOption === 'least' ? 'bg-white text-emerald-700 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}
+                className={`rounded-full px-3 py-2 text-sm font-medium transition ${sortOption === 'least' ? 'bg-white text-emerald-700 shadow-sm' : 'text-white/80 hover:text-white'}`}
               >
                 {t('gm.overview.least')}
               </button>

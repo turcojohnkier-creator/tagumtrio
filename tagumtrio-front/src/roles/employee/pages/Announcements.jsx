@@ -20,7 +20,7 @@ export default function EmployeeAnnouncements() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Employee Portal" title="Announcements" description="Company updates and notices for employees." />
+      <PageHeader tone="brand" eyebrow="Employee Portal" title="Announcements" description="Company updates and notices for employees." />
 
       <Card>
         {Array.isArray(announcements) && announcements.length > 0 ? (

@@ -16,7 +16,7 @@ export default defineConfig({
         start_url: '/',
         display: 'standalone',
         theme_color: '#059669',
-        background_color: '#EAEAEA',
+        background_color: '#f9fafb',
         icons: [
           {
             src: '/tagumtrio-logo.jpg',

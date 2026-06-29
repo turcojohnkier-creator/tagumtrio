@@ -326,6 +326,7 @@ export default function ProductionDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
+        tone="brand"
         title="Daily Production Reports"
         description="Read and review submitted reports from leadman and the employee workflow."
         actions={user?.role === 'production_incharge' ? (

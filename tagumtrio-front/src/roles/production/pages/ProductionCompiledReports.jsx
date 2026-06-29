@@ -75,6 +75,7 @@ export default function ProductionCompiledReports() {
   return (
     <div className="space-y-6">
       <PageHeader
+        tone="brand"
         title="Compiled Production Reports"
         description="Each card bundles a department's compiled reports for one day. Open a bundle to review the individual reports, then submit it to GM as one batch."
         actions={(

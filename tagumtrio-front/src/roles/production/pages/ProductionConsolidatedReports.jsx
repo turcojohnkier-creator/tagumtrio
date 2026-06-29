@@ -107,6 +107,7 @@ export default function ProductionConsolidatedReports() {
   return (
     <div className="space-y-6">
       <PageHeader
+        tone="brand"
         eyebrow={t('gm.consolidated.eyebrow')}
         title={t('gm.consolidated.title')}
         description={t('gm.consolidated.desc')}

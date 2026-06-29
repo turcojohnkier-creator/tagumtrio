@@ -30,7 +30,7 @@ export default function EmployeeManagement() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t('gm.employee.title')} description={t('gm.employee.desc')} />
+      <PageHeader tone="brand" title={t('gm.employee.title')} description={t('gm.employee.desc')} />
 
       <Card className="flex flex-col gap-4 xl:flex-row xl:items-center">
         <div className="relative w-full xl:flex-1">

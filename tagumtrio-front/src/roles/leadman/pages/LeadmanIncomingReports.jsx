@@ -264,12 +264,13 @@ export default function LeadmanIncomingReports() {
   return (
     <div className="space-y-6">
       <PageHeader
+        tone="brand"
         eyebrow="Leadman verification"
         title="Incoming Reports"
         description="Reports from the previous department, awaiting your verification before moving forward."
         actions={(
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-            <p className="text-xs uppercase tracking-wider text-zinc-400">Department</p>
+          <div className="rounded-lg border border-white/20 bg-white/10 p-3">
+            <p className="text-xs uppercase tracking-wider text-emerald-50/90">Department</p>
             <select value={currentDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-1.5 min-w-[220px] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none">
               {assignedDepartments.map((department) => (
                 <option key={department} value={department}>{department}</option>

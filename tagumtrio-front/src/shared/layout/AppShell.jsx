@@ -30,8 +30,8 @@ export default function AppShell({
   const { language, setLanguage, t } = useAuth()
 
   return (
-    <div className="min-h-screen bg-[#EAEAEA]">
-      <header className="sticky top-0 z-40 border-b border-emerald-100 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <div className="min-h-screen bg-[#f9fafb]">
+      <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
         <div className="mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto] items-center gap-3 px-4 sm:px-6 md:h-20 md:grid-cols-[1fr_auto_1fr]">
           <div className="flex items-center gap-2.5 justify-self-start">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg shadow-sm shadow-emerald-500/30 md:h-11 md:w-11">
@@ -124,7 +124,7 @@ export default function AppShell({
       </header>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
-        <div className="flex items-center gap-1 rounded-full border border-emerald-100 bg-white/80 px-2 py-2 shadow-lg shadow-zinc-900/10 backdrop-blur-xl supports-[backdrop-filter]:bg-white/70">
+        <div className="flex items-center gap-1 rounded-full border border-zinc-200/70 bg-white/80 px-2 py-2 shadow-lg shadow-zinc-900/10 backdrop-blur-xl supports-[backdrop-filter]:bg-white/70">
           {navItems.map((item) => (
             <NavLink
               key={item.href}

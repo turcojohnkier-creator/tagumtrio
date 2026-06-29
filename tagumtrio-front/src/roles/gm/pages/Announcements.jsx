@@ -98,7 +98,7 @@ export default function Announcements() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t('gm.announce.title')} description={t('gm.announce.desc')} />
+      <PageHeader tone="brand" title={t('gm.announce.title')} description={t('gm.announce.desc')} />
 
       <form onSubmit={handleCreate} className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
         <div className="border-b border-zinc-200 bg-zinc-50/70 px-5 py-4">

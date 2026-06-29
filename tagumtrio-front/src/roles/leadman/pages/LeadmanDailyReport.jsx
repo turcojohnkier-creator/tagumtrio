@@ -278,7 +278,7 @@ export default function LeadmanDailyReport() {
       />
 
       <Card className="space-y-4">
-        <SectionTitle icon={MessageSquareWarning} hint="Each scanned report becomes a small card. Open a card for the full report and submit it individually, or submit all cards in one batch.">
+        <SectionTitle>
           Daily Production Report
         </SectionTitle>
 

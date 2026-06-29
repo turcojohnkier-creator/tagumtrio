@@ -16,6 +16,7 @@ from app.api.v1.endpoints.payroll import router as payroll_router
 from app.api.v1.endpoints.daily_reports import router as daily_reports_router
 from app.api.v1.endpoints.rates import router as rates_router
 from app.api.v1.endpoints.notifications import router as notifications_router
+from app.api.v1.endpoints.translate import router as translate_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -42,6 +43,7 @@ app.include_router(payroll_router, prefix="/api/v1")
 app.include_router(daily_reports_router, prefix="/api/v1")
 app.include_router(rates_router, prefix="/api/v1")
 app.include_router(notifications_router, prefix="/api/v1")
+app.include_router(translate_router, prefix="/api/v1")
 
 
 @app.get("/api/health")

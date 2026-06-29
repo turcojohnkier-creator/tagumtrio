@@ -57,7 +57,7 @@ export default function AppShell({
                     : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
                 )}
               >
-                {item.icon ? <item.icon className="h-4 w-4 md:h-5 md:w-5" /> : null}
+                {item.icon ? <item.icon className="h-5 w-5 md:h-6 md:w-6" /> : null}
                 {item.hasUnread ? (
                   <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-rose-500" />
                 ) : null}
@@ -135,7 +135,7 @@ export default function AppShell({
               )}
               aria-label={item.name}
             >
-              {item.icon ? <item.icon className="h-5 w-5" /> : null}
+              {item.icon ? <item.icon className="h-6 w-6" /> : null}
               {item.hasUnread ? (
                 <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
               ) : null}

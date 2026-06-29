@@ -46,31 +46,31 @@ function FileLeaveForm({ user, onSubmit }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto grid w-full max-w-md grid-cols-1 gap-3">
-      <label className="text-sm font-medium text-zinc-700">Type</label>
-      <select value={type} onChange={(e) => setType(e.target.value)} className="w-full rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none">
-        <option>Sick</option>
-        <option>Vacation</option>
-        <option>Emergency</option>
-      </select>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-sm font-medium text-zinc-700">Start</label>
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none" />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-zinc-700">End</label>
-          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none" />
-        </div>
+    <form onSubmit={handleSubmit} className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="sm:col-span-2">
+        <label className="text-sm font-medium text-zinc-700">Type</label>
+        <select value={type} onChange={(e) => setType(e.target.value)} className="mt-1.5 w-full rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none">
+          <option>Sick</option>
+          <option>Vacation</option>
+          <option>Emergency</option>
+        </select>
       </div>
 
       <div>
-        <label className="text-sm font-medium text-zinc-700">Reason</label>
-        <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={4} className="w-full rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none" />
+        <label className="text-sm font-medium text-zinc-700">Start</label>
+        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mt-1.5 w-full rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none" />
+      </div>
+      <div>
+        <label className="text-sm font-medium text-zinc-700">End</label>
+        <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mt-1.5 w-full rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none" />
       </div>
 
-      <div className="flex items-center justify-end">
+      <div className="sm:col-span-2">
+        <label className="text-sm font-medium text-zinc-700">Reason</label>
+        <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={4} className="mt-1.5 w-full rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none" />
+      </div>
+
+      <div className="flex items-center justify-end sm:col-span-2">
         <Button type="submit" disabled={submitting}>{submitting ? 'Sending…' : 'Submit Request'}</Button>
       </div>
     </form>
@@ -115,12 +115,10 @@ export default function EmployeeDashboard() {
         </div>
       </Card>
 
-      <div className="mx-auto w-full max-w-2xl">
-        <Card>
-          <SectionTitle icon={FileText}>File a Leave Request</SectionTitle>
-          <FileLeaveForm user={user} onSubmit={submitLeaveRequest} />
-        </Card>
-      </div>
+      <Card>
+        <SectionTitle icon={FileText}>File a Leave Request</SectionTitle>
+        <FileLeaveForm user={user} onSubmit={submitLeaveRequest} />
+      </Card>
     </div>
   )
 }

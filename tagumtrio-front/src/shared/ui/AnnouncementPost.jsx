@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { Megaphone, MoreHorizontal, Pin, PinOff } from 'lucide-react'
+import { Languages, Megaphone, MoreHorizontal, Pin, PinOff } from 'lucide-react'
+import { useAuth } from '../../context/auth-context'
+import { translateTextApi } from '../../lib/api'
 
 function initials(name) {
   const parts = String(name || 'TriOPS').trim().split(/\s+/).filter(Boolean)
@@ -16,15 +18,49 @@ function formatTime(value) {
 }
 
 export default function AnnouncementPost({ announcement, compact = false, showActions = false, onTogglePin }) {
+  const { user, language, t } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [translated, setTranslated] = useState(null)
+  const [showTranslated, setShowTranslated] = useState(false)
+  const [translating, setTranslating] = useState(false)
+  const [translateError, setTranslateError] = useState('')
 
   if (!announcement) return null
 
   const author = announcement.author || 'Management'
   const audience = announcement.audience || 'All employees'
-  const body = String(announcement.body || '').trim()
-  const title = String(announcement.title || '').trim()
+  const originalBody = String(announcement.body || '').trim()
+  const originalTitle = String(announcement.title || '').trim()
+  const body = showTranslated && translated ? translated.body : originalBody
+  const title = showTranslated && translated ? translated.title : originalTitle
   const isPinned = Boolean(announcement.pinned)
+  const canTranslate = user?.role !== 'gm'
+
+  async function handleTranslate() {
+    if (showTranslated) {
+      setShowTranslated(false)
+      return
+    }
+    if (translated) {
+      setShowTranslated(true)
+      return
+    }
+    setTranslating(true)
+    setTranslateError('')
+    try {
+      const target = language === 'zh' ? 'zh-CN' : 'en'
+      const [titleResult, bodyResult] = await Promise.all([
+        originalTitle ? translateTextApi(originalTitle, target) : Promise.resolve({ translated: '' }),
+        originalBody ? translateTextApi(originalBody, target) : Promise.resolve({ translated: '' }),
+      ])
+      setTranslated({ title: titleResult.translated, body: bodyResult.translated })
+      setShowTranslated(true)
+    } catch (error) {
+      setTranslateError(t('announcement.translate_failed'))
+    } finally {
+      setTranslating(false)
+    }
+  }
 
   return (
     <article className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 shadow-lg shadow-black/20">
@@ -51,6 +87,22 @@ export default function AnnouncementPost({ announcement, compact = false, showAc
             </span>
           </div>
         </div>
+
+        {canTranslate ? (
+          <button
+            type="button"
+            onClick={handleTranslate}
+            disabled={translating}
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+              showTranslated
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                : 'border-zinc-200 bg-white text-zinc-600 hover:text-zinc-900'
+            }`}
+          >
+            <Languages className="h-3.5 w-3.5" />
+            {translating ? t('announcement.translating') : showTranslated ? t('announcement.show_original') : t('announcement.translate')}
+          </button>
+        ) : null}
 
         <div className="relative">
           <button
@@ -86,6 +138,9 @@ export default function AnnouncementPost({ announcement, compact = false, showAc
       </div>
 
       <div className="px-5 py-4">
+        {translateError ? (
+          <p className="mb-2 text-sm text-rose-600">{translateError}</p>
+        ) : null}
         {body ? (
           <p className="whitespace-pre-line text-sm leading-6 text-zinc-700">{body}</p>
         ) : (

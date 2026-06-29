@@ -11,6 +11,11 @@ class UserBase(BaseModel):
     department: Optional[str] = None
     departments: Optional[List[str]] = None
 
+    @field_validator("identifier")
+    @classmethod
+    def normalize_identifier(cls, value: str) -> str:
+        return value.strip().lower()
+
 
 class UserCreate(UserBase):
     password: str
@@ -36,6 +41,11 @@ class UserPublic(UserBase):
 class UserLogin(BaseModel):
     identifier: str
     password: str
+
+    @field_validator("identifier")
+    @classmethod
+    def normalize_identifier(cls, value: str) -> str:
+        return value.strip().lower()
 
 
 class Token(BaseModel):

@@ -303,6 +303,11 @@ export function AuthProvider({ children }) {
       'gm.consolidated.approval_failed_message': 'Unable to approve this bundle.',
       'gm.consolidated.approve_btn': 'Approve & release payroll ({count})',
       'gm.consolidated.approving': 'Approving...',
+
+      'announcement.translate': 'Translate',
+      'announcement.translating': 'Translating...',
+      'announcement.show_original': 'Show original',
+      'announcement.translate_failed': 'Translation unavailable, try again.',
     },
     zh: {
       'login.welcome': '欢迎回来',
@@ -517,6 +522,11 @@ export function AuthProvider({ children }) {
       'gm.consolidated.approval_failed_message': '无法批准此报表组。',
       'gm.consolidated.approve_btn': '批准并发放薪资（{count}）',
       'gm.consolidated.approving': '批准中...',
+
+      'announcement.translate': '翻译',
+      'announcement.translating': '翻译中...',
+      'announcement.show_original': '显示原文',
+      'announcement.translate_failed': '翻译暂不可用，请重试。',
     },
   }
 
@@ -550,6 +560,23 @@ export function AuthProvider({ children }) {
         window.removeEventListener('triops-auth-unauthorized', handleUnauthorized)
       }
     }
+  }, [])
+
+  // One account per browser: localStorage is already shared across every tab
+  // of the same origin, but React state isn't — without this, logging into a
+  // different account in one tab leaves other tabs showing the old user while
+  // silently making requests as the new one. The native `storage` event only
+  // fires on OTHER tabs (never the tab that made the change), so this keeps
+  // every open tab mirroring whichever account is currently logged in,
+  // including an immediate logout if another tab logs out or clears storage.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    function handleStorage(event) {
+      if (event.key !== AUTH_SESSION_KEY && event.key !== null) return
+      setUser(loadSession())
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
   }, [])
 
   // On first load, silently try to restore session from existing token

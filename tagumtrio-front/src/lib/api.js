@@ -321,3 +321,11 @@ export async function markNotificationsReadByTypeApi(type) {
     method: 'PATCH',
   })
 }
+
+// Translate API
+export async function translateTextApi(text, target = 'en') {
+  return apiRequest('/v1/translate', {
+    method: 'POST',
+    body: JSON.stringify({ text, target }),
+  })
+}

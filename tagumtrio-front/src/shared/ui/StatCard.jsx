@@ -13,10 +13,10 @@ export default function StatCard({ label, value, hint, icon: Icon, highlight = f
   }
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+    <div className="rounded-xl border border-emerald-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-center justify-between">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{label}</p>
-        {Icon ? <Icon className="h-4 w-4 text-zinc-400" /> : null}
+        {Icon ? <Icon className="h-4 w-4 text-emerald-500" /> : null}
       </div>
       <p className="mt-2 font-heading text-2xl font-bold tabular-nums text-zinc-900">{value}</p>
       {hint ? <p className="mt-1 text-sm text-zinc-500">{hint}</p> : null}

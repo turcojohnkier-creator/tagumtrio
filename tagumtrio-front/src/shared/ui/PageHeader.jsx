@@ -1,6 +1,6 @@
 export default function PageHeader({ eyebrow, title, description, actions, children }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+    <div className="rounded-xl border border-emerald-100 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1.5">
           {eyebrow ? (

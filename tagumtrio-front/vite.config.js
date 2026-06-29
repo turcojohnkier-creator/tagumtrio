@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['tagumtrio-logo.jpg'],
       manifest: {
         name: 'TriOPS',
         short_name: 'TriOPS',
@@ -16,12 +16,12 @@ export default defineConfig({
         start_url: '/',
         display: 'standalone',
         theme_color: '#059669',
-        background_color: '#ffffff',
+        background_color: '#EAEAEA',
         icons: [
           {
-            src: '/favicon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
+            src: '/tagumtrio-logo.jpg',
+            sizes: '1254x1254',
+            type: 'image/jpeg',
             purpose: 'any maskable',
           },
         ],

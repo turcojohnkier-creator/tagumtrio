@@ -4,6 +4,8 @@ const variantClasses = {
   outline: 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 disabled:hover:bg-white',
   ghost: 'text-zinc-600 hover:bg-zinc-100 disabled:hover:bg-transparent',
   danger: 'bg-rose-600 text-white shadow-sm hover:bg-rose-700 disabled:hover:bg-rose-600',
+  successOutline: 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:hover:bg-emerald-50',
+  dangerOutline: 'border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:hover:bg-rose-50',
 }
 
 const sizeClasses = {

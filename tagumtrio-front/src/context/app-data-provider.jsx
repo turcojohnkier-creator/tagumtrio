@@ -93,6 +93,7 @@ const DEFAULT_STATE = {
   leaveRequests: [],
   announcements: [],
   schedules: [],
+  dailyReportDrafts: {},
 }
 
 function loadState() {
@@ -106,6 +107,7 @@ function loadState() {
       leaveRequests: Array.isArray(parsed.leaveRequests) ? parsed.leaveRequests : DEFAULT_STATE.leaveRequests,
       announcements: Array.isArray(parsed.announcements) ? parsed.announcements : DEFAULT_STATE.announcements,
       schedules: Array.isArray(parsed.schedules) ? parsed.schedules : DEFAULT_STATE.schedules,
+      dailyReportDrafts: parsed.dailyReportDrafts && typeof parsed.dailyReportDrafts === 'object' ? parsed.dailyReportDrafts : DEFAULT_STATE.dailyReportDrafts,
     }
   } catch {
     return DEFAULT_STATE
@@ -150,7 +152,7 @@ export function AppDataProvider({ children }) {
   const { user } = useAuth()
   const dialog = useDialog()
   const initialState = loadState()
-  const [dailyReportDrafts, setDailyReportDrafts] = useState({})
+  const [dailyReportDrafts, setDailyReportDrafts] = useState(initialState.dailyReportDrafts || {})
   const [payments, setPayments] = useState(initialState.payments || [])
   const [announcements, setAnnouncements] = useState(initialState.announcements || [])
   const [rates, setRates] = useState([])
@@ -422,8 +424,8 @@ export function AppDataProvider({ children }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ payments, leaveRequests, announcements, schedules }))
-  }, [payments, leaveRequests])
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ payments, leaveRequests, announcements, schedules, dailyReportDrafts }))
+  }, [payments, leaveRequests, dailyReportDrafts])
 
   function addReportEntry(record) {
     const rawEmployeeId = record.employeeId ?? record.id ?? record.employee_id ?? record.identifier ?? record.raw?.employeeId ?? record.raw?.employee_id ?? ''

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { useAppData } from '../../../context/app-data-context'
 import { useAuth } from '../../../context/auth-context'
@@ -68,24 +69,28 @@ export default function EmployeeManagement() {
                 <th className="px-4 py-3 font-medium">{t('gm.employee.col_status')}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100">
+            <motion.tbody
+              className="divide-y divide-zinc-100"
+              initial="hidden" animate="show"
+              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
+            >
               {filtered.map((emp, index) => {
                 const id = emp.employeeId || emp.id || emp.employee_id || '—'
                 const name = emp.employeeName || emp.name || emp.employee_name || t('gm.modal.unknown')
                 const department = emp.department || emp.dept || emp.departmentName || t('gm.modal.unassigned')
                 const isActive = emp.is_active !== false
                 return (
-                  <tr key={id} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
+                  <motion.tr key={id} variants={{ hidden: { opacity: 0, y: 4 }, show: { opacity: 1, y: 0, transition: { duration: 0.18, ease: 'easeOut' } } }} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
                     <td className="px-4 py-3 font-medium text-zinc-900">{id}</td>
                     <td className="px-4 py-3 text-zinc-900">{name}</td>
                     <td className="px-4 py-3">{department}</td>
                     <td className="px-4 py-3">
                       <Badge variant={isActive ? 'success' : 'neutral'}>{isActive ? t('gm.employee.active') : t('gm.employee.inactive')}</Badge>
                     </td>
-                  </tr>
+                  </motion.tr>
                 )
               })}
-            </tbody>
+            </motion.tbody>
           </table>
         </div>
       )}

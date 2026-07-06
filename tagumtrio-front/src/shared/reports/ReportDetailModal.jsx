@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Image as ImageIcon, X } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
 import Portal from '../ui/Portal'
 import Button from '../ui/Button'
 import Badge from '../ui/Badge'
@@ -28,8 +29,20 @@ export default function ReportDetailModal({ report, onClose }) {
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4">
-        <div className="w-full max-w-4xl max-h-[90vh] overflow-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
+      <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+        <motion.div
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+          onClick={onClose}
+        />
+        <motion.div
+          className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-auto rounded-xl border border-zinc-200 bg-white shadow-sm"
+          initial={{ opacity: 0, scale: 0.96, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+        >
           <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
             <div>
               <p className="text-xs uppercase tracking-wide text-zinc-400">{t('report.detail.daily_report')}</p>
@@ -98,26 +111,43 @@ export default function ReportDetailModal({ report, onClose }) {
               {t('report.detail.close')}
             </Button>
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      {previewPhotos ? (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 p-4">
-          <div className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-xl border border-zinc-200 bg-white shadow-sm p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-heading text-lg font-bold text-zinc-900">{t('report.detail.report_images')}</h3>
-              <button type="button" onClick={() => setPreviewPhotos(null)} className="text-zinc-500 hover:text-zinc-900">{t('report.detail.close')}</button>
-            </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              {previewPhotos.map((photo, index) => (
-                <div key={index} className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
-                  <img src={photo} alt={`Report ${index + 1}`} className="h-40 w-full object-cover" />
-                </div>
-              ))}
-            </div>
+      {/* Nested photo preview modal */}
+      <AnimatePresence>
+        {previewPhotos && (
+          <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+            <motion.div
+              className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setPreviewPhotos(null)}
+            />
+            <motion.div
+              className="relative z-10 max-h-[90vh] w-full max-w-4xl overflow-auto rounded-xl border border-zinc-200 bg-white shadow-sm p-6"
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-heading text-lg font-bold text-zinc-900">{t('report.detail.report_images')}</h3>
+                <button type="button" onClick={() => setPreviewPhotos(null)} className="text-zinc-500 hover:text-zinc-900">{t('report.detail.close')}</button>
+              </div>
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {previewPhotos.map((photo, index) => (
+                  <div key={index} className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
+                    <img src={photo} alt={`Report ${index + 1}`} className="h-40 w-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            </motion.div>
           </div>
-        </div>
-      ) : null}
+        )}
+      </AnimatePresence>
     </Portal>
   )
 }

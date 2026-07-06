@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { Briefcase, Calendar as CalendarIcon, Clock, FileText, Hourglass } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
@@ -180,29 +181,22 @@ export default function EmployeeDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <LeaveWidget
-          icon={CalendarIcon}
-          iconClassName="bg-violet-50 text-violet-600"
-          value={remainingThisMonth}
-          label="Leave Requests Left"
-          hint={usedThisMonth > 0 ? `${typeSummary} this month` : 'No requests yet this month'}
-        />
-        <LeaveWidget
-          icon={Clock}
-          iconClassName="bg-amber-50 text-amber-600"
-          value={pendingCount}
-          label="Pending Requests"
-          hint="Awaiting approval"
-        />
-        <LeaveWidget
-          icon={Hourglass}
-          iconClassName="bg-emerald-50 text-emerald-600"
-          value={timeLeftValue}
-          label={timeLeftLabel}
-          hint={timeLeftHint}
-        />
-      </div>
+      <motion.div
+        className="grid grid-cols-1 gap-4 sm:grid-cols-3"
+        initial="hidden"
+        animate="show"
+        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
+      >
+        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' } } }}>
+          <LeaveWidget icon={CalendarIcon} iconClassName="bg-violet-50 text-violet-600" value={remainingThisMonth} label="Leave Requests Left" hint={usedThisMonth > 0 ? `${typeSummary} this month` : 'No requests yet this month'} />
+        </motion.div>
+        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' } } }}>
+          <LeaveWidget icon={Clock} iconClassName="bg-amber-50 text-amber-600" value={pendingCount} label="Pending Requests" hint="Awaiting approval" />
+        </motion.div>
+        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' } } }}>
+          <LeaveWidget icon={Hourglass} iconClassName="bg-emerald-50 text-emerald-600" value={timeLeftValue} label={timeLeftLabel} hint={timeLeftHint} />
+        </motion.div>
+      </motion.div>
 
       <Card>
         <SectionTitle icon={FileText}>File a Leave Request</SectionTitle>

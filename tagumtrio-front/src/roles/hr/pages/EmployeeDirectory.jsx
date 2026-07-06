@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { useAppData } from '../../../context/app-data-context'
 import { updateEmployeeApi } from '../../../lib/api'
@@ -117,14 +118,18 @@ export default function EmployeeDirectory() {
                   <th className="px-4 py-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
+              <motion.tbody
+                className="divide-y divide-zinc-100"
+                initial="hidden" animate="show"
+                variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
+              >
                 {employeesList.map((emp, index) => {
                   const id = emp.employeeId || emp.id || emp.employee_id || '—'
                   const name = emp.employeeName || emp.name || emp.employee_name || 'Unknown'
                   const department = emp.department || emp.dept || emp.departmentName || 'Unassigned'
                   const isActive = emp.is_active !== false
                   return (
-                    <tr key={id} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
+                    <motion.tr key={id} variants={{ hidden: { opacity: 0, y: 4 }, show: { opacity: 1, y: 0, transition: { duration: 0.18, ease: 'easeOut' } } }} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
                       <td className="px-4 py-3 font-medium text-zinc-900">{id}</td>
                       <td className="px-4 py-3 text-zinc-900">{name}</td>
                       <td className="px-4 py-3">{formatRole(emp.role)}</td>
@@ -147,10 +152,10 @@ export default function EmployeeDirectory() {
                           </Button>
                         </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                   )
                 })}
-              </tbody>
+              </motion.tbody>
             </table>
           </div>
         )}

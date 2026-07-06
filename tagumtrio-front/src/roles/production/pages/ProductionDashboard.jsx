@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { ChevronRight, Search, X } from 'lucide-react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/auth-context'
@@ -392,10 +393,17 @@ export default function ProductionDashboard() {
         ) : null}
 
         {!loading && visibleReports.length > 0 ? (
-          <div className="space-y-3">
+          <motion.div
+            className="space-y-3"
+            initial="hidden" animate="show"
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
+          >
             {visibleReports.map((report) => (
-              <button
+              <motion.div
                 key={report.id}
+                variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }}
+              >
+              <button
                 type="button"
                 onClick={() => setSelectedReportId(report.id)}
                 className="group relative block w-full rounded-lg border border-zinc-200 bg-white p-4 text-left transition-all hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
@@ -434,8 +442,9 @@ export default function ProductionDashboard() {
                   </div>
                 </div>
               </button>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         ) : null}
       </Card>
 

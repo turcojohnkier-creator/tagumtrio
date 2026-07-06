@@ -223,7 +223,7 @@ export function AuthProvider({ children }) {
       'login.hero_title': 'Operations, attendance, and payroll in one production flow.',
       'login.hero_desc': 'Sign in with your registered account to access your dedicated dashboard and workflows.',
       'login.hero_feature1': 'Department routing and approvals',
-      'login.hero_feature2': 'Live scan verification chain',
+      'login.hero_feature2': 'Production Monitoring and verification chain',
       'login.hero_feature3': 'Payroll and payslip visibility',
       'login.username_placeholder': 'e.g. juan.delacruz',
       'login.password_placeholder': 'Enter your password',
@@ -233,7 +233,7 @@ export function AuthProvider({ children }) {
       'login.validation_password': 'Password must be at least 6 characters.',
       'login.signing_in': 'Signing in...',
       'login.forgot_note': 'Password reset will be connected to backend email flow.',
-      'login.hr_note': 'Account creation is managed by HR. Please contact your administrator to provision access.',
+      'login.hr_note': 'Account creation is managed by Human Resources. Please contact your administrator to provision access.',
       'login.error_generic': 'Unable to sign in.',
       'ui.toggle_language': 'Toggle language',
 

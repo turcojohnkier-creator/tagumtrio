@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { ChevronDown, LogOut } from 'lucide-react'
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { formatRole } from '../../lib/roles'
 import { useAuth } from '../../context/auth-context'
 import logo from '../../assets/tagumtrio-logo.jpg'
@@ -103,21 +104,30 @@ export default function AppShell({
                 <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
               </button>
 
-              {userMenuOpen && (
-                <div className="absolute right-0 top-12 z-30 w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg">
-                  <div className="border-b border-zinc-200 px-4 py-3">
-                    <p className="truncate text-sm font-medium text-zinc-900">{user?.name}</p>
-                    <p className="truncate text-xs text-zinc-400">{t(`role.${user?.role}`, formatRole(user?.role))}</p>
-                  </div>
-                  <button
-                    onClick={onLogout}
-                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-rose-700 transition-colors hover:bg-rose-50"
+              <AnimatePresence>
+                {userMenuOpen && (
+                  <motion.div
+                    className="absolute right-0 top-12 z-30 w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg"
+                    initial={{ opacity: 0, scale: 0.95, y: -6 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -6 }}
+                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                    style={{ transformOrigin: 'top right' }}
                   >
-                    <LogOut className="h-4 w-4" />
-                    Sign out
-                  </button>
-                </div>
-              )}
+                    <div className="border-b border-zinc-200 px-4 py-3">
+                      <p className="truncate text-sm font-medium text-zinc-900">{user?.name}</p>
+                      <p className="truncate text-xs text-zinc-400">{t(`role.${user?.role}`, formatRole(user?.role))}</p>
+                    </div>
+                    <button
+                      onClick={onLogout}
+                      className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-rose-700 transition-colors hover:bg-rose-50"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign out
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>

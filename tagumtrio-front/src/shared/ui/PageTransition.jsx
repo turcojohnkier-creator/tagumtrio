@@ -1,15 +1,14 @@
-import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 
 export default function PageTransition({ children, className = '' }) {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 10)
-    return () => clearTimeout(t)
-  }, [])
-
   return (
-    <div className={`transition-opacity duration-300 ease-out ${mounted ? 'opacity-100' : 'opacity-0'} ${className}`}>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      className={className}
+    >
       {children}
-    </div>
+    </motion.div>
   )
 }

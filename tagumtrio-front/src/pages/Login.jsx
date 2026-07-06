@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { AlertCircle, Eye, EyeOff, Lock, UserCircle2 } from 'lucide-react'
 import { useAuth } from '../context/auth-context'
 import tagumtrioLogo from '../assets/tagumtrio-logo.jpg'
+import bgImage from '../assets/pexels-andrew-wells-313813-14341184.jpg'
 
 export default function Login() {
   const { loginWithCredentials, language, setLanguage, t } = useAuth()
@@ -53,8 +55,19 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-100 px-4 py-10">
-      <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl">
+    <div
+      className="relative flex min-h-screen items-center justify-center bg-cover bg-center bg-no-repeat px-4 py-10"
+      style={{ backgroundImage: `url(${bgImage})` }}
+    >
+      {/* Background overlay */}
+      <div className="absolute inset-0 bg-black/50" />
+
+      <motion.div
+        className="relative z-10 mx-auto w-full max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-white shadow-2xl"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+      >
         <div className="grid lg:grid-cols-2">
 
           {/* Left — brand panel */}
@@ -190,8 +203,9 @@ export default function Login() {
               </p>
             </form>
           </section>
+
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

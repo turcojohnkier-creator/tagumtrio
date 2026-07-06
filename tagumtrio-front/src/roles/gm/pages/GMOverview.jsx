@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import DepartmentCard from '../../../roles/gm/components/DepartmentCard'
 import EmployeeListModal from '../../../roles/gm/components/EmployeeListModal'
 import { DEPARTMENTS } from '../../../constants/departments'
@@ -120,15 +121,21 @@ export default function GMOverview() {
           )}
         />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-2">
+        <motion.div
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-2"
+          initial="hidden" animate="show"
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
+        >
           {employeesLoading
             ? Array.from({ length: 6 }).map((_, index) => (
                 <div key={index} className="h-40 animate-pulse rounded-xl bg-white" />
               ))
             : sortedDepartments.map((d) => (
-                <DepartmentCard key={d.name} department={d} onOpen={() => openDept(d)} />
+                <motion.div key={d.name} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }}>
+                  <DepartmentCard department={d} onOpen={() => openDept(d)} />
+                </motion.div>
               ))}
-        </div>
+        </motion.div>
       </div>
 
       {showModal && selectedDept && (

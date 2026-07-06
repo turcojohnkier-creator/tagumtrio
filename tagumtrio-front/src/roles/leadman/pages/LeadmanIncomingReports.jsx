@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { Check, CircleAlert, ChevronDown, Image as ImageIcon } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 import { useDialog } from '../../../context/dialog-context'
@@ -297,21 +298,33 @@ export default function LeadmanIncomingReports() {
         </button>
       </div>
 
-      <div className="space-y-3">
+      <motion.div
+        className="space-y-3"
+        initial="hidden" animate="show"
+        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
+      >
         {loading ? (
           <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">Loading reports...</div>
         ) : activeTab === 'incoming' ? (
           incomingReports.length === 0 ? (
             <EmptyState title="No incoming reports" description="No reports from the previous department are awaiting your verification." />
           ) : (
-            incomingReports.map((report) => <ReportCard key={report.id} report={report} />)
+            incomingReports.map((report) => (
+              <motion.div key={report.id} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }}>
+                <ReportCard report={report} />
+              </motion.div>
+            ))
           )
         ) : verifiedReports.length === 0 ? (
           <EmptyState title="No verified reports yet" />
         ) : (
-          verifiedReports.map((report) => <ReportCard key={report.id} report={report} />)
+          verifiedReports.map((report) => (
+            <motion.div key={report.id} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }}>
+              <ReportCard report={report} />
+            </motion.div>
+          ))
         )}
-      </div>
+      </motion.div>
 
       {showPhotoModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">

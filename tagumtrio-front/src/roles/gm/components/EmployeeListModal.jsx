@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { X } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useDialog } from '../../../context/dialog-context'
 import { useAuth } from '../../../context/auth-context'
 import { updateEmployeeApi } from '../../../lib/api'
@@ -67,8 +68,20 @@ export default function EmployeeListModal({ department, onClose, employees = [],
   return (
     <Portal>
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-      <div className="relative z-10 w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-6xl overflow-hidden rounded-[2rem] border border-zinc-200 bg-zinc-50 shadow-sm max-h-[90vh]">
+      <motion.div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <motion.div
+        className="relative z-10 w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-6xl overflow-hidden rounded-[2rem] border border-zinc-200 bg-zinc-50 shadow-sm max-h-[90vh]"
+        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.22, ease: 'easeOut' }}
+      >
         <div className="flex flex-col justify-between gap-4 border-b border-zinc-200 bg-white px-6 py-5 sm:flex-row sm:items-center">
           <div>
             <p className="text-xs uppercase tracking-wide text-zinc-400">{t('gm.modal.team')}</p>
@@ -152,7 +165,7 @@ export default function EmployeeListModal({ department, onClose, employees = [],
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
     </Portal>
   )

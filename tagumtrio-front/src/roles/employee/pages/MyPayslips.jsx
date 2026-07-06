@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Download, Eye, FileText, ArrowLeft, Receipt, Clock, ListChecks, X } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
@@ -176,9 +177,13 @@ export default function MyPayslips() {
       {periods.length === 0 ? (
         <EmptyState title="No verified payslip history yet" />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <motion.div
+          className="grid gap-4 md:grid-cols-2"
+          initial="hidden" animate="show"
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
+        >
           {periods.map((period) => (
-            <div key={period.key} className="flex flex-col justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+            <motion.div key={period.key} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }} className="flex flex-col justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex items-start gap-4">
                 <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-emerald-600">
                   <FileText className="w-6 h-6" />
@@ -199,9 +204,9 @@ export default function MyPayslips() {
                   <Download className="w-4 h-4" /> PDF
                 </button>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       <div className="mt-8 rounded-lg border border-zinc-200 bg-zinc-50 p-6 text-center">

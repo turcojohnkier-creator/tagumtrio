@@ -1,12 +1,11 @@
 import { createContext, useContext, useMemo, useState } from 'react'
 import { CheckCircle2, AlertTriangle, X } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
 import Portal from '../shared/ui/Portal'
 
 const DialogContext = createContext(undefined)
 
 function DialogModal({ dialog, onCancel, onConfirm, onClose }) {
-  if (!dialog) return null
-
   const isConfirm = dialog.variant === 'confirm'
   const isSuccess = dialog.variant === 'success'
   const isError = dialog.variant === 'error'
@@ -14,8 +13,23 @@ function DialogModal({ dialog, onCancel, onConfirm, onClose }) {
   return (
     <Portal>
       <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
-        <button type="button" aria-label="Close dialog" className="absolute inset-0 bg-black/60" onClick={isConfirm ? onCancel : onClose} />
-        <div className="relative z-10 w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <motion.button
+          type="button"
+          aria-label="Close dialog"
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={isConfirm ? onCancel : onClose}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        />
+        <motion.div
+          className="relative z-10 w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+          initial={{ opacity: 0, scale: 0.95, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 8 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+        >
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className={`rounded-xl p-2 ${isSuccess ? 'bg-emerald-500/10 text-emerald-700' : isError ? 'bg-rose-500/10 text-rose-700' : 'bg-cyan-500/10 text-cyan-700'}`}>
@@ -49,7 +63,7 @@ function DialogModal({ dialog, onCancel, onConfirm, onClose }) {
               </button>
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
     </Portal>
   )
@@ -102,7 +116,11 @@ export function DialogProvider({ children }) {
   return (
     <DialogContext.Provider value={api}>
       {children}
-      <DialogModal dialog={dialog} onConfirm={handleConfirm} onCancel={handleCancel} onClose={handleClose} />
+      <AnimatePresence>
+        {dialog && (
+          <DialogModal key="dialog" dialog={dialog} onConfirm={handleConfirm} onCancel={handleCancel} onClose={handleClose} />
+        )}
+      </AnimatePresence>
     </DialogContext.Provider>
   )
 }

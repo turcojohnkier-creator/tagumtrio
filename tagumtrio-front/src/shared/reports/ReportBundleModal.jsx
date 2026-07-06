@@ -1,4 +1,5 @@
 import { ChevronRight, X } from 'lucide-react'
+import { motion } from 'framer-motion'
 import Portal from '../ui/Portal'
 import Button from '../ui/Button'
 import Badge from '../ui/Badge'
@@ -18,8 +19,20 @@ export default function ReportBundleModal({ bundle, onClose, onOpenReport, bundl
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4">
-        <div className="w-full max-w-3xl max-h-[90vh] overflow-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+        <motion.div
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+          onClick={onClose}
+        />
+        <motion.div
+          className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-auto rounded-xl border border-zinc-200 bg-white shadow-sm"
+          initial={{ opacity: 0, scale: 0.96, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+        >
           <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
             <div>
               <p className="text-xs uppercase tracking-wide text-zinc-400">{t('report.modal.daily_reports_for_day')}</p>
@@ -66,7 +79,7 @@ export default function ReportBundleModal({ bundle, onClose, onOpenReport, bundl
               </Button>
             ) : null}
           </div>
-        </div>
+        </motion.div>
       </div>
     </Portal>
   )

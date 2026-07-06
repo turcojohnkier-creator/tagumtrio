@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { ChevronDown, Image as ImageIcon } from 'lucide-react'
 import { useAppData } from '../../../context/app-data-context'
 import PageHeader from '../../../shared/ui/PageHeader'
@@ -250,19 +251,31 @@ export default function ProductionReports() {
         </button>
       </div>
 
-      <div className="space-y-3">
+      <motion.div
+        className="space-y-3"
+        initial="hidden" animate="show"
+        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
+      >
         {activeTab === 'pending' ? (
           pendingReports.length === 0 ? (
             <EmptyState title="No pending reports" description="No submitted reports waiting on leadman verification." />
           ) : (
-            pendingReports.map((report) => <ReportCard key={report.id} report={report} />)
+            pendingReports.map((report) => (
+              <motion.div key={report.id} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }}>
+                <ReportCard report={report} />
+              </motion.div>
+            ))
           )
         ) : reviewedReports.length === 0 ? (
           <EmptyState title="No verified reports yet" />
         ) : (
-          reviewedReports.map((report) => <ReportCard key={report.id} report={report} />)
+          reviewedReports.map((report) => (
+            <motion.div key={report.id} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }}>
+              <ReportCard report={report} />
+            </motion.div>
+          ))
         )}
-      </div>
+      </motion.div>
 
       {showPhotoModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">

@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { ArrowLeft, CheckCircle2, Hourglass, XCircle } from 'lucide-react'
+import { motion } from 'framer-motion'
+
+const listV = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } }
+const itemV = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
@@ -104,9 +108,9 @@ export default function MyLeaves() {
             {approvedLeaves.length === 0 ? (
               <EmptyState className="mt-4" title="No approved leaves yet" />
             ) : (
-              <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <motion.div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3" variants={listV} initial="hidden" animate="show">
                 {approvedLeaves.map((request) => (
-                  <div key={request.id} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+                  <motion.div key={request.id} variants={itemV} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-medium text-zinc-900">{request.leaveType || 'Leave'}</p>
@@ -118,9 +122,9 @@ export default function MyLeaves() {
                       <p><span className="text-zinc-400">Date range:</span> {request.startDate || request.start_date || '—'} to {request.endDate || request.end_date || '—'}</p>
                       <p><span className="text-zinc-400">Reason:</span> {request.reason || 'No reason provided'}</p>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             )}
           </div>
         )}
@@ -131,17 +135,17 @@ export default function MyLeaves() {
             {pendingLeaves.length === 0 ? (
               <EmptyState className="mt-4" title="No pending leaves right now" />
             ) : (
-              <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <motion.div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3" variants={listV} initial="hidden" animate="show">
                 {pendingLeaves.map((request) => (
-                  <div key={request.id} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+                  <motion.div key={request.id} variants={itemV} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
                     <div className="flex items-start justify-between gap-3">
                       <p className="text-sm font-medium text-zinc-900">{request.leaveType || 'Leave'}</p>
                       <Badge variant="warning">Pending</Badge>
                     </div>
                     <p className="mt-4 border-t border-zinc-100 pt-3 text-sm text-zinc-700">{request.startDate || request.start_date || '—'} to {request.endDate || request.end_date || '—'}</p>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             )}
           </div>
         )}
@@ -152,9 +156,9 @@ export default function MyLeaves() {
             {rejectedLeaves.length === 0 ? (
               <EmptyState className="mt-4" title="No rejected leaves yet" />
             ) : (
-              <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <motion.div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3" variants={listV} initial="hidden" animate="show">
                 {rejectedLeaves.map((request) => (
-                  <div key={request.id} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+                  <motion.div key={request.id} variants={itemV} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-medium text-zinc-900">{request.leaveType || 'Leave'}</p>
@@ -164,9 +168,9 @@ export default function MyLeaves() {
                     <div className="mt-4 space-y-2 border-t border-zinc-100 pt-3 text-sm text-zinc-700">
                       <p><span className="text-zinc-400">Date range:</span> {request.startDate || request.start_date || '—'} to {request.endDate || request.end_date || '—'}</p>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             )}
           </div>
         )}

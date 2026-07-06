@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Languages, Megaphone, MoreHorizontal, Pin, PinOff } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { translateTextApi } from '../../lib/api'
@@ -63,9 +64,9 @@ export default function AnnouncementPost({ announcement, compact = false, showAc
   }
 
   return (
-    <article className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 shadow-lg shadow-black/20">
-      <div className="flex items-start gap-4 border-b border-zinc-200/80 bg-white/60 px-5 py-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-sm font-semibold text-black shadow-lg shadow-emerald-500/20">
+    <article className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+      <div className="flex items-start gap-4 border-b border-zinc-200 px-6 py-5">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-sm font-semibold text-white">
           {initials(author)}
         </div>
         <div className="min-w-0 flex-1">
@@ -115,29 +116,38 @@ export default function AnnouncementPost({ announcement, compact = false, showAc
             <MoreHorizontal className="h-4 w-4" />
           </button>
 
-          {menuOpen ? (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 top-full z-20 mt-1 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onTogglePin?.(announcement)
-                    setMenuOpen(false)
-                  }}
-                  disabled={!onTogglePin}
-                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+          <AnimatePresence>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                <motion.div
+                  className="absolute right-0 top-full z-20 mt-1 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg"
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  style={{ transformOrigin: 'top right' }}
                 >
-                  {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-                  {isPinned ? 'Unpin announcement' : 'Pin announcement'}
-                </button>
-              </div>
-            </>
-          ) : null}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onTogglePin?.(announcement)
+                      setMenuOpen(false)
+                    }}
+                    disabled={!onTogglePin}
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                    {isPinned ? 'Unpin announcement' : 'Pin announcement'}
+                  </button>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
-      <div className="px-5 py-4">
+      <div className="px-6 py-5">
         {translateError ? (
           <p className="mb-2 text-sm text-rose-600">{translateError}</p>
         ) : null}

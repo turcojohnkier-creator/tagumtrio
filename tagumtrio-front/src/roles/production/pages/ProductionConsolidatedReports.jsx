@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
 import { useDialog } from '../../../context/dialog-context'
@@ -152,16 +153,24 @@ export default function ProductionConsolidatedReports() {
         {visibleBundles.length === 0 ? (
           <EmptyState title={activeTab === 'approved' ? t('gm.consolidated.empty_approved') : t('gm.consolidated.empty_pending')} />
         ) : (
-          <div className="space-y-3">
+          <motion.div
+            className="space-y-3"
+            initial="hidden" animate="show"
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
+          >
             {visibleBundles.map((bundle) => (
-              <ReportBundleCard
+              <motion.div
                 key={bundle.key}
-                bundle={bundle}
-                selected={selectedBundleKey === bundle.key}
-                onClick={() => setSelectedBundleKey(bundle.key)}
-              />
+                variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }}
+              >
+                <ReportBundleCard
+                  bundle={bundle}
+                  selected={selectedBundleKey === bundle.key}
+                  onClick={() => setSelectedBundleKey(bundle.key)}
+                />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </Card>
 

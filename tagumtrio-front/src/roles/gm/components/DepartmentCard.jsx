@@ -10,7 +10,7 @@ export default function DepartmentCard({ department, onOpen }) {
     <button
       type="button"
       onClick={onOpen}
-      className="group flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
+      className="group flex w-full flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">

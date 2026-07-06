@@ -1,17 +1,15 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { useAppData } from '../../../context/app-data-context'
 import { useAuth } from '../../../context/auth-context'
 import AnnouncementPost from '../../../shared/ui/AnnouncementPost'
 import PageHeader from '../../../shared/ui/PageHeader'
-import Card from '../../../shared/ui/Card'
 import Button from '../../../shared/ui/Button'
 import EmptyState from '../../../shared/ui/EmptyState'
 
 const ROLE_OPTIONS = [
   { key: 'employee', label: 'Employee' },
   { key: 'leadman', label: 'Leadman' },
-  { key: 'gm', label: 'General Manager' },
-  { key: 'hr', label: 'Human Resource' },
   { key: 'production_incharge', label: 'Production In-Charge' },
 ]
 
@@ -119,14 +117,19 @@ export default function Announcements() {
         </div>
       </form>
 
-      <Card>
-        <h3 className="font-heading text-lg font-bold text-zinc-900 mb-4">{t('gm.announce.recent')}</h3>
-        {announcements.length === 0 ? (
-          <EmptyState title={t('gm.announce.no')} />
-        ) : (
-          <div className="space-y-3">
-            {announcements.map((a) => (
-              <div key={a.id} className="space-y-2">
+      <h3 className="font-heading text-base font-bold text-zinc-700">{t('gm.announce.recent')}</h3>
+
+      {announcements.length === 0 ? (
+        <EmptyState title={t('gm.announce.no')} />
+      ) : (
+        <motion.div
+          className="space-y-4"
+          initial="hidden"
+          animate="show"
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
+        >
+          {announcements.map((a) => (
+              <motion.div key={a.id} className="space-y-2" variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' } } }}>
                 {editingAnnouncementId === a.id ? (
                   <form
                     onSubmit={async (event) => {
@@ -214,11 +217,10 @@ export default function Announcements() {
                     </div>
                   </>
                 )}
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
+              </motion.div>
+          ))}
+        </motion.div>
+      )}
     </div>
   )
 }

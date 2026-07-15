@@ -11,13 +11,9 @@ import Button from '../ui/Button'
 import Badge from '../ui/Badge'
 import EmptyState from '../ui/EmptyState'
 
-const STATUS_TABS = [
-  { key: 'pending', label: 'Pending' },
-  { key: 'approved', label: 'Approved' },
-  { key: 'rejected', label: 'Rejected' },
-]
+const STATUS_TABS = ['pending', 'approved', 'rejected']
 
-function leaveDurationLabel(req) {
+function leaveDurationDays(req) {
   const startDate = req.startDate || req.start_date
   const endDate = req.endDate || req.end_date
   if (!startDate || !endDate) return null
@@ -26,12 +22,12 @@ function leaveDurationLabel(req) {
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null
   const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
   if (days <= 0) return null
-  return days === 1 ? '1 day' : `${days} days`
+  return days
 }
 
 export default function Requests() {
   const { leaveRequests = [], approveLeaveRequest, rejectLeaveRequest, formatDateTime, markNotificationsSeen } = useAppData()
-  const { user } = useAuth()
+  const { user, t } = useAuth()
   const dialog = useDialog()
 
   useEffect(() => {
@@ -50,67 +46,89 @@ export default function Requests() {
     [leaveRequests, statusTab]
   )
 
+  function requestName(req) {
+    return req.employeeName || req.employee_name
+  }
+
+  function leaveTypeLabel(req) {
+    const type = req.leaveType || req.leave_type
+    if (!type) return type
+    return t(`leave.type_${String(type).toLowerCase()}`, type)
+  }
+
+  function durationLabel(req) {
+    const days = leaveDurationDays(req)
+    if (!days) return null
+    return days === 1 ? t('requests.one_day') : `${days} ${t('requests.days')}`
+  }
+
   async function handleApprove(req) {
     const confirmed = await dialog.confirm({
-      title: 'Approve leave request?',
-      message: `Approve leave request for ${req.employeeName || req.employee_name}?`,
-      confirmText: 'Yes, approve',
-      cancelText: 'No',
+      kicker: t('ui.confirm_action'),
+      title: t('requests.approve_confirm_title'),
+      message: t('requests.approve_confirm_msg').replace('{name}', requestName(req)),
+      confirmText: t('requests.yes_approve'),
+      cancelText: t('requests.no'),
     })
     if (!confirmed) return
 
     try {
       await approveLeaveRequest(req.id, user?.id)
       dialog.success({
-        title: 'Request approved',
-        message: `Leave request for ${req.employeeName || req.employee_name} was approved successfully.`,
+        kicker: t('ui.success'),
+        title: t('requests.approved_title'),
+        message: t('requests.approved_msg').replace('{name}', requestName(req)),
       })
     } catch (e) {
       console.error(e)
       dialog.error({
-        title: 'Approval failed',
-        message: 'Failed to approve request. Please try again.',
+        kicker: t('ui.error'),
+        title: t('requests.approve_failed_title'),
+        message: t('requests.approve_failed_msg'),
       })
     }
   }
 
   async function handleReject(req) {
     const confirmed = await dialog.confirm({
-      title: 'Reject leave request?',
-      message: `Reject leave request from ${req.employeeName || req.employee_name}?`,
-      confirmText: 'Yes, reject',
-      cancelText: 'No',
+      kicker: t('ui.confirm_action'),
+      title: t('requests.reject_confirm_title'),
+      message: t('requests.reject_confirm_msg').replace('{name}', requestName(req)),
+      confirmText: t('requests.yes_reject'),
+      cancelText: t('requests.no'),
     })
     if (!confirmed) return
 
     try {
       await rejectLeaveRequest(req.id, user?.id, 'Rejected by approver')
       dialog.success({
-        title: 'Request rejected',
-        message: `Leave request from ${req.employeeName || req.employee_name} was rejected successfully.`,
+        kicker: t('ui.success'),
+        title: t('requests.rejected_title'),
+        message: t('requests.rejected_msg').replace('{name}', requestName(req)),
       })
     } catch (e) {
       console.error(e)
       dialog.error({
-        title: 'Rejection failed',
-        message: 'Failed to reject request. Please try again.',
+        kicker: t('ui.error'),
+        title: t('requests.reject_failed_title'),
+        message: t('requests.reject_failed_msg'),
       })
     }
   }
 
   return (
     <div className="space-y-6">
-      <PageHeader tone="brand" title="Requests & Submissions" description="Manage employee account submissions and leave requests." />
+      <PageHeader tone="brand" title={t('requests.title')} description={t('requests.desc')} />
 
       <div className="flex overflow-hidden rounded-full border border-emerald-200 bg-emerald-50/60 w-fit">
         {STATUS_TABS.map((tab) => (
           <button
-            key={tab.key}
+            key={tab}
             type="button"
-            onClick={() => setStatusTab(tab.key)}
-            className={`px-4 py-2 text-sm font-semibold transition-colors ${statusTab === tab.key ? 'bg-emerald-600 text-white shadow-sm' : 'text-emerald-700 hover:bg-white/60'}`}
+            onClick={() => setStatusTab(tab)}
+            className={`px-4 py-2 text-sm font-semibold transition-colors ${statusTab === tab ? 'bg-emerald-600 text-white shadow-sm' : 'text-emerald-700 hover:bg-white/60'}`}
           >
-            {tab.label}
+            {t(`requests.tab_${tab}`)}
           </button>
         ))}
       </div>
@@ -125,7 +143,7 @@ export default function Requests() {
           filteredRequests.map((req) => {
             const status = (req.status || '').toLowerCase()
             const isPending = status === 'pending'
-            const duration = leaveDurationLabel(req)
+            const duration = durationLabel(req)
             return (
               <motion.div key={req.id} variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' } } }}>
               <Card className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
@@ -135,19 +153,19 @@ export default function Requests() {
                   </div>
                   <div>
                     <div className="flex items-center gap-3">
-                      <h3 className="font-heading text-lg font-bold text-zinc-900">{req.employeeName || req.employee_name}</h3>
-                      <Badge variant={isPending ? 'warning' : req.status === 'approved' ? 'success' : 'danger'}>{String(req.status || '').toUpperCase()}</Badge>
+                      <h3 className="font-heading text-lg font-bold text-zinc-900">{requestName(req)}</h3>
+                      <Badge variant={isPending ? 'warning' : req.status === 'approved' ? 'success' : 'danger'}>{t(`requests.status_${status}`, String(req.status || '').toUpperCase())}</Badge>
                     </div>
                     <div className="text-sm text-zinc-500 mt-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                      <span><strong className="text-zinc-700">Type:</strong> {req.leaveType || req.leave_type}</span>
+                      <span><strong className="text-zinc-700">{t('requests.type')}:</strong> {leaveTypeLabel(req)}</span>
                       <span className="hidden sm:inline text-zinc-600">•</span>
                       {duration ? (
                         <>
-                          <span><strong className="text-zinc-700">Duration:</strong> {duration}</span>
+                          <span><strong className="text-zinc-700">{t('requests.duration')}:</strong> {duration}</span>
                           <span className="hidden sm:inline text-zinc-600">•</span>
                         </>
                       ) : null}
-                      <span><strong className="text-zinc-700">Requested:</strong> {formatDateTime ? formatDateTime(req.requestedAt || req.requested_at) : (req.requestedAt || req.requested_at)}</span>
+                      <span><strong className="text-zinc-700">{t('requests.requested')}:</strong> {formatDateTime ? formatDateTime(req.requestedAt || req.requested_at) : (req.requestedAt || req.requested_at)}</span>
                     </div>
                     {req.reason && <p className="text-sm text-zinc-700 mt-2 bg-zinc-50 p-2 rounded border border-zinc-200/50">{req.reason}</p>}
                   </div>
@@ -156,11 +174,11 @@ export default function Requests() {
                 <div className="flex gap-3 w-full md:w-auto mt-4 md:mt-0">
                   {isPending && canApprove ? (
                     <>
-                      <Button variant="successOutline" size="sm" onClick={() => handleApprove(req)}><CheckCircle className="w-4 h-4" />Approve</Button>
-                      <Button variant="dangerOutline" size="sm" onClick={() => handleReject(req)}><XCircle className="w-4 h-4" />Reject</Button>
+                      <Button variant="successOutline" size="sm" onClick={() => handleApprove(req)}><CheckCircle className="w-4 h-4" />{t('requests.approve')}</Button>
+                      <Button variant="dangerOutline" size="sm" onClick={() => handleReject(req)}><XCircle className="w-4 h-4" />{t('requests.reject')}</Button>
                     </>
                   ) : (
-                    <div className="text-sm font-medium text-zinc-400 px-4">Processed</div>
+                    <div className="text-sm font-medium text-zinc-400 px-4">{t('requests.processed')}</div>
                   )}
                 </div>
               </Card>
@@ -168,7 +186,7 @@ export default function Requests() {
             )
           })
         ) : (
-          <EmptyState title={`No ${statusTab} requests found`} />
+          <EmptyState title={t(`requests.empty_${statusTab}`)} />
         )}
       </motion.div>
     </div>

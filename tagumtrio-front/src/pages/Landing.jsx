@@ -23,7 +23,7 @@ export default function Landing() {
             <div className="flex items-center gap-3">
               <img src={tagumtrioLogo} alt="Tagum Trio" className="h-9 w-9 rounded-lg object-cover" />
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">TriOPS</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">Tagum Trio Lumber Corporation</p>
                 <p className="text-sm text-white/80">Production Operations System</p>
               </div>
             </div>

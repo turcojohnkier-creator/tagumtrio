@@ -76,7 +76,7 @@ export default function Login() {
               <div className="flex items-center gap-3">
                 <img src={tagumtrioLogo} alt="Tagum Trio" className="h-10 w-10 rounded-lg object-cover shadow-lg" />
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-200">TriOPS</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-200">Tagum Trio Lumber Corporation</p>
                   <p className="text-sm font-medium text-white">Production Operations System</p>
                 </div>
               </div>
@@ -103,7 +103,7 @@ export default function Login() {
           <section className="flex flex-col justify-center p-8 sm:p-10">
             <div className="mb-8 flex items-start justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">TriOPS</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Tagum Trio Lumber Corporation</p>
                 <h2 className="mt-1 text-2xl font-bold text-zinc-900">{t('login.welcome')}</h2>
                 <p className="mt-1.5 text-sm text-zinc-500">{t('login.description')}</p>
               </div>

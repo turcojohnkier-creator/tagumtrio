@@ -5,7 +5,7 @@ import { useAuth } from '../../context/auth-context'
 import { translateTextApi } from '../../lib/api'
 
 function initials(name) {
-  const parts = String(name || 'TriOPS').trim().split(/\s+/).filter(Boolean)
+  const parts = String(name || 'Tagum Trio').trim().split(/\s+/).filter(Boolean)
   const first = parts[0]?.[0] || 'T'
   const second = parts[1]?.[0] || parts[0]?.[1] || 'R'
   return `${first}${second}`.toUpperCase()

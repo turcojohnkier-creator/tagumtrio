@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['tagumtrio-logo.jpg'],
       manifest: {
-        name: 'TriOPS',
-        short_name: 'TriOPS',
-        description: 'TriOPS workforce, production, and payroll management',
+        name: 'Tagum Trio Lumber Corporation',
+        short_name: 'Tagum Trio',
+        description: 'Tagum Trio Lumber Corporation workforce, production, and payroll management',
         start_url: '/',
         display: 'standalone',
         theme_color: '#059669',

@@ -113,14 +113,14 @@ export function AuthProvider({ children }) {
       'ui.signed_in': 'Signed in as',
       'ui.sign_out': 'Sign out',
       'gm.overview.title': 'Department cards',
-      'gm.overview.desc': 'Tap a card to open the active employee roster and reassign team members.',
+
       'gm.overview.departments': 'departments',
       'gm.overview.most': 'Most staffed',
       'gm.overview.least': 'Least staffed',
       'gm.card.department': 'Department',
       'gm.card.view_roster': 'View roster',
       'gm.employee.title': 'Employee Management',
-      'gm.employee.desc': 'View and manage employee records backed by the database.',
+     
       'gm.employee.search': 'Search employees...',
       'gm.employee.all_depts': 'All Departments',
       'gm.employee.no_match': 'No employees matched your filters.',
@@ -220,7 +220,7 @@ export function AuthProvider({ children }) {
       'gm.modal.reassigned_to': 'to',
 
       'requests.title': 'Requests & Submissions',
-      'requests.desc': 'Manage employee account submissions and leave requests.',
+    
       'requests.tab_pending': 'Pending',
       'requests.tab_approved': 'Approved',
       'requests.tab_rejected': 'Rejected',
@@ -388,7 +388,7 @@ export function AuthProvider({ children }) {
       'gm.employee.active': '在职',
       'gm.employee.inactive': '停用',
       'gm.announce.title': '公告',
-      'gm.announce.desc': '向所有员工广播类似Facebook的帖子。',
+      
       'gm.announce.create': '创建广播',
       'gm.announce.post': '发布给所有员工',
       'gm.announce.what': '公告标题是什么？',
@@ -428,7 +428,7 @@ export function AuthProvider({ children }) {
       'nav.requests': '请求',
 
       'gm.rate.title': '价格管理',
-      'gm.rate.desc': '设置各部门产品的每件/每单位价格。领班报表会自动调用这些价格。',
+      
       'gm.rate.add_label': '添加价格',
       'gm.rate.new': '新建部门价格',
       'gm.rate.product_placeholder': '产品/规格（例如 Sizer16mm/18mm）',
@@ -586,7 +586,7 @@ export function AuthProvider({ children }) {
 
       'gm.consolidated.eyebrow': '生产汇总',
       'gm.consolidated.title': '生产报表汇总卡片',
-      'gm.consolidated.desc': '每张卡片汇总某部门当天的报表。打开卡片可查看其中的各份报表。',
+      
       'gm.consolidated.all_statuses': '所有状态',
       'gm.consolidated.tab_all': '所有报表',
       'gm.consolidated.tab_pending': '待审批',

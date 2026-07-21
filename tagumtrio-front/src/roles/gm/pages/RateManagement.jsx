@@ -86,7 +86,12 @@ export default function RateManagement() {
               <div key={dept}>
                 <h4 className="mb-2 text-sm font-semibold text-zinc-700">{dept}</h4>
                 <div className="overflow-x-auto rounded-lg border border-zinc-200">
-                  <table className="w-full text-left text-sm">
+                  <table className="w-full table-fixed text-left text-sm">
+                    <colgroup>
+                      <col className="w-[45%]" />
+                      <col className="w-24 sm:w-36" />
+                      <col />
+                    </colgroup>
                     <thead className="bg-emerald-50/70 text-emerald-800">
                       <tr>
                         <th className="px-4 py-2 font-medium">{t('gm.rate.col_product')}</th>
@@ -129,7 +134,7 @@ export default function RateManagement() {
                           </tr>
                         ) : (
                           <tr key={rate.id} className="text-zinc-700">
-                            <td className="px-4 py-2">{rate.product}</td>
+                            <td className="break-words px-4 py-2">{rate.product}</td>
                             <td className="px-4 py-2 font-medium text-emerald-700">₱{Number(rate.pricePerUnit || 0).toLocaleString()}</td>
                             <td className="px-4 py-2 text-right">
                               <button

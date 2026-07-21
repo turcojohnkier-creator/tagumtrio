@@ -55,7 +55,7 @@ export default function RateManagement() {
 
   return (
     <div className="space-y-6">
-      <PageHeader tone="brand" title={t('gm.rate.title')} description={t('gm.rate.desc')} />
+      <PageHeader tone="brand" title={t('gm.rate.title')} description={t(' ')} />
 
       <form onSubmit={handleCreate} className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
         <div className="border-b border-zinc-200 bg-zinc-50/70 px-5 py-4">

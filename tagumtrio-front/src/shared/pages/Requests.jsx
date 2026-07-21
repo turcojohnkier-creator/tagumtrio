@@ -118,7 +118,7 @@ export default function Requests() {
 
   return (
     <div className="space-y-6">
-      <PageHeader tone="brand" title={t('requests.title')} description={t('requests.desc')} />
+      <PageHeader tone="brand" title={t('requests.title')} description={t(' ')} />
 
       <div className="flex overflow-hidden rounded-full border border-emerald-200 bg-emerald-50/60 w-fit">
         {STATUS_TABS.map((tab) => (

@@ -1,6 +1,9 @@
-import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, BadgeCheck, ShieldCheck, Users } from 'lucide-react'
+import { useAuth } from '../context/auth-context'
+import { roleHomePath } from '../lib/roleHomePath'
 import tagumtrioLogo from '../assets/tagumtrio-logo.jpg'
 import bgImage from '../assets/pexels-mandiri-abadi-396768996-15016528.jpg'
 
@@ -10,6 +13,17 @@ const cardV = { hidden: {}, show: { transition: { staggerChildren: 0.1, delayChi
 const cardItemV = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: 'easeOut' } } }
 
 export default function Landing() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+
+  // Visiting the bare URL while already signed in should land you back in
+  // your dashboard, not the marketing page — same behavior as /login.
+  useEffect(() => {
+    if (user) navigate(roleHomePath(user.role), { replace: true })
+  }, [user, navigate])
+
+  if (user) return null
+
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat"

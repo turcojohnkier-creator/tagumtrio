@@ -5,13 +5,7 @@ import { AlertCircle, Eye, EyeOff, Lock, UserCircle2 } from 'lucide-react'
 import { useAuth } from '../context/auth-context'
 import tagumtrioLogo from '../assets/tagumtrio-logo.jpg'
 import bgImage from '../assets/pexels-andrew-wells-313813-14341184.jpg'
-
-function roleHomePath(role) {
-  if (role === 'leadman') return '/app/leadman'
-  if (role === 'gm') return '/app/gm'
-  if (role === 'hr') return '/app/hr/employees'
-  return '/app/portal'
-}
+import { roleHomePath } from '../lib/roleHomePath'
 
 export default function Login() {
   const { user, loginWithCredentials, language, setLanguage, t } = useAuth()

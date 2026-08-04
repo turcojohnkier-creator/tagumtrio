@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { AlertCircle, Eye, EyeOff, Lock, UserCircle2 } from 'lucide-react'
@@ -6,8 +6,15 @@ import { useAuth } from '../context/auth-context'
 import tagumtrioLogo from '../assets/tagumtrio-logo.jpg'
 import bgImage from '../assets/pexels-andrew-wells-313813-14341184.jpg'
 
+function roleHomePath(role) {
+  if (role === 'leadman') return '/app/leadman'
+  if (role === 'gm') return '/app/gm'
+  if (role === 'hr') return '/app/hr/employees'
+  return '/app/portal'
+}
+
 export default function Login() {
-  const { loginWithCredentials, language, setLanguage, t } = useAuth()
+  const { user, loginWithCredentials, language, setLanguage, t } = useAuth()
   const navigate = useNavigate()
 
   const [identifier, setIdentifier] = useState('')
@@ -16,6 +23,12 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
+
+  // Already signed in (e.g. this tab was opened fresh but another tab, or a
+  // remembered session, is still logged in) — skip the form and go straight in.
+  useEffect(() => {
+    if (user) navigate(roleHomePath(user.role), { replace: true })
+  }, [user, navigate])
 
   const validationMessage = useMemo(() => {
     if (!identifier.trim()) return t('login.validation_username')
@@ -29,7 +42,7 @@ export default function Login() {
     if (validationMessage) { setFormError(validationMessage); return }
     setSubmitting(true)
 
-    loginWithCredentials({ identifier: identifier.trim(), password })
+    loginWithCredentials({ identifier: identifier.trim(), password, remember: rememberMe })
       .then((result) => {
         if (!result.ok) {
           setFormError(result.error || t('login.error_generic'))
@@ -37,16 +50,7 @@ export default function Login() {
           return
         }
 
-        const role = result.user?.role
-        if (role === 'leadman') {
-          navigate('/app/leadman', { replace: true })
-        } else if (role === 'gm') {
-          navigate('/app/gm', { replace: true })
-        } else if (role === 'hr') {
-          navigate('/app/hr/employees', { replace: true })
-        } else {
-          navigate('/app/portal', { replace: true })
-        }
+        navigate(roleHomePath(result.user?.role), { replace: true })
       })
       .catch((error) => {
         setFormError(error.message || t('login.error_generic'))

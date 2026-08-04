@@ -52,11 +52,13 @@ function buildSessionUser(record) {
 function loadSession() {
   if (typeof window === 'undefined') return null
   try {
-    const raw = window.localStorage.getItem(AUTH_SESSION_KEY)
+    const storage = window.sessionStorage.getItem(AUTH_SESSION_KEY) !== null
+      ? window.sessionStorage
+      : window.localStorage
+    const raw = storage.getItem(AUTH_SESSION_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
     if (!parsed?.user?.id) return null
-    setAuthToken(parsed.token || parsed.accessToken || '')
     // Normalize legacy leadman saved sessions while preserving the assigned department list.
     if (parsed.user.role === 'leadman') {
       if (Array.isArray(parsed.user.departments)) {
@@ -619,13 +621,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    if (!user) {
-      window.localStorage.removeItem(AUTH_SESSION_KEY)
-      clearAuthToken()
-      return
-    }
-    const token = window.localStorage.getItem('triops-auth-token') || ''
-    window.localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({ user, token }))
+    if (!user) clearAuthToken()
   }, [user])
 
   useEffect(() => {
@@ -665,7 +661,10 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (user) return
-    const token = window.localStorage.getItem('triops-auth-token') || ''
+    const tokenStorage = window.sessionStorage.getItem('triops-auth-token') !== null
+      ? window.sessionStorage
+      : window.localStorage
+    const token = tokenStorage.getItem('triops-auth-token') || ''
     if (!token) return
 
     let mounted = true
@@ -684,7 +683,7 @@ export function AuthProvider({ children }) {
           return
         }
         const result = await res.json()
-        setAuthToken(token)
+        setAuthToken(token, tokenStorage === window.localStorage)
         setUser(buildSessionUser(result))
       } catch (e) {
         clearAuthToken()
@@ -715,11 +714,9 @@ export function AuthProvider({ children }) {
     setUser(buildSessionUser(fallback))
   }
 
-  const loginWithCredentials = async ({ identifier, password }) => {
+  const loginWithCredentials = async ({ identifier, password, remember = true }) => {
     try {
-      const result = await loginApi({ identifier: normalizeIdentifier(identifier), password })
-      const token = result.accessToken || result.access_token || ''
-      setAuthToken(token)
+      const result = await loginApi({ identifier: normalizeIdentifier(identifier), password, remember })
       setUser(buildSessionUser(result.user))
       return { ok: true, user: buildSessionUser(result.user) }
     } catch (error) {

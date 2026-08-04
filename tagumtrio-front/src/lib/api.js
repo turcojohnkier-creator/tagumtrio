@@ -12,29 +12,48 @@ function normalizeIdentifier(value) {
   return String(value || '').trim().toLowerCase()
 }
 
-export function setAuthToken(token) {
+// "Remember me" decides which Storage a session lives in: localStorage persists
+// across browser restarts and is shared by every tab; sessionStorage is wiped
+// when the tab closes and is never visible to other tabs. Reads check
+// sessionStorage first so a not-remembered login in this tab takes precedence
+// over a remembered login sitting in localStorage from another session.
+function pickStorage(remember) {
+  if (typeof window === 'undefined') return null
+  return remember ? window.localStorage : window.sessionStorage
+}
+
+function findStorageWithKey(key) {
+  if (typeof window === 'undefined') return null
+  if (window.sessionStorage.getItem(key) !== null) return window.sessionStorage
+  if (window.localStorage.getItem(key) !== null) return window.localStorage
+  return null
+}
+
+export function setAuthToken(token, remember = true) {
   if (typeof window === 'undefined') return
   if (token) {
-    window.localStorage.setItem(AUTH_TOKEN_KEY, token)
+    pickStorage(remember).setItem(AUTH_TOKEN_KEY, token)
     return
   }
   window.localStorage.removeItem(AUTH_TOKEN_KEY)
+  window.sessionStorage.removeItem(AUTH_TOKEN_KEY)
 }
 
 export function clearAuthToken() {
   if (typeof window === 'undefined') return
   window.localStorage.removeItem(AUTH_TOKEN_KEY)
   window.localStorage.removeItem(AUTH_SESSION_KEY)
+  window.sessionStorage.removeItem(AUTH_TOKEN_KEY)
+  window.sessionStorage.removeItem(AUTH_SESSION_KEY)
 }
 
 export function hasAuthToken() {
-  if (typeof window === 'undefined') return false
-  return Boolean(window.localStorage.getItem(AUTH_TOKEN_KEY))
+  return Boolean(findStorageWithKey(AUTH_TOKEN_KEY))
 }
 
 function getAuthHeaders() {
-  if (typeof window === 'undefined') return {}
-  const token = window.localStorage.getItem(AUTH_TOKEN_KEY)
+  const storage = findStorageWithKey(AUTH_TOKEN_KEY)
+  const token = storage ? storage.getItem(AUTH_TOKEN_KEY) : null
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
@@ -103,30 +122,29 @@ async function apiRequest(path, options = {}) {
   }
 }
 
-function persistSession(user, token) {
+function persistSession(user, token, remember = true) {
   if (typeof window === 'undefined') return
-  window.localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({ user, token }))
-  setAuthToken(token)
+  pickStorage(remember).setItem(AUTH_SESSION_KEY, JSON.stringify({ user, token }))
+  setAuthToken(token, remember)
 }
 
 function loadSession() {
-  if (typeof window === 'undefined') return null
+  const storage = findStorageWithKey(AUTH_SESSION_KEY)
+  if (!storage) return null
   try {
-    const raw = window.localStorage.getItem(AUTH_SESSION_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
+    const parsed = JSON.parse(storage.getItem(AUTH_SESSION_KEY))
     return parsed?.user || null
   } catch {
     return null
   }
 }
 
-export async function loginApi({ identifier, password }) {
+export async function loginApi({ identifier, password, remember = true }) {
   const result = await apiRequest('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ identifier: normalizeIdentifier(identifier), password }),
   })
-  persistSession(result.user, result.access_token || result.accessToken)
+  persistSession(result.user, result.access_token || result.accessToken, remember)
   return result
 }
 

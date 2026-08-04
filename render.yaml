@@ -13,7 +13,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
-        value: "60"
+        value: "43200"
       - key: BACKEND_CORS_ORIGINS
         sync: false
 

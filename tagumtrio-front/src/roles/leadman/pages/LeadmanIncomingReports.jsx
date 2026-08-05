@@ -397,7 +397,6 @@ export default function LeadmanIncomingReports() {
         tone="brand"
         eyebrow="Leadman verification"
         title="Incoming Reports"
-        description="Reports from the previous department, awaiting your verification before moving forward."
         actions={(
           <div className="rounded-lg border border-white/20 bg-white/10 p-3">
             <p className="text-xs uppercase tracking-wider text-emerald-50/90">Department</p>

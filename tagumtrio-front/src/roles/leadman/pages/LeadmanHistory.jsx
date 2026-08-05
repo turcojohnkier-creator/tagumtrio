@@ -70,22 +70,21 @@ export default function LeadmanHistory() {
         tone="brand"
         eyebrow="History"
         title="Submitted Reports"
-        description="View recent submitted reports and send a consolidated daily report."
         actions={(
-          <div className="flex flex-wrap gap-3">
-            <div className="rounded-lg border border-white/20 bg-white/10 p-3 min-w-[200px] select-none">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-row sm:flex-wrap sm:gap-3">
+            <div className="rounded-lg border border-white/20 bg-white/10 p-2.5 select-none sm:p-3 sm:min-w-[180px]">
               <p className="text-xs font-semibold text-emerald-50/90">Department</p>
-              <p className="mt-1.5 text-white">{currentDepartment || 'Assigned department'}</p>
+              <p className="mt-1 truncate text-white sm:mt-1.5">{currentDepartment || 'Assigned department'}</p>
             </div>
-            <div className="rounded-lg border border-white/20 bg-white/10 p-3">
+            <div className="rounded-lg border border-white/20 bg-white/10 p-2.5 sm:p-3">
               <p className="text-xs text-emerald-50/90">Date</p>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5 bg-transparent text-white outline-none [color-scheme:dark]" />
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1 w-full bg-transparent text-white outline-none [color-scheme:dark] sm:mt-1.5" />
             </div>
-            <div className="rounded-lg border border-white/20 bg-white/10 p-3">
+            <div className="col-span-2 rounded-lg border border-white/20 bg-white/10 p-2.5 sm:col-span-1 sm:p-3 sm:min-w-[220px]">
               <p className="text-xs text-emerald-50/90">Search</p>
-              <div className="relative mt-1.5">
+              <div className="relative mt-1 sm:mt-1.5">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-50/70" />
-                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search reports..." className="pl-9 bg-transparent text-white placeholder:text-emerald-50/60 outline-none" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search reports..." className="w-full bg-transparent pl-9 text-white placeholder:text-emerald-50/60 outline-none" />
               </div>
             </div>
           </div>
@@ -110,38 +109,40 @@ export default function LeadmanHistory() {
       </Card>
 
       {selected ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-4xl rounded-xl border border-zinc-200 bg-white shadow-sm">
-            <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-zinc-400">Submitted daily report</p>
-                <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{selected.department} • {selected.reportDate}</h3>
-                <p className="mt-1 text-sm text-zinc-500">Submitted by {selected.submittedByName || selected.submittedBy || 'Unknown'}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setSelected(null)} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700">Close</button>
-              </div>
-            </div>
-            <div className="max-h-[72vh] overflow-auto px-5 py-4">
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 mb-4">
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-zinc-400">Employees involved</p>
-                  <p className="mt-2 font-heading text-2xl font-bold text-zinc-900">{new Set((selected.entries || []).map((e) => String(e.employeeId || e.employeeName || ''))).size}</p>
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
+          <div className="flex min-h-full items-center justify-center py-8">
+            <div className="w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
+              <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-zinc-400">Submitted daily report</p>
+                  <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{selected.department} • {selected.reportDate}</h3>
+                  <p className="mt-1 text-sm text-zinc-500">Submitted by {selected.submittedByName || selected.submittedBy || 'Unknown'}</p>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-zinc-400">Total entries</p>
-                  <p className="mt-2 font-heading text-2xl font-bold text-zinc-900">{(selected.entries || []).length}</p>
-                </div>
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-zinc-400">Total pieces</p>
-                  <p className="mt-2 font-heading text-2xl font-bold text-zinc-900">{aggregateReport([selected]).totalPieces}</p>
-                </div>
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-zinc-400">Total amount</p>
-                  <p className="mt-2 text-2xl font-semibold text-emerald-700">₱{aggregateReport([selected]).totalAmount.toLocaleString()}</p>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setSelected(null)} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700">Close</button>
                 </div>
               </div>
-              <DailyReportTable entries={selected.entries || []} fallbackDepartment={selected.department || currentDepartment} />
+              <div className="px-5 py-4">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 mb-4">
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                    <p className="text-xs uppercase tracking-wide text-zinc-400">Employees involved</p>
+                    <p className="mt-2 font-heading text-2xl font-bold text-zinc-900">{new Set((selected.entries || []).map((e) => String(e.employeeId || e.employeeName || ''))).size}</p>
+                  </div>
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                    <p className="text-xs uppercase tracking-wide text-zinc-400">Total entries</p>
+                    <p className="mt-2 font-heading text-2xl font-bold text-zinc-900">{(selected.entries || []).length}</p>
+                  </div>
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                    <p className="text-xs uppercase tracking-wide text-zinc-400">Total pieces</p>
+                    <p className="mt-2 font-heading text-2xl font-bold text-zinc-900">{aggregateReport([selected]).totalPieces}</p>
+                  </div>
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                    <p className="text-xs uppercase tracking-wide text-zinc-400">Total amount</p>
+                    <p className="mt-2 text-2xl font-semibold text-emerald-700">₱{aggregateReport([selected]).totalAmount.toLocaleString()}</p>
+                  </div>
+                </div>
+                <DailyReportTable entries={selected.entries || []} fallbackDepartment={selected.department || currentDepartment} />
+              </div>
             </div>
           </div>
         </div>

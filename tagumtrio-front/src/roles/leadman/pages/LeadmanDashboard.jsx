@@ -37,7 +37,6 @@ export default function LeadmanDashboard() {
         tone="brand"
         eyebrow="Leadman reporting"
         title="Report Dashboard"
-        description="Use this page to create reports for deployed workers. Deployed workers and the daily report live on separate pages."
         actions={(
           <div className="rounded-lg border border-white/20 bg-white/10 p-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-emerald-50/90">Department</p>

@@ -111,7 +111,6 @@ export default function ProductionConsolidatedReports() {
         tone="brand"
         eyebrow={t('gm.consolidated.eyebrow')}
         title={t('gm.consolidated.title')}
-        description={t(' ')}
       />
 
       <div className="grid gap-3 sm:grid-cols-2 sm:max-w-md">

@@ -100,7 +100,6 @@ export default function GMOverview() {
           tone="brand"
           eyebrow={`${departments.length} ${t('gm.overview.departments')}`}
           title={t('gm.overview.title')}
-          description={t(' ')}
           actions={(
             <div className="inline-flex gap-1 rounded-full bg-white/15 p-1">
               <button

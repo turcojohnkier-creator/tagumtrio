@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Camera, Image as ImageIcon, Plus, X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Portal from '../../../shared/ui/Portal'
@@ -244,7 +244,20 @@ export default function ReportEntryForm({
   const [extraSlotKeys, setExtraSlotKeys] = useState(() => deriveExtraSlotKeys(initialPhotoPreview))
 
   // Department changed (e.g. leadman switched the selector) — reset the form for the new department.
+  // Skipped when `department` hasn't actually changed since last run: a
+  // `useEffect` with a dependency array still runs once right after mount
+  // regardless of whether the dependency actually changed, which was wiping
+  // out the initial* props (used to pre-fill the Edit & Resubmit form from
+  // History) the instant the form appeared. A plain "is this the first
+  // render" boolean isn't enough — StrictMode double-invokes effects in dev,
+  // which would flip that boolean before the second invocation and reset
+  // anyway; comparing against the last department this effect actually ran
+  // for is safe under that double-invoke since the ref only advances on the
+  // branch that performs a real reset.
+  const previousDepartmentRef = useRef(department)
   useEffect(() => {
+    if (previousDepartmentRef.current === department) return
+    previousDepartmentRef.current = department
     const defaultId = normalizeEmployeeId({ employeeId: initialEmployeeId }) || validEmployeeOptions[0]?.normalizedEmployeeId
     setSelectedEmployeeIds(defaultId ? [defaultId] : [])
     setShowEmployeeTable(false)

@@ -26,10 +26,10 @@ export default function LeadmanLayout() {
 
   const navItems = [
     { name: t('leadman.create_report', 'Create Report'), href: '/app/leadman', icon: ScanLine, end: true },
-    { name: t('leadman.incoming_reports', 'Incoming Reports'), href: '/app/leadman/reports', icon: ClipboardList, hasUnread: Number(notificationCounts.daily_report_incoming || 0) > 0 },
+    { name: t('leadman.incoming_reports', 'Incoming Reports'), href: '/app/leadman/reports', icon: ClipboardList, hasUnread: Number(notificationCounts.daily_report_incoming || 0) > 0 || Number(notificationCounts.daily_report_rejected || 0) > 0 },
     { name: t('leadman.deployed_workers', 'Deployed Workers'), href: '/app/leadman/workers', icon: Users },
     { name: t('leadman.daily_report', 'Daily Report'), href: '/app/leadman/report', icon: FileText },
-    { name: t('leadman.history', 'History'), href: '/app/leadman/history', icon: History, hasUnread: Number(notificationCounts.daily_report_rejected || 0) > 0 },
+    { name: t('leadman.history', 'History'), href: '/app/leadman/history', icon: History },
   ]
 
   return (

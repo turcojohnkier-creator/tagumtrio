@@ -5,6 +5,8 @@ import { useAuth } from '../../../context/auth-context'
 import { useDialog } from '../../../context/dialog-context'
 import { useAppData } from '../../../context/app-data-context'
 import { fetchDailyReportsApi, updateDailyReportApi } from '../../../lib/api'
+import DailyReportTable from '../../../shared/reports/DailyReportTable'
+import ReportEntryForm from '../components/ReportEntryForm'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Button from '../../../shared/ui/Button'
 import Badge from '../../../shared/ui/Badge'
@@ -56,6 +58,22 @@ function getReportPhotos(report) {
     if (entry?.photos && typeof entry.photos === 'object') return Object.values(entry.photos)
     return entry?.photoUrls || entry?.imageUrls || []
   }).filter(Boolean)
+}
+
+function buildEntriesFromPayloads(payloads, batchCapturedAt) {
+  return payloads.map((payload) => ({
+    id: `RPT-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    employeeId: payload.employeeId,
+    employeeName: payload.employeeName,
+    department: payload.department,
+    product: payload.product,
+    quantity: payload.quantity,
+    pricePerUnit: payload.pricePerUnit,
+    amount: payload.amount,
+    photos: payload.photos,
+    notes: payload.notes,
+    scannedAt: batchCapturedAt,
+  }))
 }
 
 // Defined at module scope (not inside LeadmanIncomingReports) so React keeps
@@ -174,10 +192,41 @@ function ReportCard({ report, isExpanded, onToggleExpand, actionLoadingId, onVer
   )
 }
 
+// Reports THIS leadman submitted (to the next department) that came back
+// rejected — a different, opposite dataset from the Incoming/Verified tabs
+// above (which are about reports flowing the other direction, into this
+// department). Rendered as a simple row + "Edit & Resubmit", not the
+// verify/reject ReportCard, since there's nothing to verify here.
+function RejectedReportRow({ report, formatDateTime: formatDT, onEdit, onOpen }) {
+  return (
+    <div className="rounded-lg border border-rose-200 bg-rose-50/50 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="truncate font-semibold text-zinc-900">{report.department || 'Unknown Department'}</h3>
+          <Badge variant="danger">Rejected</Badge>
+        </div>
+        <p className="mt-1 text-sm text-zinc-500">
+          Sent {formatDT(report.createdAt || report.created_at || report.reportDate)} • {Array.isArray(report.entries) ? report.entries.length : 0} entr{Array.isArray(report.entries) && report.entries.length === 1 ? 'y' : 'ies'}
+        </p>
+        <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+          Rejected: {report.summary || 'No reason provided.'}
+        </div>
+      </div>
+      <div className="flex shrink-0 gap-2">
+        <Button variant="danger" size="sm" onClick={() => onEdit(report)}>Edit & Resubmit</Button>
+        <Button variant="secondary" size="sm" onClick={() => onOpen(report)}>Open</Button>
+      </div>
+    </div>
+  )
+}
+
 export default function LeadmanIncomingReports() {
   const { user } = useAuth()
   const dialog = useDialog()
-  const { selectedLeadmanDepartment, setSelectedLeadmanDepartment, formatDateTime: formatProviderDateTime, markNotificationsSeen } = useAppData()
+  const {
+    selectedLeadmanDepartment, setSelectedLeadmanDepartment, formatDateTime: formatProviderDateTime,
+    markNotificationsSeen, notificationCounts, employees = [], resubmitDailyReport,
+  } = useAppData()
 
   useEffect(() => {
     markNotificationsSeen('daily_report_incoming')
@@ -193,11 +242,14 @@ export default function LeadmanIncomingReports() {
 
   const [activeTab, setActiveTab] = useState('incoming')
   const [reports, setReports] = useState([])
+  const [myRejectedReports, setMyRejectedReports] = useState([])
   const [loading, setLoading] = useState(true)
   const [expandedReportId, setExpandedReportId] = useState(null)
   const [showPhotoModal, setShowPhotoModal] = useState(false)
   const [selectedPhotos, setSelectedPhotos] = useState([])
   const [actionLoadingId, setActionLoadingId] = useState('')
+  const [selectedRejected, setSelectedRejected] = useState(null)
+  const [resubmitting, setResubmitting] = useState(null)
 
   const loadReports = useCallback(async () => {
     if (!currentDepartment) {
@@ -213,15 +265,35 @@ export default function LeadmanIncomingReports() {
     }
   }, [currentDepartment])
 
-  // Poll for newly-arrived reports — without this, a report submitted by the
-  // previous leadman while this page is already open never appears until a
-  // full remount, even though the nav badge count updates live.
+  const loadMyRejected = useCallback(async () => {
+    if (!currentDepartment || !user?.id) {
+      setMyRejectedReports([])
+      return
+    }
+    try {
+      const remote = await fetchDailyReportsApi({ department: currentDepartment })
+      const mine = (Array.isArray(remote) ? remote : []).filter((report) => (
+        normalizeText(report.status) === 'rejected' && String(report.submittedBy || '') === String(user.id)
+      ))
+      setMyRejectedReports(mine)
+    } catch {
+      setMyRejectedReports([])
+    }
+  }, [currentDepartment, user?.id])
+
+  // Poll for newly-arrived reports and newly-rejected submissions — without
+  // this, a report submitted (or rejected) while this page is already open
+  // never appears until a full remount, even though nav badges update live.
   useEffect(() => {
     setLoading(true)
     loadReports()
-    const interval = setInterval(loadReports, 5000)
+    loadMyRejected()
+    const interval = setInterval(() => {
+      loadReports()
+      loadMyRejected()
+    }, 5000)
     return () => clearInterval(interval)
-  }, [loadReports])
+  }, [loadReports, loadMyRejected])
 
   const incomingReports = useMemo(
     () => reports.filter((report) => normalizeText(report.status) === 'submitted'),
@@ -232,6 +304,16 @@ export default function LeadmanIncomingReports() {
     () => reports.filter((report) => ['leadman_verified', 'gm_submitted'].includes(normalizeText(report.status))),
     [reports]
   )
+
+  const departmentEmployees = useMemo(() => {
+    return employees
+      .filter((employee) => String(employee.department || '').toLowerCase() === String(currentDepartment || '').toLowerCase())
+      .map((employee) => ({
+        employeeId: employee.employeeId,
+        employeeName: employee.employeeName,
+        department: employee.department || currentDepartment,
+      }))
+  }, [employees, currentDepartment])
 
   async function patchReport(report, status, notes = '') {
     if (!report?.id) return
@@ -267,6 +349,39 @@ export default function LeadmanIncomingReports() {
     } finally {
       setActionLoadingId('')
     }
+  }
+
+  function openResubmit(report) {
+    const entries = Array.isArray(report.entries) ? report.entries : []
+    const firstEntry = entries[0] || {}
+    setResubmitting({
+      report,
+      initialValues: {
+        department: report.department,
+        product: firstEntry.product || '',
+        quantity: firstEntry.quantity || '',
+        date: report.reportDate || new Date().toISOString().slice(0, 10),
+      },
+      initialSelectedEmployeeIds: entries.map((entry) => String(entry.employeeId || '')).filter(Boolean),
+      initialTargetDepartment: report.targetDepartment || '',
+      initialPhotoPreview: firstEntry.photos || null,
+    })
+  }
+
+  async function handleResubmit(payloads) {
+    if (!resubmitting?.report?.id) return
+    const list = Array.isArray(payloads) ? payloads : [payloads]
+    if (list.length === 0) return
+    const batchCapturedAt = new Date().toISOString()
+    const entries = buildEntriesFromPayloads(list, batchCapturedAt)
+    await resubmitDailyReport(resubmitting.report.id, {
+      department: list[0].department,
+      targetDepartment: list[0].targetDepartment,
+      summary: list[0].notes,
+      entries,
+    })
+    setResubmitting(null)
+    loadMyRejected()
   }
 
   function handleViewPhotos(photos) {
@@ -310,6 +425,16 @@ export default function LeadmanIncomingReports() {
         >
           Verified ({verifiedReports.length})
         </button>
+        <button
+          type="button"
+          onClick={() => { setActiveTab('rejected'); markNotificationsSeen('daily_report_rejected') }}
+          className={`relative px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'rejected' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
+        >
+          Rejected ({myRejectedReports.length})
+          {Number(notificationCounts?.daily_report_rejected || 0) > 0 ? (
+            <span className="absolute right-1 top-2 h-2 w-2 rounded-full bg-rose-500" />
+          ) : null}
+        </button>
       </div>
 
       <motion.div
@@ -319,6 +444,21 @@ export default function LeadmanIncomingReports() {
       >
         {loading ? (
           <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">Loading reports...</div>
+        ) : activeTab === 'rejected' ? (
+          myRejectedReports.length === 0 ? (
+            <EmptyState title="No rejected reports" description="Reports the next department sends back for correction will appear here." />
+          ) : (
+            myRejectedReports.map((report) => (
+              <motion.div key={report.id} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }}>
+                <RejectedReportRow
+                  report={report}
+                  formatDateTime={resolvedFormatDateTime}
+                  onEdit={openResubmit}
+                  onOpen={setSelectedRejected}
+                />
+              </motion.div>
+            ))
+          )
         ) : (() => {
           const activeReports = activeTab === 'incoming' ? incomingReports : verifiedReports
           const emptyText = activeTab === 'incoming'
@@ -358,6 +498,50 @@ export default function LeadmanIncomingReports() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {selectedRejected ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-4xl rounded-xl border border-zinc-200 bg-white shadow-sm">
+            <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-zinc-400">Rejected report</p>
+                <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{selectedRejected.department} • {selectedRejected.reportDate}</h3>
+              </div>
+              <button onClick={() => setSelectedRejected(null)} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700">Close</button>
+            </div>
+            <div className="max-h-[72vh] overflow-auto px-5 py-4 space-y-4">
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                Rejected: {selectedRejected.summary || 'No reason provided.'}
+              </div>
+              <DailyReportTable entries={selectedRejected.entries || []} fallbackDepartment={selectedRejected.department} />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {resubmitting ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-auto rounded-xl border border-zinc-200 bg-white shadow-sm p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-zinc-400">Edit & resubmit</p>
+                <h3 className="font-heading text-lg font-bold text-zinc-900">{resubmitting.report.department} • {resubmitting.report.reportDate}</h3>
+              </div>
+              <button onClick={() => setResubmitting(null)} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700">Close</button>
+            </div>
+            <ReportEntryForm
+              department={resubmitting.report.department}
+              employeeOptions={departmentEmployees}
+              submitLabel="Resubmit Report"
+              initialValues={resubmitting.initialValues}
+              initialSelectedEmployeeIds={resubmitting.initialSelectedEmployeeIds}
+              initialTargetDepartment={resubmitting.initialTargetDepartment}
+              initialPhotoPreview={resubmitting.initialPhotoPreview}
+              onSubmit={handleResubmit}
+            />
           </div>
         </div>
       ) : null}

@@ -58,6 +58,122 @@ function getReportPhotos(report) {
   }).filter(Boolean)
 }
 
+// Defined at module scope (not inside LeadmanIncomingReports) so React keeps
+// treating it as the same component across parent re-renders — otherwise a
+// new function identity every render makes React remount the whole subtree
+// on every keystroke, dropping focus from the textarea below after one letter.
+// The note text is also kept as local state here rather than lifted into the
+// parent, so typing never triggers a parent re-render in the first place.
+function ReportCard({ report, isExpanded, onToggleExpand, actionLoadingId, onVerify, onReject, onViewPhotos, formatDateTime: formatDT }) {
+  const [note, setNote] = useState('')
+  const entries = Array.isArray(report.entries) ? report.entries : []
+  const photos = getReportPhotos(report)
+  const status = normalizeText(report.status)
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 transition-colors hover:border-zinc-300">
+      <button
+        type="button"
+        onClick={onToggleExpand}
+        className="flex w-full items-center justify-between gap-4 p-4 text-left hover:bg-white/70"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="truncate font-semibold text-zinc-900">{report.department || 'Unknown Department'}</h3>
+            <Badge variant={getStatusVariant(report.status)}>{getStatusLabel(report.status)}</Badge>
+          </div>
+          <p className="mt-1 text-sm text-zinc-500">
+            {report.submittedByName || report.submitted_by_name || 'Unknown'} • {formatDT(report.createdAt || report.created_at || report.reportDate)}
+          </p>
+          <p className="mt-1 text-sm text-zinc-400">
+            {entries.length} entr{entries.length === 1 ? 'y' : 'ies'} • {report.summary || 'No summary provided'}
+          </p>
+        </div>
+        <ChevronDown className={`h-5 w-5 shrink-0 text-zinc-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isExpanded ? (
+        <div className="border-t border-zinc-200 bg-white/40 p-4 space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+              <p className="text-xs uppercase tracking-wide text-zinc-400">From department</p>
+              <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{report.department || '—'}</p>
+            </div>
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+              <p className="text-xs uppercase tracking-wide text-zinc-400">Status</p>
+              <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{getStatusLabel(report.status)}</p>
+            </div>
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+              <p className="text-xs uppercase tracking-wide text-zinc-400">Entries</p>
+              <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{entries.length}</p>
+            </div>
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+              <p className="text-xs uppercase tracking-wide text-zinc-400">Created</p>
+              <p className="mt-2 text-sm font-semibold text-zinc-900">{formatDT(report.createdAt || report.created_at || report.reportDate)}</p>
+            </div>
+          </div>
+
+          {photos.length > 0 ? (
+            <div>
+              <p className="mb-2 text-xs uppercase tracking-wide text-zinc-400">Photos</p>
+              <button
+                type="button"
+                onClick={() => onViewPhotos(photos)}
+                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:border-zinc-300 hover:bg-white"
+              >
+                <ImageIcon className="h-4 w-4" />
+                View photos
+              </button>
+            </div>
+          ) : null}
+
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-zinc-400">Notes</p>
+            <p className="mt-2 text-sm text-zinc-800">{report.summary || 'No notes provided.'}</p>
+          </div>
+
+          {status === 'submitted' ? (
+            <div className="grid gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
+              <div>
+                <label className="text-xs uppercase tracking-wide text-zinc-400">Verification notes</label>
+                <textarea
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  placeholder="Required when rejecting — explain what needs to be corrected."
+                  className="mt-2 min-h-[96px] w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div className="flex flex-col gap-2 lg:w-[220px]">
+                <Button
+                  type="button"
+                  disabled={actionLoadingId === report.id}
+                  onClick={() => onVerify(report, note)}
+                >
+                  <Check className="h-4 w-4" />
+                  {actionLoadingId === report.id ? 'Updating...' : 'Verify report'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="danger"
+                  disabled={actionLoadingId === report.id || !note}
+                  onClick={() => onReject(report, note)}
+                >
+                  <CircleAlert className="h-4 w-4" />
+                  Reject (note required)
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
+              This report has already been verified and moved forward.
+            </div>
+          )}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export default function LeadmanIncomingReports() {
   const { user } = useAuth()
   const dialog = useDialog()
@@ -81,7 +197,6 @@ export default function LeadmanIncomingReports() {
   const [expandedReportId, setExpandedReportId] = useState(null)
   const [showPhotoModal, setShowPhotoModal] = useState(false)
   const [selectedPhotos, setSelectedPhotos] = useState([])
-  const [verificationNotes, setVerificationNotes] = useState({})
   const [actionLoadingId, setActionLoadingId] = useState('')
 
   const loadReports = useCallback(async () => {
@@ -90,7 +205,6 @@ export default function LeadmanIncomingReports() {
       setLoading(false)
       return
     }
-    setLoading(true)
     try {
       const remote = await fetchDailyReportsApi({ targetDepartment: currentDepartment })
       setReports(Array.isArray(remote) ? remote : [])
@@ -99,8 +213,14 @@ export default function LeadmanIncomingReports() {
     }
   }, [currentDepartment])
 
+  // Poll for newly-arrived reports — without this, a report submitted by the
+  // previous leadman while this page is already open never appears until a
+  // full remount, even though the nav badge count updates live.
   useEffect(() => {
+    setLoading(true)
     loadReports()
+    const interval = setInterval(loadReports, 5000)
+    return () => clearInterval(interval)
   }, [loadReports])
 
   const incomingReports = useMemo(
@@ -149,118 +269,12 @@ export default function LeadmanIncomingReports() {
     }
   }
 
-  const ReportCard = ({ report }) => {
-    const isExpanded = expandedReportId === report.id
-    const entries = Array.isArray(report.entries) ? report.entries : []
-    const photos = getReportPhotos(report)
-    const status = normalizeText(report.status)
-
-    return (
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 transition-colors hover:border-zinc-300">
-        <button
-          type="button"
-          onClick={() => setExpandedReportId(isExpanded ? null : report.id)}
-          className="flex w-full items-center justify-between gap-4 p-4 text-left hover:bg-white/70"
-        >
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="truncate font-semibold text-zinc-900">{report.department || 'Unknown Department'}</h3>
-              <Badge variant={getStatusVariant(report.status)}>{getStatusLabel(report.status)}</Badge>
-            </div>
-            <p className="mt-1 text-sm text-zinc-500">
-              {report.submittedByName || report.submitted_by_name || 'Unknown'} • {formatProviderDateTime ? formatProviderDateTime(report.createdAt || report.created_at || report.reportDate) : formatDateTime(report.createdAt || report.created_at || report.reportDate)}
-            </p>
-            <p className="mt-1 text-sm text-zinc-400">
-              {entries.length} entr{entries.length === 1 ? 'y' : 'ies'} • {report.summary || 'No summary provided'}
-            </p>
-          </div>
-          <ChevronDown className={`h-5 w-5 shrink-0 text-zinc-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-        </button>
-
-        {isExpanded ? (
-          <div className="border-t border-zinc-200 bg-white/40 p-4 space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-zinc-400">From department</p>
-                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{report.department || '—'}</p>
-              </div>
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-zinc-400">Status</p>
-                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{getStatusLabel(report.status)}</p>
-              </div>
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-zinc-400">Entries</p>
-                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{entries.length}</p>
-              </div>
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-zinc-400">Created</p>
-                <p className="mt-2 text-sm font-semibold text-zinc-900">{formatProviderDateTime ? formatProviderDateTime(report.createdAt || report.created_at || report.reportDate) : formatDateTime(report.createdAt || report.created_at || report.reportDate)}</p>
-              </div>
-            </div>
-
-            {photos.length > 0 ? (
-              <div>
-                <p className="mb-2 text-xs uppercase tracking-wide text-zinc-400">Photos</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedPhotos(photos.slice(0, 4))
-                    setShowPhotoModal(true)
-                  }}
-                  className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:border-zinc-300 hover:bg-white"
-                >
-                  <ImageIcon className="h-4 w-4" />
-                  View photos
-                </button>
-              </div>
-            ) : null}
-
-            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-zinc-400">Notes</p>
-              <p className="mt-2 text-sm text-zinc-800">{report.summary || 'No notes provided.'}</p>
-            </div>
-
-            {status === 'submitted' ? (
-              <div className="grid gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
-                <div>
-                  <label className="text-xs uppercase tracking-wide text-zinc-400">Verification notes</label>
-                  <textarea
-                    value={verificationNotes[report.id] || ''}
-                    onChange={(event) => setVerificationNotes((current) => ({ ...current, [report.id]: event.target.value }))}
-                    placeholder="Required when rejecting — explain what needs to be corrected."
-                    className="mt-2 min-h-[96px] w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-500"
-                  />
-                </div>
-                <div className="flex flex-col gap-2 lg:w-[220px]">
-                  <Button
-                    type="button"
-                    disabled={actionLoadingId === report.id}
-                    onClick={() => patchReport(report, 'leadman_verified', verificationNotes[report.id] || '')}
-                  >
-                    <Check className="h-4 w-4" />
-                    {actionLoadingId === report.id ? 'Updating...' : 'Verify report'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="danger"
-                    disabled={actionLoadingId === report.id || !verificationNotes[report.id]}
-                    onClick={() => patchReport(report, 'rejected', verificationNotes[report.id] || '')}
-                  >
-                    <CircleAlert className="h-4 w-4" />
-                    Reject (note required)
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
-                This report has already been verified and moved forward.
-              </div>
-            )}
-          </div>
-        ) : null}
-      </div>
-    )
+  function handleViewPhotos(photos) {
+    setSelectedPhotos(photos.slice(0, 4))
+    setShowPhotoModal(true)
   }
+
+  const resolvedFormatDateTime = formatProviderDateTime || formatDateTime
 
   return (
     <div className="space-y-6">
@@ -311,7 +325,16 @@ export default function LeadmanIncomingReports() {
           ) : (
             incomingReports.map((report) => (
               <motion.div key={report.id} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }}>
-                <ReportCard report={report} />
+                <ReportCard
+                  report={report}
+                  isExpanded={expandedReportId === report.id}
+                  onToggleExpand={() => setExpandedReportId((current) => (current === report.id ? null : report.id))}
+                  actionLoadingId={actionLoadingId}
+                  onVerify={(r, note) => patchReport(r, 'leadman_verified', note)}
+                  onReject={(r, note) => patchReport(r, 'rejected', note)}
+                  onViewPhotos={handleViewPhotos}
+                  formatDateTime={resolvedFormatDateTime}
+                />
               </motion.div>
             ))
           )
@@ -320,7 +343,16 @@ export default function LeadmanIncomingReports() {
         ) : (
           verifiedReports.map((report) => (
             <motion.div key={report.id} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }}>
-              <ReportCard report={report} />
+              <ReportCard
+                report={report}
+                isExpanded={expandedReportId === report.id}
+                onToggleExpand={() => setExpandedReportId((current) => (current === report.id ? null : report.id))}
+                actionLoadingId={actionLoadingId}
+                onVerify={(r, note) => patchReport(r, 'leadman_verified', note)}
+                onReject={(r, note) => patchReport(r, 'rejected', note)}
+                onViewPhotos={handleViewPhotos}
+                formatDateTime={resolvedFormatDateTime}
+              />
             </motion.div>
           ))
         )}

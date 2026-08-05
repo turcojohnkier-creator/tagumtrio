@@ -21,31 +21,6 @@ function normalizeText(value) {
   return String(value || '').trim().toLowerCase()
 }
 
-// Rejections don't have a backend notification aimed at the rejecting leadman
-// (they already know the moment they reject it) — this tracks, purely on this
-// device, which rejected reports they've since opened, so the Rejected tab can
-// still carry a red dot for ones they haven't looked at again yet.
-const SEEN_REJECTED_KEY = 'triops-seen-rejected-reports'
-
-function loadSeenRejectedIds() {
-  if (typeof window === 'undefined') return new Set()
-  try {
-    const raw = window.localStorage.getItem(SEEN_REJECTED_KEY)
-    return new Set(raw ? JSON.parse(raw) : [])
-  } catch {
-    return new Set()
-  }
-}
-
-function saveSeenRejectedIds(ids) {
-  if (typeof window === 'undefined') return
-  try {
-    window.localStorage.setItem(SEEN_REJECTED_KEY, JSON.stringify(Array.from(ids)))
-  } catch {
-    // ignore — worst case the dot reappears next reload
-  }
-}
-
 function getStatusLabel(status) {
   switch (normalizeText(status)) {
     case 'submitted':
@@ -188,10 +163,6 @@ function ReportCard({ report, isExpanded, onToggleExpand, actionLoadingId, onVer
                 </Button>
               </div>
             </div>
-          ) : status === 'rejected' ? (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-              You rejected this report. It has been sent back to {report.department || 'the original department'} for correction — it will reappear under Incoming once resubmitted.
-            </div>
           ) : (
             <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
               This report has already been verified and moved forward.
@@ -227,7 +198,6 @@ export default function LeadmanIncomingReports() {
   const [showPhotoModal, setShowPhotoModal] = useState(false)
   const [selectedPhotos, setSelectedPhotos] = useState([])
   const [actionLoadingId, setActionLoadingId] = useState('')
-  const [seenRejectedIds, setSeenRejectedIds] = useState(() => loadSeenRejectedIds())
 
   const loadReports = useCallback(async () => {
     if (!currentDepartment) {
@@ -262,23 +232,6 @@ export default function LeadmanIncomingReports() {
     () => reports.filter((report) => ['leadman_verified', 'gm_submitted'].includes(normalizeText(report.status))),
     [reports]
   )
-
-  const rejectedReports = useMemo(
-    () => reports.filter((report) => normalizeText(report.status) === 'rejected'),
-    [reports]
-  )
-
-  const hasUnseenRejected = rejectedReports.some((report) => !seenRejectedIds.has(report.id))
-
-  function markRejectedSeen() {
-    if (rejectedReports.length === 0) return
-    setSeenRejectedIds((current) => {
-      const next = new Set(current)
-      rejectedReports.forEach((report) => next.add(report.id))
-      saveSeenRejectedIds(next)
-      return next
-    })
-  }
 
   async function patchReport(report, status, notes = '') {
     if (!report?.id) return
@@ -357,14 +310,6 @@ export default function LeadmanIncomingReports() {
         >
           Verified ({verifiedReports.length})
         </button>
-        <button
-          type="button"
-          onClick={() => { setActiveTab('rejected'); markRejectedSeen() }}
-          className={`relative px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'rejected' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
-        >
-          Rejected ({rejectedReports.length})
-          {hasUnseenRejected ? <span className="absolute right-1 top-2 h-2 w-2 rounded-full bg-rose-500" /> : null}
-        </button>
       </div>
 
       <motion.div
@@ -375,12 +320,10 @@ export default function LeadmanIncomingReports() {
         {loading ? (
           <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">Loading reports...</div>
         ) : (() => {
-          const activeReports = activeTab === 'incoming' ? incomingReports : activeTab === 'verified' ? verifiedReports : rejectedReports
+          const activeReports = activeTab === 'incoming' ? incomingReports : verifiedReports
           const emptyText = activeTab === 'incoming'
             ? { title: 'No incoming reports', description: 'No reports from the previous department are awaiting your verification.' }
-            : activeTab === 'verified'
-              ? { title: 'No verified reports yet' }
-              : { title: 'No rejected reports', description: "Reports you've rejected will appear here until they're corrected and resubmitted." }
+            : { title: 'No verified reports yet' }
 
           if (activeReports.length === 0) return <EmptyState title={emptyText.title} description={emptyText.description} />
 

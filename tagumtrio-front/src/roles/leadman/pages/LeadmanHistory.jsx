@@ -44,13 +44,10 @@ function buildEntriesFromPayloads(payloads, batchCapturedAt) {
 
 export default function LeadmanHistory() {
   const { user } = useAuth()
-  const { formatDateTime, selectedLeadmanDepartment, employees = [], resubmitDailyReport, markNotificationsSeen } = useAppData()
-
-  useEffect(() => {
-    markNotificationsSeen('daily_report_rejected')
-  }, [])
+  const { formatDateTime, selectedLeadmanDepartment, employees = [], resubmitDailyReport, notificationCounts, markNotificationsSeen } = useAppData()
 
   const currentDepartment = selectedLeadmanDepartment || (user?.departments?.[0] || user?.department || '')
+  const [activeTab, setActiveTab] = useState('history')
   const [date, setDate] = useState(new Date().toISOString().slice(0,10))
   const [reports, setReports] = useState([])
   const [query, setQuery] = useState('')
@@ -82,6 +79,17 @@ export default function LeadmanHistory() {
       return [r.department, r.reportDate, r.submittedByName, r.summary].filter(Boolean).some((f) => asText(f).includes(q))
     })
   }, [reports, query])
+
+  // Reports this leadman submitted that the NEXT department's leadman sent
+  // back for correction — distinct from anything on Incoming Reports, which
+  // only shows reports the other direction (rejected BY this leadman).
+  const rejectedReports = useMemo(
+    () => filtered.filter((report) => (
+      String(report.status || '').toLowerCase() === 'rejected'
+      && String(report.submittedBy || '') === String(user?.id || '')
+    )),
+    [filtered, user?.id]
+  )
 
   const departmentEmployees = useMemo(() => {
     return employees
@@ -154,35 +162,70 @@ export default function LeadmanHistory() {
         )}
       />
 
+      <div className="flex gap-2 border-b border-zinc-200">
+        <button
+          type="button"
+          onClick={() => setActiveTab('history')}
+          className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'history' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
+        >
+          History ({filtered.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => { setActiveTab('rejected'); markNotificationsSeen('daily_report_rejected') }}
+          className={`relative px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'rejected' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
+        >
+          Rejected ({rejectedReports.length})
+          {Number(notificationCounts?.daily_report_rejected || 0) > 0 ? (
+            <span className="absolute right-1 top-2 h-2 w-2 rounded-full bg-rose-500" />
+          ) : null}
+        </button>
+      </div>
+
       <Card>
         {loading ? <div className="text-zinc-500">Loading...</div> : null}
-        {!loading && filtered.length === 0 ? <EmptyState title="No reports found" description="No reports found for selected filters." /> : null}
-        <div className="space-y-3">
-          {filtered.map((report) => {
-            const isRejected = String(report.status || '').toLowerCase() === 'rejected'
-            const isOwnReport = String(report.submittedBy || '') === String(user?.id || '')
-            return (
-              <div key={report.id} className={`rounded-xl border py-2 px-3 flex items-center justify-between ${isRejected ? 'border-rose-200 bg-rose-50/50' : 'border-zinc-200 bg-zinc-50'}`}>
-                <div>
-                  <div className="font-medium text-zinc-900">{report.department} • {report.reportDate}</div>
-                  <div className="text-xs text-zinc-500 mt-1">Submitted by {report.submittedByName || report.submittedBy || 'Unknown'} • {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</div>
-                  <div className="text-sm text-zinc-700 mt-1">Entries: {Array.isArray(report.entries) ? report.entries.length : 0}</div>
-                  {isRejected ? (
+
+        {activeTab === 'history' ? (
+          !loading && filtered.length === 0 ? (
+            <EmptyState title="No reports found" description="No reports found for selected filters." />
+          ) : (
+            <div className="space-y-3">
+              {filtered.map((report) => (
+                <div key={report.id} className="rounded-xl border border-zinc-200 bg-zinc-50 py-2 px-3 flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-zinc-900">{report.department} • {report.reportDate}</div>
+                    <div className="text-xs text-zinc-500 mt-1">Submitted by {report.submittedByName || report.submittedBy || 'Unknown'} • {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</div>
+                    <div className="text-sm text-zinc-700 mt-1">Entries: {Array.isArray(report.entries) ? report.entries.length : 0}</div>
+                  </div>
+                  <Button variant="secondary" size="sm" onClick={() => setSelected(report)}>Open</Button>
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+          !loading && rejectedReports.length === 0 ? (
+            <EmptyState title="No rejected reports" description="Reports the next department sends back for correction will appear here." />
+          ) : (
+            <div className="space-y-3">
+              {rejectedReports.map((report) => (
+                <div key={report.id} className="rounded-xl border border-rose-200 bg-rose-50/50 py-2 px-3 flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-zinc-900">{report.department} • {report.reportDate}</div>
+                    <div className="text-xs text-zinc-500 mt-1">Submitted by {report.submittedByName || report.submittedBy || 'Unknown'} • {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</div>
+                    <div className="text-sm text-zinc-700 mt-1">Entries: {Array.isArray(report.entries) ? report.entries.length : 0}</div>
                     <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
                       Rejected: {report.summary || 'No reason provided.'}
                     </div>
-                  ) : null}
-                </div>
-                <div className="flex gap-2">
-                  {isRejected && isOwnReport ? (
+                  </div>
+                  <div className="flex gap-2">
                     <Button variant="danger" size="sm" onClick={() => openResubmit(report)}>Edit & Resubmit</Button>
-                  ) : null}
-                  <Button variant="secondary" size="sm" onClick={() => setSelected(report)}>Open</Button>
+                    <Button variant="secondary" size="sm" onClick={() => setSelected(report)}>Open</Button>
+                  </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              ))}
+            </div>
+          )
+        )}
       </Card>
 
       {selected ? (

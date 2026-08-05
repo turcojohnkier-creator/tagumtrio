@@ -1,4 +1,5 @@
 import { CalendarDays } from 'lucide-react'
+import { formatEmployeeId } from '../../../lib/employeeId'
 
 export default function EmployeeCard({
   employee,
@@ -32,7 +33,7 @@ export default function EmployeeCard({
           </div>
           <div className="min-w-0">
             <h3 className="font-semibold text-zinc-900 truncate leading-tight">{name}</h3>
-            <p className="text-xs text-zinc-500 truncate mt-0.5">{id}</p>
+            <p className="text-xs text-zinc-500 truncate mt-0.5">{formatEmployeeId(id)}</p>
           </div>
         </div>
 

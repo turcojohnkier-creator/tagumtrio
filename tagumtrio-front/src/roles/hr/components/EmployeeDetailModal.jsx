@@ -1,6 +1,7 @@
 import { X, File, Info } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { DEPARTMENTS } from '../../../constants/departments'
+import { formatEmployeeId } from '../../../lib/employeeId'
 import Button from '../../../shared/ui/Button'
 import Portal from '../../../shared/ui/Portal'
 
@@ -36,7 +37,7 @@ export default function EmployeeDetailModal({ employee, onClose, onToggleActive,
               <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-2xl text-emerald-700 font-semibold border border-emerald-500/20">{name.split(' ').map(n=>n[0]).join('').substring(0,2)}</div>
               <div>
                 <h3 className="font-heading text-lg font-bold text-zinc-900">{name}</h3>
-                <p className="text-xs text-zinc-500">{id}</p>
+                <p className="text-xs text-zinc-500">{formatEmployeeId(id)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -55,7 +56,7 @@ export default function EmployeeDetailModal({ employee, onClose, onToggleActive,
                   </div>
                   <div>
                     <p className="text-[11px] text-zinc-500">Employee ID</p>
-                    <p className="text-sm font-medium text-zinc-900">{id}</p>
+                    <p className="text-sm font-medium text-zinc-900">{formatEmployeeId(id)}</p>
                   </div>
                   <div>
                     <p className="text-[11px] text-zinc-500">Department</p>

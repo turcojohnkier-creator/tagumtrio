@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -16,11 +18,31 @@ router = APIRouter(prefix="/employees", tags=["employees"])
 # accounts are not self-service and are not in scope for HR's create-account flow.
 HR_CREATABLE_ROLES = {"employee", "leadman", "production_incharge"}
 
+# How long an archived account is kept before it's permanently deleted.
+ARCHIVE_RETENTION_DAYS = 90
+
+
+def purge_expired_archived_accounts(db: Session) -> None:
+    """Permanently delete accounts archived longer than the retention window.
+
+    No scheduler/cron exists in this backend, so this runs as a side effect of
+    listing employees — the next time anyone opens the Accounts page, any
+    archived account past its retention window is deleted for good.
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(days=ARCHIVE_RETENTION_DAYS)
+    db.query(User).filter(
+        User.is_active.is_(False),
+        User.archived_at.isnot(None),
+        User.archived_at < cutoff,
+    ).delete(synchronize_session=False)
+    db.commit()
+
 
 @router.get("", response_model=list[UserPublic])
 def list_employees(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     if current_user.role not in {"hr", "production_incharge", "leadman", "admin", "gm"}:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
+    purge_expired_archived_accounts(db)
     return db.query(User).order_by(User.name.asc()).all()
 
 

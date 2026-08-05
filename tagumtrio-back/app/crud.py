@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -44,6 +46,10 @@ def update_user(db: Session, user_id: int, data: dict):
     for key, value in data.items():
         if hasattr(user, key) and value is not None:
             setattr(user, key, value)
+    # Track when an account was archived so it can be permanently purged after
+    # the retention window — stamp on archive, clear on reactivate.
+    if "is_active" in data:
+        user.archived_at = None if data["is_active"] else datetime.now(timezone.utc)
     db.add(user)
     db.commit()
     db.refresh(user)

@@ -4,12 +4,26 @@ import { Search } from 'lucide-react'
 import { useAppData } from '../../../context/app-data-context'
 import { updateEmployeeApi } from '../../../lib/api'
 import { formatRole } from '../../../lib/roles'
+import { formatEmployeeId } from '../../../lib/employeeId'
 import EmployeeDetailModal from '../../../roles/hr/components/EmployeeDetailModal'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Card from '../../../shared/ui/Card'
 import Button from '../../../shared/ui/Button'
 import Badge from '../../../shared/ui/Badge'
 import EmptyState from '../../../shared/ui/EmptyState'
+
+// Kept in sync with ARCHIVE_RETENTION_DAYS in tagumtrio-back's
+// app/api/v1/endpoints/users.py — the backend is the source of truth for the
+// actual purge, this is only used to show a "days left" countdown here.
+const ARCHIVE_RETENTION_DAYS = 90
+
+function daysUntilPurge(archivedAt) {
+  if (!archivedAt) return null
+  const archivedDate = new Date(archivedAt)
+  if (Number.isNaN(archivedDate.getTime())) return null
+  const elapsedDays = Math.floor((Date.now() - archivedDate.getTime()) / (1000 * 60 * 60 * 24))
+  return Math.max(0, ARCHIVE_RETENTION_DAYS - elapsedDays)
+}
 
 export default function EmployeeDirectory() {
   const { employees = [], employeesLoading, refreshEmployees } = useAppData()
@@ -19,6 +33,7 @@ export default function EmployeeDirectory() {
   const [selectedEmployee, setSelectedEmployee] = useState(null)
   const [localEmployees, setLocalEmployees] = useState([])
   const [actionLoading, setActionLoading] = useState(false)
+  const [accountTab, setAccountTab] = useState('active')
 
   useEffect(() => {
     const list = Array.isArray(employees) ? employees : []
@@ -68,7 +83,7 @@ export default function EmployeeDirectory() {
       const name = String(emp.employeeName || emp.name || emp.employee_name || '')
       const role = String(emp.role || '')
 
-      const matchesQuery = !query || [id, name, role].some((field) => field.toLowerCase().includes(query))
+      const matchesQuery = !query || [id, formatEmployeeId(id), name, role].some((field) => field.toLowerCase().includes(query))
       const matchesRole = roleFilter === 'All Roles' || role === roleFilter
       return matchesQuery && matchesRole
     }).sort((a, b) => {
@@ -91,18 +106,9 @@ export default function EmployeeDirectory() {
     [filteredEmployees]
   )
 
-  function renderEmployeeSection(title, employeesList, emptyMessage, tone = 'emerald') {
+  function renderEmployeeSection(employeesList, emptyMessage, { showRetention = false } = {}) {
     return (
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            {title}
-          </h3>
-          <Badge variant={tone === 'emerald' ? 'success' : 'neutral'}>
-            {employeesList.length}
-          </Badge>
-        </div>
-
+      <section>
         {employeesList.length === 0 ? (
           <EmptyState description={emptyMessage} />
         ) : (
@@ -115,6 +121,7 @@ export default function EmployeeDirectory() {
                   <th className="px-4 py-3 font-medium">Role</th>
                   <th className="px-4 py-3 font-medium">Department</th>
                   <th className="px-4 py-3 font-medium">Status</th>
+                  {showRetention ? <th className="px-4 py-3 font-medium">Permanently deleted in</th> : null}
                   <th className="px-4 py-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>
@@ -128,15 +135,27 @@ export default function EmployeeDirectory() {
                   const name = emp.employeeName || emp.name || emp.employee_name || 'Unknown'
                   const department = emp.department || emp.dept || emp.departmentName || 'Unassigned'
                   const isActive = emp.is_active !== false
+                  const daysLeft = showRetention ? daysUntilPurge(emp.archived_at || emp.archivedAt) : null
                   return (
                     <motion.tr key={id} variants={{ hidden: { opacity: 0, y: 4 }, show: { opacity: 1, y: 0, transition: { duration: 0.18, ease: 'easeOut' } } }} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
-                      <td className="px-4 py-3 font-medium text-zinc-900">{id}</td>
+                      <td className="px-4 py-3 font-medium text-zinc-900">{formatEmployeeId(id)}</td>
                       <td className="px-4 py-3 text-zinc-900">{name}</td>
                       <td className="px-4 py-3">{formatRole(emp.role)}</td>
                       <td className="px-4 py-3">{department}</td>
                       <td className="px-4 py-3">
                         <Badge variant={isActive ? 'success' : 'neutral'}>{isActive ? 'Active' : 'Inactive'}</Badge>
                       </td>
+                      {showRetention ? (
+                        <td className="px-4 py-3">
+                          {daysLeft === null ? (
+                            <span className="text-zinc-400">—</span>
+                          ) : (
+                            <Badge variant={daysLeft <= 7 ? 'danger' : daysLeft <= 30 ? 'warning' : 'neutral'}>
+                              {daysLeft === 0 ? 'Today' : `${daysLeft} day${daysLeft === 1 ? '' : 's'}`}
+                            </Badge>
+                          )}
+                        </td>
+                      ) : null}
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-2">
                           <Button type="button" variant="outline" size="sm" onClick={() => setSelectedEmployee(emp)}>
@@ -163,7 +182,6 @@ export default function EmployeeDirectory() {
     )
   }
 
-  
   return (
     <div className="space-y-6">
       <PageHeader
@@ -211,9 +229,32 @@ export default function EmployeeDirectory() {
 
       {employeesLoading && <div className="rounded-xl border border-zinc-200 bg-white px-4 py-6 text-sm text-zinc-500">Loading accounts from the database...</div>}
 
-      <div className="space-y-6">
-        {renderEmployeeSection('Active Accounts', activeEmployees, 'No active accounts match your filters.', 'emerald')}
-        {renderEmployeeSection('Inactive Accounts', inactiveEmployees, 'No inactive accounts match your filters.', 'zinc')}
+      <div className="space-y-4">
+        <div className="flex overflow-hidden rounded-full border border-emerald-200 bg-emerald-50/60 w-fit">
+          {[
+            { key: 'active', label: 'Active', count: activeEmployees.length },
+            { key: 'archived', label: 'Archived', count: inactiveEmployees.length },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setAccountTab(tab.key)}
+              className={`px-4 py-2 text-sm font-semibold transition-colors ${accountTab === tab.key ? 'bg-emerald-600 text-white shadow-sm' : 'text-emerald-700 hover:bg-white/60'}`}
+            >
+              {tab.label} ({tab.count})
+            </button>
+          ))}
+        </div>
+
+        {accountTab === 'archived' ? (
+          <p className="text-sm text-zinc-500">
+            Archived accounts are kept for {ARCHIVE_RETENTION_DAYS} days, then permanently deleted. Reactivate an account any time before then to keep it.
+          </p>
+        ) : null}
+
+        {accountTab === 'active'
+          ? renderEmployeeSection(activeEmployees, 'No active accounts match your filters.')
+          : renderEmployeeSection(inactiveEmployees, 'No archived accounts match your filters.', { showRetention: true })}
       </div>
 
       {!employeesLoading && filteredEmployees.length === 0 && (

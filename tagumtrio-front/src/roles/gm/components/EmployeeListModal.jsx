@@ -5,6 +5,7 @@ import { useDialog } from '../../../context/dialog-context'
 import { useAuth } from '../../../context/auth-context'
 import { updateEmployeeApi } from '../../../lib/api'
 import { DEPARTMENTS } from '../../../constants/departments'
+import { formatEmployeeId } from '../../../lib/employeeId'
 import Button from '../../../shared/ui/Button'
 import EmptyState from '../../../shared/ui/EmptyState'
 import Portal from '../../../shared/ui/Portal'
@@ -142,7 +143,7 @@ export default function EmployeeListModal({ department, onClose, employees = [],
                         <div className="font-semibold text-zinc-900">{emp.employeeName || emp.name || emp.fullName || t('gm.modal.unknown')}</div>
                         <div className="text-xs text-zinc-400">{emp.department || t('gm.modal.unassigned')}</div>
                       </div>
-                      <div className="text-zinc-500">{employeeKey}</div>
+                      <div className="text-zinc-500">{formatEmployeeId(employeeKey)}</div>
                       <div className="text-zinc-500">{emp.role || t('gm.modal.role_default')}</div>
                       <div className="flex justify-end gap-2">
                         <Button type="button" variant="outline" size="sm" className="rounded-full">

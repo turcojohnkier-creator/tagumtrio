@@ -16,3 +16,7 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    # Stamped when an account is archived (is_active set False), cleared on
+    # reactivate — lets us purge accounts past the retention window (see
+    # ARCHIVE_RETENTION_DAYS in app/api/v1/endpoints/users.py).
+    archived_at = Column(DateTime(timezone=True), nullable=True)

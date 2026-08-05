@@ -34,6 +34,7 @@ class UserPublic(UserBase):
     id: int
     is_active: bool
     created_at: datetime
+    archived_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 

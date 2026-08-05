@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { MessageSquareWarning, Send, Trash2, X } from 'lucide-react'
+import { MessageSquareWarning, Printer, Send, Trash2, X } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
 import DailyReportTable from '../../../shared/reports/DailyReportTable'
 import { useDialog } from '../../../context/dialog-context'
-import { getEntryIdentifier, getEntryLabel, hasMeaningfulEntry } from '../../../shared/reports/report-entry-utils'
+import { getEntryIdentifier, getEntryLabel, getEntryPieces, getReportPhotos, hasMeaningfulEntry } from '../../../shared/reports/report-entry-utils'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Card, { SectionTitle } from '../../../shared/ui/Card'
 import Button from '../../../shared/ui/Button'
 import EmptyState from '../../../shared/ui/EmptyState'
+import logo from '../../../assets/tagumtrio-logo.jpg'
 
 function formatReportDate(value) {
   if (!value) return '-'
@@ -60,6 +61,92 @@ function groupReportEntries(entries = []) {
       totalAmount: group.entries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0),
     }))
     .sort((a, b) => new Date(b.scannedAt || 0) - new Date(a.scannedAt || 0))
+}
+
+// Flattened, self-contained report layout — only rendered visible during printing
+// (see the .print-area rule in index.css). Unlike the on-screen DailyReportTable,
+// nothing here is behind a popup: every employee row and photo is printed directly
+// since a piece of paper has nothing to click.
+function PrintableBatchReport({ batch }) {
+  if (!batch) return null
+
+  const entries = (Array.isArray(batch.entries) ? batch.entries : []).filter(hasMeaningfulEntry)
+  const photos = getReportPhotos(entries)
+  const printedAt = new Intl.DateTimeFormat('en-US', {
+    month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  }).format(new Date())
+
+  return (
+    <div className="hidden print:block print-area text-zinc-900">
+      <div className="flex items-center gap-3 border-b border-zinc-300 pb-4">
+        <img src={logo} alt="Tagum Trio Lumber Corporation" className="h-12 w-12 rounded-lg object-cover" />
+        <div>
+          <p className="text-lg font-bold">Tagum Trio Lumber Corporation</p>
+          <p className="text-sm text-zinc-600">Daily Production Report</p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+        <p><strong>Department:</strong> {batch.department || '-'}</p>
+        <p><strong>Scanned:</strong> {formatReportDate(batch.scannedAt)}</p>
+        <p><strong>Printed on:</strong> {printedAt}</p>
+        <p><strong>Total entries:</strong> {entries.length}</p>
+      </div>
+
+      <div className="mt-4 grid grid-cols-4 gap-3 text-sm">
+        <div className="rounded border border-zinc-300 p-2">
+          <p className="text-xs text-zinc-500">Employees involved</p>
+          <p className="font-bold">{batch.employeeCount}</p>
+        </div>
+        <div className="rounded border border-zinc-300 p-2">
+          <p className="text-xs text-zinc-500">Product</p>
+          <p className="font-bold">{batch.product || '-'}</p>
+        </div>
+        <div className="rounded border border-zinc-300 p-2">
+          <p className="text-xs text-zinc-500">Quantity</p>
+          <p className="font-bold">{batch.quantity || '-'}</p>
+        </div>
+        <div className="rounded border border-zinc-300 p-2">
+          <p className="text-xs text-zinc-500">Total amount</p>
+          <p className="font-bold">₱{batch.totalAmount.toLocaleString()}</p>
+        </div>
+      </div>
+
+      <table className="mt-4 w-full border-collapse text-sm">
+        <thead>
+          <tr className="border-b-2 border-zinc-400 text-left">
+            <th className="py-1.5 pr-2">Employee ID</th>
+            <th className="py-1.5 pr-2">Employee Name</th>
+            <th className="py-1.5 pr-2">Product</th>
+            <th className="py-1.5 pr-2">Quantity</th>
+            <th className="py-1.5 pr-2">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {entries.map((entry, index) => (
+            <tr key={entry.id || `${getEntryIdentifier(entry)}-${index}`} className="border-b border-zinc-200">
+              <td className="py-1.5 pr-2">{getEntryIdentifier(entry) || '-'}</td>
+              <td className="py-1.5 pr-2">{getEntryLabel(entry) || '-'}</td>
+              <td className="py-1.5 pr-2">{entry.product || entry.raw?.product || '-'}</td>
+              <td className="py-1.5 pr-2">{getEntryPieces(entry) || '-'}</td>
+              <td className="py-1.5 pr-2">₱{Number(entry.amount || 0).toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {photos.length > 0 ? (
+        <div className="mt-4">
+          <p className="text-sm font-semibold">Photos attached ({photos.length})</p>
+          <div className="mt-2 grid grid-cols-4 gap-2">
+            {photos.map((photo, index) => (
+              <img key={index} src={photo} alt={`Evidence ${index + 1}`} className="h-24 w-full rounded border border-zinc-300 object-cover" />
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 function ReportDetailModal({ batch, onClose, onSubmit, onDelete, isSubmitting }) {
@@ -119,6 +206,9 @@ function ReportDetailModal({ batch, onClose, onSubmit, onDelete, isSubmitting })
         </div>
 
         <div className="flex items-center justify-end gap-3 border-t border-zinc-200 px-5 py-4">
+          <Button type="button" variant="secondary" onClick={() => window.print()}>
+            <Printer className="h-4 w-4" /> Print / Save as PDF
+          </Button>
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
@@ -127,6 +217,8 @@ function ReportDetailModal({ batch, onClose, onSubmit, onDelete, isSubmitting })
           </Button>
         </div>
       </div>
+
+      <PrintableBatchReport batch={batch} />
     </div>
   )
 }

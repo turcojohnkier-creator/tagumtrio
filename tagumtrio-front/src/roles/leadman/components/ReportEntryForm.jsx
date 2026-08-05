@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Camera, Image as ImageIcon, X } from 'lucide-react'
+import { Camera, Image as ImageIcon, Plus, X } from 'lucide-react'
+import { motion } from 'framer-motion'
 import Portal from '../../../shared/ui/Portal'
 import Button from '../../../shared/ui/Button'
+import DailyReportTable from '../../../shared/reports/DailyReportTable'
 import { useAppData } from '../../../context/app-data-context'
+import { formatEmployeeId } from '../../../lib/employeeId'
 import { buildDepartmentReportSummary, getDepartmentReportFieldSpec } from '../../../constants/department-report-fields'
 import { getNextDepartmentOptions } from '../../../constants/department-flow'
 
@@ -28,7 +31,25 @@ function buildInitialValues(spec, department, overrides = {}) {
   return { ...base, ...overrides }
 }
 
-const EMPTY_PHOTOS = { photo1: null, photo2: null, photo3: null, photo4: null }
+const FIXED_PHOTO_SLOTS = [
+  { key: 'front', label: 'Front' },
+  { key: 'back', label: 'Back' },
+  { key: 'left', label: 'Left' },
+  { key: 'right', label: 'Right' },
+]
+const FIXED_PHOTO_KEYS = FIXED_PHOTO_SLOTS.map((slot) => slot.key)
+const EMPTY_PHOTOS = { front: null, back: null, left: null, right: null }
+
+function generateExtraSlotKey() {
+  return `extra-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+}
+
+// Any key in a photo object beyond the 4 fixed angles is an "extra" the leadman
+// added — reconstruct that list so a resubmit reopens with the same slots.
+function deriveExtraSlotKeys(photoPreview) {
+  if (!photoPreview || typeof photoPreview !== 'object') return []
+  return Object.keys(photoPreview).filter((key) => !FIXED_PHOTO_KEYS.includes(key))
+}
 
 // Downscale + re-encode before staging so a slow connection has far less to
 // upload — phone camera photos can be several MB each; this brings them down
@@ -97,7 +118,7 @@ function EmployeePickerModal({ open, department, employeeOptions, selectedEmploy
                           className="h-4 w-4 rounded border-zinc-300 bg-white text-emerald-500 focus:ring-emerald-500"
                         />
                       </td>
-                      <td className="px-4 py-3 align-middle font-medium text-zinc-900">{employeeId}</td>
+                      <td className="px-4 py-3 align-middle font-medium text-zinc-900">{formatEmployeeId(employeeId)}</td>
                       <td className="px-4 py-3 align-middle">{employee.employeeName || employee.name || employee.fullName}</td>
                       <td className="px-4 py-3 align-middle text-zinc-700">{employee.department || department || employee.dept}</td>
                     </tr>
@@ -107,6 +128,76 @@ function EmployeePickerModal({ open, department, employeeOptions, selectedEmploy
             </table>
           </div>
         </div>
+      </div>
+    </Portal>
+  )
+}
+
+function ReportReviewModal({ open, department, product, quantity, pricePerUnit, totalAmount, perEmployeeAmount, payloads, isSubmitting, submissionError, onConfirm, onBack }) {
+  if (!open) return null
+
+  const employeeCount = payloads.length
+
+  return (
+    <Portal>
+      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4">
+        <motion.div
+          className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-auto rounded-xl border border-zinc-200 bg-white shadow-sm"
+          initial={{ opacity: 0, scale: 0.96, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+        >
+          <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-zinc-400">Review before submitting</p>
+              <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{department || 'Report'}</h3>
+              <p className="mt-1 text-sm text-zinc-500">Check the details below carefully. This is what will be recorded.</p>
+            </div>
+            <button type="button" onClick={onBack} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="space-y-4 px-5 py-4">
+            {submissionError ? (
+              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-700">{submissionError}</div>
+            ) : null}
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-zinc-400">Employees</p>
+                <p className="mt-2 font-heading text-2xl font-bold text-zinc-900">{employeeCount}</p>
+              </div>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-zinc-400">Product</p>
+                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{product || '-'}</p>
+              </div>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-zinc-400">Quantity</p>
+                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{quantity || '-'}</p>
+              </div>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-zinc-400">Total amount</p>
+                <p className="mt-2 text-lg font-semibold text-emerald-700">₱{totalAmount.toLocaleString()}</p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 text-sm text-emerald-800">
+              Rate: ₱{pricePerUnit.toLocaleString()} per unit · ₱{perEmployeeAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })} each for {employeeCount} employee{employeeCount === 1 ? '' : 's'}
+            </div>
+
+            <DailyReportTable entries={payloads} fallbackDepartment={department} />
+          </div>
+
+          <div className="flex items-center justify-end gap-3 border-t border-zinc-200 px-5 py-4">
+            <Button type="button" variant="secondary" onClick={onBack} disabled={isSubmitting}>
+              Back to Edit
+            </Button>
+            <Button type="button" onClick={onConfirm} disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting…' : 'Confirm & Submit'}
+            </Button>
+          </div>
+        </motion.div>
       </div>
     </Portal>
   )
@@ -145,10 +236,12 @@ export default function ReportEntryForm({
   const [showEmployeeTable, setShowEmployeeTable] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submissionError, setSubmissionError] = useState('')
+  const [reviewPayloads, setReviewPayloads] = useState(null)
   const [values, setValues] = useState(() => buildInitialValues(spec, department, initialValuesOverride))
   const [targetDepartment, setTargetDepartment] = useState(() => initialTargetDepartment || '')
   const [photos, setPhotos] = useState(EMPTY_PHOTOS)
   const [photoPreview, setPhotoPreview] = useState(() => initialPhotoPreview || EMPTY_PHOTOS)
+  const [extraSlotKeys, setExtraSlotKeys] = useState(() => deriveExtraSlotKeys(initialPhotoPreview))
 
   // Department changed (e.g. leadman switched the selector) — reset the form for the new department.
   useEffect(() => {
@@ -161,6 +254,7 @@ export default function ReportEntryForm({
     setTargetDepartment('')
     setPhotos(EMPTY_PHOTOS)
     setPhotoPreview(EMPTY_PHOTOS)
+    setExtraSlotKeys([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [department])
 
@@ -197,6 +291,29 @@ export default function ReportEntryForm({
       })
   }
 
+  function addPhotoSlot() {
+    setExtraSlotKeys((current) => [...current, generateExtraSlotKey()])
+  }
+
+  function removePhotoSlot(key) {
+    setExtraSlotKeys((current) => current.filter((k) => k !== key))
+    setPhotos((current) => {
+      const next = { ...current }
+      delete next[key]
+      return next
+    })
+    setPhotoPreview((current) => {
+      const next = { ...current }
+      delete next[key]
+      return next
+    })
+  }
+
+  const photoSlots = useMemo(() => [
+    ...FIXED_PHOTO_SLOTS,
+    ...extraSlotKeys.map((key, index) => ({ key, label: `Photo ${FIXED_PHOTO_SLOTS.length + 1 + index}`, removable: true })),
+  ], [extraSlotKeys])
+
   const selectedEmployees = validEmployeeOptions.filter((employee) => selectedEmployeeIds.includes(employee.normalizedEmployeeId))
 
   const product = String(values.product || '').trim()
@@ -227,6 +344,8 @@ export default function ReportEntryForm({
     setTargetDepartment(nextDepartmentOptions.length === 1 ? nextDepartmentOptions[0] : '')
     setPhotos(EMPTY_PHOTOS)
     setPhotoPreview(EMPTY_PHOTOS)
+    setExtraSlotKeys([])
+    setReviewPayloads(null)
   }
 
   function handleSubmit(event) {
@@ -253,9 +372,9 @@ export default function ReportEntryForm({
       return
     }
 
-    const uploadedPhotos = Object.values(photoPreview).filter(Boolean)
-    if (uploadedPhotos.length === 0) {
-      setSubmissionError('Please upload at least one work verification photo.')
+    const missingAngles = FIXED_PHOTO_SLOTS.filter((slot) => !photoPreview[slot.key]).map((slot) => slot.label)
+    if (missingAngles.length > 0) {
+      setSubmissionError(`Please upload a ${missingAngles.join(', ')} photo before submitting.`)
       return
     }
 
@@ -279,12 +398,7 @@ export default function ReportEntryForm({
       batchId,
       batchCapturedAt,
       batchItemCount: selectedEmployees.length,
-      photos: {
-        photo1: photoPreview.photo1 || null,
-        photo2: photoPreview.photo2 || null,
-        photo3: photoPreview.photo3 || null,
-        photo4: photoPreview.photo4 || null,
-      },
+      photos: { ...photoPreview },
       notes: autoSummary,
     }))
 
@@ -293,10 +407,16 @@ export default function ReportEntryForm({
       return
     }
 
+    setSubmissionError('')
+    setReviewPayloads(payloads)
+  }
+
+  function confirmSubmit() {
+    if (!reviewPayloads || isSubmitting) return
     setIsSubmitting(true)
     setSubmissionError('')
 
-    Promise.resolve(onSubmit(payloads)).then(() => {
+    Promise.resolve(onSubmit(reviewPayloads)).then(() => {
       setIsSubmitting(false)
       resetForm()
     }).catch((error) => {
@@ -391,45 +511,54 @@ export default function ReportEntryForm({
       </div>
 
       <div className="border-t border-zinc-200 pt-4">
-        <h4 className="text-sm font-semibold text-zinc-900 mb-4">Work Verification Photos (Required)</h4>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {[1, 2, 3, 4].map((num) => {
-            const photoKey = `photo${num}`
+        <h4 className="text-sm font-semibold text-zinc-900 mb-4">Work Verification Photos (Front, Back, Left &amp; Right required)</h4>
+        <div className="flex gap-4 overflow-x-auto pb-2">
+          {photoSlots.map((slot) => {
+            const photoKey = slot.key
             return (
-              <div key={photoKey} className="flex flex-col">
-                <label className="text-xs text-zinc-500 mb-2">Photo {num}</label>
+              <div key={photoKey} className="flex w-32 shrink-0 flex-col">
+                <label className="text-xs text-zinc-500 mb-2 truncate">{slot.label}</label>
                 <input
                   type="file"
                   accept="image/*"
                   capture="environment"
                   onChange={(e) => handlePhotoChange(photoKey, e.target.files?.[0] || null)}
                   className="hidden"
-                  id={`photo-camera-${num}`}
+                  id={`photo-camera-${photoKey}`}
                 />
                 <input
                   type="file"
                   accept="image/*"
                   onChange={(e) => handlePhotoChange(photoKey, e.target.files?.[0] || null)}
                   className="hidden"
-                  id={`photo-gallery-${num}`}
+                  id={`photo-gallery-${photoKey}`}
                 />
                 {photoPreview[photoKey] ? (
-                  <div className="relative flex-1 w-full h-24 rounded-xl overflow-hidden border-2 border-zinc-300">
-                    <img src={photoPreview[photoKey]} alt={`Preview ${num}`} className="w-full h-full object-cover" />
+                  <div className="relative w-32 h-24 rounded-xl overflow-hidden border-2 border-zinc-300">
+                    <img src={photoPreview[photoKey]} alt={`${slot.label} preview`} className="w-full h-full object-cover" />
                     <button
                       type="button"
-                      onClick={() => handlePhotoChange(photoKey, null)}
+                      onClick={() => (slot.removable ? removePhotoSlot(photoKey) : handlePhotoChange(photoKey, null))}
                       className="absolute top-1 right-1 bg-rose-500 rounded-full p-1 text-white hover:bg-rose-600"
                     >
                       <X className="w-3 h-3" />
                     </button>
                   </div>
                 ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 p-3">
-                    <label htmlFor={`photo-camera-${num}`} className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors">
+                  <div className="relative w-32 h-24 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 p-3">
+                    {slot.removable ? (
+                      <button
+                        type="button"
+                        onClick={() => removePhotoSlot(photoKey)}
+                        className="absolute top-1 right-1 rounded-full bg-zinc-200 p-1 text-zinc-600 hover:bg-zinc-300"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    ) : null}
+                    <label htmlFor={`photo-camera-${photoKey}`} className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors">
                       <Camera className="w-3.5 h-3.5" /> Take photo
                     </label>
-                    <label htmlFor={`photo-gallery-${num}`} className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs font-medium text-zinc-600 hover:border-emerald-500/50 hover:text-zinc-900 transition-colors">
+                    <label htmlFor={`photo-gallery-${photoKey}`} className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs font-medium text-zinc-600 hover:border-emerald-500/50 hover:text-zinc-900 transition-colors">
                       <ImageIcon className="w-3.5 h-3.5" /> Gallery
                     </label>
                   </div>
@@ -437,6 +566,18 @@ export default function ReportEntryForm({
               </div>
             )
           })}
+
+          <div className="flex w-32 shrink-0 flex-col">
+            <label className="text-xs text-zinc-500 mb-2">&nbsp;</label>
+            <button
+              type="button"
+              onClick={addPhotoSlot}
+              className="flex w-32 h-24 flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-emerald-300 bg-emerald-50/40 text-emerald-700 transition-colors hover:border-emerald-500 hover:bg-emerald-50"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="text-xs font-semibold">Add photo</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -456,6 +597,21 @@ export default function ReportEntryForm({
         selectedEmployeeIds={selectedEmployeeIds}
         onToggleEmployee={toggleEmployee}
         onClose={() => setShowEmployeeTable(false)}
+      />
+
+      <ReportReviewModal
+        open={Boolean(reviewPayloads)}
+        department={spec.department}
+        product={product}
+        quantity={quantity}
+        pricePerUnit={pricePerUnit || 0}
+        totalAmount={totalAmount}
+        perEmployeeAmount={perEmployeeAmount}
+        payloads={reviewPayloads || []}
+        isSubmitting={isSubmitting}
+        submissionError={submissionError}
+        onConfirm={confirmSubmit}
+        onBack={() => setReviewPayloads(null)}
       />
     </form>
   )

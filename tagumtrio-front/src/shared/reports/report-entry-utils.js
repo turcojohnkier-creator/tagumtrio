@@ -1,3 +1,5 @@
+import { formatEmployeeId } from '../../lib/employeeId'
+
 export function getEntryLabel(entry) {
   return String(
     entry?.employeeName
@@ -11,12 +13,13 @@ export function getEntryLabel(entry) {
 }
 
 export function getEntryIdentifier(entry) {
-  return String(
+  const raw = String(
     entry?.employeeId
     || entry?.raw?.employeeId
     || entry?.raw?.employee_id
     || ''
   ).trim()
+  return raw ? formatEmployeeId(raw) : ''
 }
 
 export function getEntryPieces(entry) {

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Search, Users } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
+import { formatEmployeeId } from '../../../lib/employeeId'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Card, { SectionTitle } from '../../../shared/ui/Card'
 import Badge from '../../../shared/ui/Badge'
@@ -80,7 +81,7 @@ export default function LeadmanWorkers() {
               <tbody className="divide-y divide-zinc-100">
                 {deployedEmployees.map((employee, index) => (
                   <tr key={employee.employeeId} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
-                    <td className="px-4 py-3 font-medium text-zinc-900">{employee.employeeId}</td>
+                    <td className="px-4 py-3 font-medium text-zinc-900">{formatEmployeeId(employee.employeeId)}</td>
                     <td className="px-4 py-3 text-zinc-900">{employee.employeeName}</td>
                     <td className="px-4 py-3">{employee.department || selectedDepartment}</td>
                     <td className="px-4 py-3">

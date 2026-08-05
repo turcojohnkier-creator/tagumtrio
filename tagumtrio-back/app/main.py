@@ -26,6 +26,7 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS target_department VARCHAR(128)"))
     connection.execute(text("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS start_date VARCHAR(32)"))
     connection.execute(text("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS end_date VARCHAR(32)"))
+    connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ"))
 
 app = FastAPI(title="TriOPS Backend")
 

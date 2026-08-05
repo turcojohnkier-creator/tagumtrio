@@ -53,3 +53,21 @@ select option:checked {
   background: linear-gradient(#d1fae5, #d1fae5);
   color: #18181b;
 }
+
+/* Printable reports: only .print-area (and its contents) render when printing —
+   everything else on the page (sidebar, background, modal chrome/buttons) is hidden.
+   Works regardless of where in the DOM the print area lives. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0;
+    padding: 24px;
+  }
+}

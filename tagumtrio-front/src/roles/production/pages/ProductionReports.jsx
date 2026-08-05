@@ -177,7 +177,7 @@ export default function ProductionReports() {
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedPhotos(photos.slice(0, 4))
+                      setSelectedPhotos(photos)
                       setShowPhotoModal(true)
                     }}
                     className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:border-zinc-300 hover:bg-white"

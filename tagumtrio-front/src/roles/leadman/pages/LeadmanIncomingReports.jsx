@@ -270,7 +270,7 @@ export default function LeadmanIncomingReports() {
   }
 
   function handleViewPhotos(photos) {
-    setSelectedPhotos(photos.slice(0, 4))
+    setSelectedPhotos(photos)
     setShowPhotoModal(true)
   }
 

@@ -278,18 +278,20 @@ export default function ProductionReports() {
       </motion.div>
 
       {showPhotoModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-          <div className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-xl border border-zinc-200 bg-white shadow-sm p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-heading text-lg font-bold text-zinc-900">Verification photos</h3>
-              <button type="button" onClick={() => setShowPhotoModal(false)} className="text-zinc-500 hover:text-zinc-900">Close</button>
-            </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              {selectedPhotos.map((photo, index) => (
-                <div key={index} className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
-                  <img src={photo} alt={`Report ${index + 1}`} className="h-40 w-full object-cover" />
-                </div>
-              ))}
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/75 p-4">
+          <div className="flex min-h-full items-center justify-center py-8">
+            <div className="max-h-[85vh] w-full max-w-4xl overflow-y-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-4">
+                <h3 className="font-heading text-lg font-bold text-zinc-900">Verification photos</h3>
+                <button type="button" onClick={() => setShowPhotoModal(false)} className="text-zinc-500 hover:text-zinc-900">Close</button>
+              </div>
+              <div className="grid grid-cols-2 gap-4 p-6 md:grid-cols-4">
+                {selectedPhotos.map((photo, index) => (
+                  <div key={index} className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
+                    <img src={photo} alt={`Report ${index + 1}`} className="h-40 w-full object-cover" />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

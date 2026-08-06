@@ -18,21 +18,22 @@ export default function EmployeeDetailModal({ employee, onClose, onToggleActive,
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[60] overflow-y-auto p-4">
         <motion.div
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2 }}
           onClick={onClose}
         />
+        <div className="relative flex min-h-full items-center justify-center">
         <motion.div
-          className="relative w-full max-w-3xl mx-auto bg-zinc-50 border border-zinc-200 rounded-lg overflow-hidden"
+          className="relative w-full max-w-3xl max-h-[85vh] mx-auto overflow-y-auto bg-zinc-50 border border-zinc-200 rounded-lg"
           initial={{ opacity: 0, scale: 0.96, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.22, ease: 'easeOut' }}
         >
-          <div className="flex items-center justify-between p-4 border-b border-zinc-200">
+          <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-zinc-200 bg-zinc-50">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-2xl text-emerald-700 font-semibold border border-emerald-500/20">{name.split(' ').map(n=>n[0]).join('').substring(0,2)}</div>
               <div>
@@ -130,6 +131,7 @@ export default function EmployeeDetailModal({ employee, onClose, onToggleActive,
             </div>
           </div>
         </motion.div>
+        </div>
       </div>
     </Portal>
   )

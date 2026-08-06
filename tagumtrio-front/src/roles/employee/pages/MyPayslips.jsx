@@ -89,9 +89,10 @@ export default function MyPayslips() {
       </div>
 
       {openModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-4xl rounded-lg border border-zinc-200 bg-white">
-            <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
+          <div className="flex min-h-full items-center justify-center py-8">
+          <div className="w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-lg border border-zinc-200 bg-white">
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-zinc-200 bg-white px-5 py-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{modalMode === 'receipt' ? 'Receipt preview' : 'Report history'}</p>
                 <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{modalTitle}</h3>
@@ -170,6 +171,7 @@ export default function MyPayslips() {
                 Close
               </Button>
             </div>
+          </div>
           </div>
         </div>
       )}

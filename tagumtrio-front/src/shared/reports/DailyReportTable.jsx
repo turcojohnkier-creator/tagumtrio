@@ -52,22 +52,24 @@ function EmployeeListPopup({ open, entries, onClose }) {
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/60 p-4">
-        <div className="w-full max-w-lg rounded-xl border border-zinc-200 bg-white shadow-sm max-h-[80vh] overflow-auto">
-          <div className="flex items-center justify-between gap-4 border-b border-zinc-200 px-5 py-4">
-            <h4 className="font-heading text-base font-semibold text-zinc-900">{t('table.employees_involved')} ({entries.length})</h4>
-            <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
-              <X className="h-4 w-4" />
-            </button>
+      <div className="fixed inset-0 z-[95] overflow-y-auto bg-black/60 p-4">
+        <div className="flex min-h-full items-center justify-center py-8">
+          <div className="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-zinc-200 bg-white px-5 py-4">
+              <h4 className="font-heading text-base font-semibold text-zinc-900">{t('table.employees_involved')} ({entries.length})</h4>
+              <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <ul className="divide-y divide-zinc-100">
+              {entries.map((entry, index) => (
+                <li key={entry.id || `${getEntryIdentifier(entry)}-${index}`} className="px-5 py-3">
+                  <p className="font-medium text-zinc-900">{getEntryLabel(entry) || t('table.unknown_employee')}</p>
+                  <p className="text-xs text-zinc-400">{getEntryIdentifier(entry) || '-'}</p>
+                </li>
+              ))}
+            </ul>
           </div>
-          <ul className="divide-y divide-zinc-100">
-            {entries.map((entry, index) => (
-              <li key={entry.id || `${getEntryIdentifier(entry)}-${index}`} className="px-5 py-3">
-                <p className="font-medium text-zinc-900">{getEntryLabel(entry) || t('table.unknown_employee')}</p>
-                <p className="text-xs text-zinc-400">{getEntryIdentifier(entry) || '-'}</p>
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
     </Portal>
@@ -80,20 +82,22 @@ function PhotoGridPopup({ open, photos, onClose }) {
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/60 p-4">
-        <div className="w-full max-w-2xl rounded-xl border border-zinc-200 bg-white shadow-sm max-h-[80vh] overflow-auto">
-          <div className="flex items-center justify-between gap-4 border-b border-zinc-200 px-5 py-4">
-            <h4 className="font-heading text-base font-semibold text-zinc-900">{t('table.evidence_photos')} ({photos.length})</h4>
-            <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-3 p-5">
-            {photos.map((photo, index) => (
-              <div key={index} className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
-                <img src={photo} alt={`Evidence ${index + 1}`} className="h-40 w-full object-cover" />
-              </div>
-            ))}
+      <div className="fixed inset-0 z-[95] overflow-y-auto bg-black/60 p-4">
+        <div className="flex min-h-full items-center justify-center py-8">
+          <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-zinc-200 bg-white px-5 py-4">
+              <h4 className="font-heading text-base font-semibold text-zinc-900">{t('table.evidence_photos')} ({photos.length})</h4>
+              <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3 p-5">
+              {photos.map((photo, index) => (
+                <div key={index} className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
+                  <img src={photo} alt={`Evidence ${index + 1}`} className="h-40 w-full object-cover" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

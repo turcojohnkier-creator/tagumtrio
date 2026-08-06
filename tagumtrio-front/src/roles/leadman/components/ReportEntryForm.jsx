@@ -141,14 +141,15 @@ function ReportReviewModal({ open, department, product, quantity, pricePerUnit, 
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4">
+      <div className="fixed inset-0 z-[70] overflow-y-auto bg-black/60 p-4">
+        <div className="flex min-h-full items-center justify-center py-8">
         <motion.div
-          className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-auto rounded-xl border border-zinc-200 bg-white shadow-sm"
+          className="relative z-10 w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-xl border border-zinc-200 bg-white shadow-sm"
           initial={{ opacity: 0, scale: 0.96, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.22, ease: 'easeOut' }}
         >
-          <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
+          <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-zinc-200 bg-white px-5 py-4">
             <div>
               <p className="text-xs uppercase tracking-wide text-zinc-400">Review before submitting</p>
               <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{department || 'Report'}</h3>
@@ -199,6 +200,7 @@ function ReportReviewModal({ open, department, product, quantity, pricePerUnit, 
             </Button>
           </div>
         </motion.div>
+        </div>
       </div>
     </Portal>
   )

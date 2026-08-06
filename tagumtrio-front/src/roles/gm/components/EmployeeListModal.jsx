@@ -78,7 +78,7 @@ export default function EmployeeListModal({ department, onClose, employees = [],
         aria-hidden="true"
       />
       <motion.div
-        className="relative z-10 w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-6xl overflow-hidden rounded-[2rem] border border-zinc-200 bg-zinc-50 shadow-sm max-h-[90vh]"
+        className="relative z-10 w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-6xl overflow-y-auto rounded-[2rem] border border-zinc-200 bg-zinc-50 shadow-sm max-h-[85vh]"
         initial={{ opacity: 0, scale: 0.96, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.22, ease: 'easeOut' }}

@@ -154,8 +154,9 @@ function ReportDetailModal({ batch, onClose, onSubmit, onDelete, isSubmitting })
   if (!batch) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-5xl rounded-xl border border-zinc-200 bg-white shadow-sm">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
+      <div className="flex min-h-full items-center justify-center py-8">
+      <div className="w-full max-w-5xl max-h-[85vh] flex flex-col rounded-xl border border-zinc-200 bg-white shadow-sm">
         <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-zinc-400">Daily report</p>
@@ -172,7 +173,7 @@ function ReportDetailModal({ batch, onClose, onSubmit, onDelete, isSubmitting })
           </div>
         </div>
 
-        <div className="max-h-[72vh] overflow-auto px-5 py-4 space-y-4">
+        <div className="min-h-0 flex-1 overflow-auto px-5 py-4 space-y-4">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
               <p className="text-xs uppercase tracking-wide text-zinc-400">Employees involved</p>
@@ -217,6 +218,7 @@ function ReportDetailModal({ batch, onClose, onSubmit, onDelete, isSubmitting })
             <Send className="h-4 w-4" /> {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
         </div>
+      </div>
       </div>
 
       <PrintableBatchReport batch={batch} />

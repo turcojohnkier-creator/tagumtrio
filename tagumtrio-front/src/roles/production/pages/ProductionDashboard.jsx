@@ -461,24 +461,26 @@ export default function ProductionDashboard() {
       />
 
       {showPhotosModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-3xl overflow-auto rounded-xl border border-zinc-200 bg-white shadow-sm p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-heading text-lg font-bold text-zinc-900">Report images</h3>
-              <button
-                type="button"
-                onClick={() => setShowPhotosModal(false)}
-                className="text-zinc-500 hover:text-zinc-900"
-              >
-                Close
-              </button>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {selectedPhotos.map((photo, index) => (
-                <div key={`${photo}-${index}`} className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
-                  <img src={photo} alt={`Report image ${index + 1}`} className="h-64 w-full object-cover" />
-                </div>
-              ))}
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
+          <div className="flex min-h-full items-center justify-center py-8">
+            <div className="w-full max-w-3xl max-h-[85vh] overflow-y-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white px-5 py-4">
+                <h3 className="font-heading text-lg font-bold text-zinc-900">Report images</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowPhotosModal(false)}
+                  className="text-zinc-500 hover:text-zinc-900"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="grid gap-3 p-5 sm:grid-cols-2">
+                {selectedPhotos.map((photo, index) => (
+                  <div key={`${photo}-${index}`} className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
+                    <img src={photo} alt={`Report image ${index + 1}`} className="h-64 w-full object-cover" />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

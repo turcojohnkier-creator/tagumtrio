@@ -5,7 +5,7 @@ import { useAppData } from '../../../context/app-data-context'
 import DailyReportTable from '../../../shared/reports/DailyReportTable'
 import { useDialog } from '../../../context/dialog-context'
 import { getEntryIdentifier, getEntryLabel, getEntryPieces, getReportPhotos, hasMeaningfulEntry } from '../../../shared/reports/report-entry-utils'
-import { formatQuantityWithUnit } from '../../../lib/units'
+import { formatProductWithUnit } from '../../../lib/units'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Card, { SectionTitle } from '../../../shared/ui/Card'
 import Button from '../../../shared/ui/Button'
@@ -101,11 +101,11 @@ function PrintableBatchReport({ batch }) {
         </div>
         <div className="rounded border border-zinc-300 p-2">
           <p className="text-xs text-zinc-500">Product</p>
-          <p className="font-bold">{batch.product || '-'}</p>
+          <p className="font-bold">{batch.product ? formatProductWithUnit(batch.product, batch.department) : '-'}</p>
         </div>
         <div className="rounded border border-zinc-300 p-2">
           <p className="text-xs text-zinc-500">Quantity</p>
-          <p className="font-bold">{batch.quantity ? formatQuantityWithUnit(batch.quantity, batch.product) : '-'}</p>
+          <p className="font-bold">{batch.quantity || '-'}</p>
         </div>
         <div className="rounded border border-zinc-300 p-2">
           <p className="text-xs text-zinc-500">Total amount</p>
@@ -128,8 +128,8 @@ function PrintableBatchReport({ batch }) {
             <tr key={entry.id || `${getEntryIdentifier(entry)}-${index}`} className="border-b border-zinc-200">
               <td className="py-1.5 pr-2">{getEntryIdentifier(entry) || '-'}</td>
               <td className="py-1.5 pr-2">{getEntryLabel(entry) || '-'}</td>
-              <td className="py-1.5 pr-2">{entry.product || entry.raw?.product || '-'}</td>
-              <td className="py-1.5 pr-2">{getEntryPieces(entry) !== '' ? formatQuantityWithUnit(getEntryPieces(entry), entry.product || entry.raw?.product) : '-'}</td>
+              <td className="py-1.5 pr-2">{(entry.product || entry.raw?.product) ? formatProductWithUnit(entry.product || entry.raw?.product, entry.department || entry.raw?.department) : '-'}</td>
+              <td className="py-1.5 pr-2">{getEntryPieces(entry) !== '' ? getEntryPieces(entry) : '-'}</td>
               <td className="py-1.5 pr-2">₱{Number(entry.amount || 0).toLocaleString()}</td>
             </tr>
           ))}
@@ -184,11 +184,11 @@ function ReportDetailModal({ batch, onClose, onSubmit, onDelete, isSubmitting })
             </div>
             <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
               <p className="text-xs uppercase tracking-wide text-zinc-400">Product</p>
-              <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{batch.product || '-'}</p>
+              <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{batch.product ? formatProductWithUnit(batch.product, batch.department) : '-'}</p>
             </div>
             <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
               <p className="text-xs uppercase tracking-wide text-zinc-400">Quantity</p>
-              <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{batch.quantity ? formatQuantityWithUnit(batch.quantity, batch.product) : '-'}</p>
+              <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{batch.quantity || '-'}</p>
             </div>
           </div>
 
@@ -422,11 +422,11 @@ export default function LeadmanDailyReport() {
                     </div>
                     <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
                       <p className="text-[11px] text-zinc-400">Product</p>
-                      <p className="mt-1 text-sm font-semibold text-zinc-900">{batch.product || '-'}</p>
+                      <p className="mt-1 text-sm font-semibold text-zinc-900">{batch.product ? formatProductWithUnit(batch.product, batch.department) : '-'}</p>
                     </div>
                     <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
                       <p className="text-[11px] text-zinc-400">Quantity</p>
-                      <p className="mt-1 text-sm font-semibold text-zinc-900">{batch.quantity ? formatQuantityWithUnit(batch.quantity, batch.product) : '-'}</p>
+                      <p className="mt-1 text-sm font-semibold text-zinc-900">{batch.quantity || '-'}</p>
                     </div>
                   </div>
 

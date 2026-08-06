@@ -3,7 +3,7 @@ import { Image as ImageIcon, Users, X } from 'lucide-react'
 import Portal from '../ui/Portal'
 import { useAuth } from '../../context/auth-context'
 import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from './report-entry-utils'
-import { formatQuantityWithUnit } from '../../lib/units'
+import { formatProductWithUnit } from '../../lib/units'
 
 function resolveEntryDepartment(entry, fallbackDepartment) {
   return entry?.department
@@ -134,8 +134,8 @@ export default function DailyReportTable({ entries = [], fallbackDepartment = ''
             {batches.map((batch, index) => (
               <tr key={batch.key} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
                 <td className="px-4 py-4 text-zinc-700">{batch.department}</td>
-                <td className="px-4 py-4 text-zinc-700">{batch.product}</td>
-                <td className="px-4 py-4 text-zinc-700">{formatQuantityWithUnit(batch.quantity, batch.product)}</td>
+                <td className="px-4 py-4 text-zinc-700">{formatProductWithUnit(batch.product, batch.department)}</td>
+                <td className="px-4 py-4 text-zinc-700">{batch.quantity}</td>
                 <td className="px-4 py-4 text-zinc-700">{batch.date}</td>
                 <td className="px-4 py-4 font-semibold text-emerald-700">₱{batch.amount.toLocaleString()}</td>
                 <td className="px-4 py-4">

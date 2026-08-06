@@ -7,7 +7,7 @@ import Badge from '../ui/Badge'
 import { useAuth } from '../../context/auth-context'
 import DailyReportTable from './DailyReportTable'
 import { getReportPhotos } from './report-entry-utils'
-import { formatQuantityWithUnit } from '../../lib/units'
+import { formatProductWithUnit } from '../../lib/units'
 import { getStatusLabel, getStatusVariant, normalizeStatus } from './report-status'
 
 function formatDateTime(value) {
@@ -66,11 +66,11 @@ export default function ReportDetailModal({ report, onClose }) {
               </div>
               <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
                 <p className="text-xs uppercase tracking-wide text-zinc-400">{t('report.detail.product')}</p>
-                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{firstEntry.product || '-'}</p>
+                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{firstEntry.product ? formatProductWithUnit(firstEntry.product, firstEntry.department || report.department) : '-'}</p>
               </div>
               <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
                 <p className="text-xs uppercase tracking-wide text-zinc-400">{t('report.detail.quantity')}</p>
-                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{firstEntry.quantity ? formatQuantityWithUnit(firstEntry.quantity, firstEntry.product) : '-'}</p>
+                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{firstEntry.quantity || '-'}</p>
               </div>
               <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
                 <p className="text-xs uppercase tracking-wide text-zinc-400">{t('report.detail.total_amount')}</p>

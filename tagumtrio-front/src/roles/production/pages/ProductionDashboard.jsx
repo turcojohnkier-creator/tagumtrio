@@ -7,7 +7,7 @@ import { useDialog } from '../../../context/dialog-context'
 import { useAppData } from '../../../context/app-data-context'
 import { fetchDailyReportsApi } from '../../../lib/api'
 import { getEntryIdentifier, getEntryLabel, hasMeaningfulEntry } from '../../../shared/reports/report-entry-utils'
-import { formatQuantityWithUnit } from '../../../lib/units'
+import { formatProductWithUnit } from '../../../lib/units'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Card from '../../../shared/ui/Card'
 import Button, { LinkButton } from '../../../shared/ui/Button'
@@ -128,8 +128,8 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
                       <div className="text-xs text-zinc-400">{getEntryIdentifier(entry) || '-'}</div>
                     </td>
                     <td className="px-4 py-4 text-zinc-700">{resolveEntryDepartment(entry, report.department)}</td>
-                    <td className="px-4 py-4 text-zinc-700">{entry.product || entry.raw?.product || report.product || '-'}</td>
-                    <td className="px-4 py-4 text-zinc-700">{(entry.quantity || entry.raw?.quantity || report.quantity) ? formatQuantityWithUnit(entry.quantity || entry.raw?.quantity || report.quantity, entry.product || entry.raw?.product || report.product) : '-'}</td>
+                    <td className="px-4 py-4 text-zinc-700">{(entry.product || entry.raw?.product || report.product) ? formatProductWithUnit(entry.product || entry.raw?.product || report.product, resolveEntryDepartment(entry, report.department)) : '-'}</td>
+                    <td className="px-4 py-4 text-zinc-700">{entry.quantity || entry.raw?.quantity || report.quantity || '-'}</td>
                     <td className="px-4 py-4 text-zinc-700">{formatReportDate(entry.scannedAt || report.scannedAt)}</td>
                     <td className="px-4 py-4 font-semibold text-zinc-900">₱{Number(entry.amount || 0).toLocaleString()}</td>
                   </tr>
@@ -423,11 +423,11 @@ export default function ProductionDashboard() {
                     </div>
                     <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
                       <p className="text-[11px] text-zinc-400">Product</p>
-                      <p className="mt-1 text-sm font-semibold text-zinc-900">{report.product || '-'}</p>
+                      <p className="mt-1 text-sm font-semibold text-zinc-900">{report.product ? formatProductWithUnit(report.product, report.department) : '-'}</p>
                     </div>
                     <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
                       <p className="text-[11px] text-zinc-400">Quantity</p>
-                      <p className="mt-1 text-sm font-semibold text-zinc-900">{report.quantity ? formatQuantityWithUnit(report.quantity, report.product) : '-'}</p>
+                      <p className="mt-1 text-sm font-semibold text-zinc-900">{report.quantity || '-'}</p>
                     </div>
                     <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
                       <p className="text-[11px] text-zinc-400">Status</p>

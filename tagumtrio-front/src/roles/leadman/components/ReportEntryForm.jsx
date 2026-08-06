@@ -6,7 +6,7 @@ import Button from '../../../shared/ui/Button'
 import DailyReportTable from '../../../shared/reports/DailyReportTable'
 import { useAppData } from '../../../context/app-data-context'
 import { formatEmployeeId } from '../../../lib/employeeId'
-import { isMeasuredProduct, formatQuantityWithUnit } from '../../../lib/units'
+import { formatProductWithUnit } from '../../../lib/units'
 import { buildDepartmentReportSummary, getDepartmentReportFieldSpec } from '../../../constants/department-report-fields'
 import { getNextDepartmentOptions } from '../../../constants/department-flow'
 
@@ -171,11 +171,11 @@ function ReportReviewModal({ open, department, product, quantity, pricePerUnit, 
               </div>
               <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
                 <p className="text-xs uppercase tracking-wide text-zinc-400">Product</p>
-                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{product || '-'}</p>
+                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{product ? formatProductWithUnit(product, department) : '-'}</p>
               </div>
               <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
                 <p className="text-xs uppercase tracking-wide text-zinc-400">Quantity</p>
-                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{quantity ? formatQuantityWithUnit(quantity, product) : '-'}</p>
+                <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{quantity || '-'}</p>
               </div>
               <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
                 <p className="text-xs uppercase tracking-wide text-zinc-400">Total amount</p>
@@ -332,7 +332,6 @@ export default function ReportEntryForm({
 
   const product = String(values.product || '').trim()
   const quantity = Number(values.quantity || 0)
-  const productNeedsCm = isMeasuredProduct(product)
   const pricePerUnit = getRateFor(spec.department, product)
   const hasRate = pricePerUnit !== null && pricePerUnit !== undefined
   const totalAmount = hasRate ? pricePerUnit * quantity : 0
@@ -465,7 +464,7 @@ export default function ReportEntryForm({
         >
           <option value="">Select product</option>
           {departmentRates.map((rate) => (
-            <option key={rate.id} value={rate.product}>{rate.product}</option>
+            <option key={rate.id} value={rate.product}>{formatProductWithUnit(rate.product, spec.department)}</option>
           ))}
         </select>
         {departmentRates.length === 0 ? (
@@ -474,20 +473,15 @@ export default function ReportEntryForm({
       </div>
 
       <div>
-        <label className="text-sm text-zinc-700">Quantity{productNeedsCm ? ' (cm)' : ''}</label>
-        <div className="relative mt-2">
-          <input
-            type="number"
-            min="0"
-            value={values.quantity || ''}
-            onChange={(e) => handleChange('quantity', e.target.value)}
-            placeholder="e.g. 100"
-            className={`w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-zinc-900 focus:border-emerald-500 focus:outline-none ${productNeedsCm ? 'pr-12' : ''}`}
-          />
-          {productNeedsCm && values.quantity ? (
-            <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-400">cm</span>
-          ) : null}
-        </div>
+        <label className="text-sm text-zinc-700">Quantity</label>
+        <input
+          type="number"
+          min="0"
+          value={values.quantity || ''}
+          onChange={(e) => handleChange('quantity', e.target.value)}
+          placeholder="e.g. 100"
+          className="mt-2 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-zinc-900 focus:border-emerald-500 focus:outline-none"
+        />
       </div>
 
       {nextDepartmentOptions.length > 1 ? (

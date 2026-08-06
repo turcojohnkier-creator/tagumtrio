@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAppData } from '../../../context/app-data-context'
 import { useAuth } from '../../../context/auth-context'
 import { DEPARTMENTS } from '../../../constants/departments'
+import { formatProductWithUnit } from '../../../lib/units'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Card from '../../../shared/ui/Card'
 import Button from '../../../shared/ui/Button'
@@ -134,7 +135,7 @@ export default function RateManagement() {
                           </tr>
                         ) : (
                           <tr key={rate.id} className="text-zinc-700">
-                            <td className="break-words px-4 py-2">{rate.product}</td>
+                            <td className="break-words px-4 py-2">{formatProductWithUnit(rate.product, rate.department || dept)}</td>
                             <td className="px-4 py-2 font-medium text-emerald-700">₱{Number(rate.pricePerUnit || 0).toLocaleString()}</td>
                             <td className="px-4 py-2 text-right">
                               <button

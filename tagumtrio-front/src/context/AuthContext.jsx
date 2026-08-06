@@ -174,7 +174,7 @@ export function AuthProvider({ children }) {
       'gm.rate.title': 'Rate Management',
       'gm.rate.add_label': 'Add rate',
       'gm.rate.new': 'New department rate',
-      'gm.rate.product_placeholder': 'Product / size (e.g. Sizer16mm/18mm)',
+      'gm.rate.product_placeholder': 'Product / size (e.g. Sizer16cm/18cm)',
       'gm.rate.price_placeholder': 'Price per unit',
       'gm.rate.adding': 'Adding…',
       'gm.rate.add_btn': 'Add rate',
@@ -433,7 +433,7 @@ export function AuthProvider({ children }) {
       
       'gm.rate.add_label': '添加价格',
       'gm.rate.new': '新建部门价格',
-      'gm.rate.product_placeholder': '产品/规格（例如 Sizer16mm/18mm）',
+      'gm.rate.product_placeholder': '产品/规格（例如 Sizer16cm/18cm）',
       'gm.rate.price_placeholder': '每单位价格',
       'gm.rate.adding': '添加中…',
       'gm.rate.add_btn': '添加价格',

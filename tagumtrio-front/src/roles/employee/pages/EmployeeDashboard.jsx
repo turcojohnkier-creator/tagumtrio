@@ -5,6 +5,7 @@ import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
 import { useDialog } from '../../../context/dialog-context'
 import { toManilaDateKey } from '../../../lib/datetime'
+import { formatEmployeeId } from '../../../lib/employeeId'
 import Card, { SectionTitle } from '../../../shared/ui/Card'
 import Button from '../../../shared/ui/Button'
 
@@ -169,7 +170,7 @@ export default function EmployeeDashboard() {
               <h2 className="font-heading text-xl font-bold text-white">{user?.name || 'Employee'}</h2>
               <p className="mt-1 font-semibold text-emerald-50">{currentDepartment ? `${currentDepartment} Department` : 'Department not yet assigned'}</p>
               <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-emerald-50/80">
-                <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4" /> ID: {user?.id || '—'}</span>
+                <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4" /> ID: {formatEmployeeId(user?.id)}</span>
                 <span className="flex items-center gap-1.5"><CalendarIcon className="h-4 w-4" /> Reports update in real time</span>
               </div>
             </div>

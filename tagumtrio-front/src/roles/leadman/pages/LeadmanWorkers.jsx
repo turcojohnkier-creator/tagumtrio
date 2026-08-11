@@ -39,7 +39,7 @@ export default function LeadmanWorkers() {
         tone="brand"
         eyebrow="Leadman roster"
         title="Deployed Workers"
-        description="Review the workers deployed under the selected department."
+        
         actions={(
           <div className="rounded-lg border border-white/20 bg-white/10 p-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-emerald-50/90">Department</p>

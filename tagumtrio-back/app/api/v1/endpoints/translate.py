@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+import time
+from collections import OrderedDict
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status as http_status
@@ -11,6 +13,33 @@ from app.schemas.translate import TranslateRequest
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/translate", tags=["translate"])
+
+# All members share this one backend, so many people translating the same
+# announcement would otherwise mean one outbound call per viewer for
+# identical text. Cache by (text, target) so repeats are served for free
+# and don't count against Google/MyMemory at all.
+_CACHE_MAX_SIZE = 500
+_CACHE_TTL_SECONDS = 6 * 60 * 60  # 6 hours
+_cache: "OrderedDict[tuple[str, str], tuple[str, float]]" = OrderedDict()
+
+
+def _cache_get(key: tuple[str, str]) -> str | None:
+    entry = _cache.get(key)
+    if entry is None:
+        return None
+    translated, expires_at = entry
+    if expires_at < time.monotonic():
+        _cache.pop(key, None)
+        return None
+    _cache.move_to_end(key)
+    return translated
+
+
+def _cache_set(key: tuple[str, str], translated: str) -> None:
+    _cache[key] = (translated, time.monotonic() + _CACHE_TTL_SECONDS)
+    _cache.move_to_end(key)
+    while len(_cache) > _CACHE_MAX_SIZE:
+        _cache.popitem(last=False)
 
 GOOGLE_TRANSLATE_URL = "https://translate.googleapis.com/translate_a/single"
 MYMEMORY_TRANSLATE_URL = "https://api.mymemory.translated.net/get"
@@ -63,13 +92,20 @@ async def translate_text(payload: TranslateRequest, current_user=Depends(get_cur
     if not text:
         return {"translated": ""}
 
+    cache_key = (text, payload.target)
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return {"translated": cached}
+
     last_exc: Exception | None = None
     async with httpx.AsyncClient(timeout=10) as client:
         # Google is tried first (better quality, no length limit) with a
         # couple of retries to absorb transient blocks/rate-limits.
         for attempt in range(1, GOOGLE_ATTEMPTS + 1):
             try:
-                return {"translated": await _translate_via_google(client, text, payload.target)}
+                translated = await _translate_via_google(client, text, payload.target)
+                _cache_set(cache_key, translated)
+                return {"translated": translated}
             except Exception as exc:
                 last_exc = exc
                 logger.warning("Google translate attempt %s/%s failed: %r", attempt, GOOGLE_ATTEMPTS, exc)
@@ -77,7 +113,9 @@ async def translate_text(payload: TranslateRequest, current_user=Depends(get_cur
         # Fall back to MyMemory, a free API meant for programmatic use, in
         # case Google is blocking this server's IP outright.
         try:
-            return {"translated": await _translate_via_mymemory(client, text, payload.target)}
+            translated = await _translate_via_mymemory(client, text, payload.target)
+            _cache_set(cache_key, translated)
+            return {"translated": translated}
         except Exception as exc:
             last_exc = exc
             logger.warning("MyMemory fallback failed: %r", exc)

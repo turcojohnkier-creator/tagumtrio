@@ -10,6 +10,13 @@ from app.schemas.announcement import AnnouncementCreate, AnnouncementPublic, Ann
 from app.services.notification_service import notify_role
 
 
+ANNOUNCEMENT_LINKS = {
+    "employee": "/app/portal/announcements",
+    "leadman": "/app/leadman/announcements",
+    "production_incharge": "/app/announcements",
+}
+
+
 def _make_id(prefix: str = "ANN") -> str:
     token = uuid.uuid4().hex[:10].upper()
     return f"{prefix}-{token}"
@@ -66,7 +73,7 @@ def create_announcement(db: Session, payload: AnnouncementCreate) -> Announcemen
     db.commit()
     db.refresh(record)
 
-    target_roles = payload.target_roles or ["employee"]
+    target_roles = payload.target_roles or list(ANNOUNCEMENT_LINKS)
     for role in target_roles:
         notify_role(
             db,
@@ -74,7 +81,7 @@ def create_announcement(db: Session, payload: AnnouncementCreate) -> Announcemen
             "announcement_new",
             "New announcement",
             record.title,
-            "/app/portal/announcements",
+            ANNOUNCEMENT_LINKS.get(role),
         )
 
     return _to_public(record)

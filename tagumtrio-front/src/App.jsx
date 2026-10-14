@@ -27,7 +27,7 @@ const GMAnnouncements = lazy(() => import('./roles/gm/pages/Announcements'))
 const GMRateManagement = lazy(() => import('./roles/gm/pages/RateManagement'))
 const GMOverview = lazy(() => import('./roles/gm/pages/GMOverview'))
 const EmployeeDashboard = lazy(() => import('./roles/employee/pages/EmployeeDashboard'))
-const EmployeeAnnouncements = lazy(() => import('./roles/employee/pages/Announcements'))
+const Announcements = lazy(() => import('./shared/pages/Announcements'))
 const MyLeaves = lazy(() => import('./roles/employee/pages/MyLeaves'))
 const MyPayslips = lazy(() => import('./roles/employee/pages/MyPayslips'))
 const ViewPayslip = lazy(() => import('./roles/employee/pages/ViewPayslip'))
@@ -50,7 +50,7 @@ export default function App() {
 
                 <Route path="/app/portal/*" element={<EmployeeLayout />}>
                   <Route index element={<EmployeeDashboard />} />
-                  <Route path="announcements" element={<EmployeeAnnouncements />} />
+                  <Route path="announcements" element={<Announcements />} />
                   <Route path="leaves" element={<MyLeaves />} />
                   <Route path="payslips" element={<MyPayslips />} />
                   <Route path="payslips/:id" element={<ViewPayslip />} />
@@ -75,6 +75,7 @@ export default function App() {
                   <Route path="gm" element={<GMOverview />} />
                   <Route path="gm/overview" element={<GMOverview />} />
                   <Route path="requests" element={<Requests />} />
+                  <Route path="announcements" element={<Announcements />} />
                   <Route path="*" element={<Navigate to="" replace />} />
                 </Route>
 
@@ -84,6 +85,7 @@ export default function App() {
                   <Route path="workers" element={<LeadmanWorkers />} />
                   <Route path="report" element={<LeadmanDailyReport />} />
                   <Route path="history" element={<LeadmanHistory />} />
+                  <Route path="announcements" element={<Announcements />} />
                   <Route path="*" element={<Navigate to="/app/leadman" replace />} />
                 </Route>
 

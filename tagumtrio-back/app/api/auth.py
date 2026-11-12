@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.db import get_db
 from app.deps import get_current_user
-from app.security import create_access_token, verify_password
+from app.security import create_access_token, get_password_hash, verify_password
 
 router = APIRouter()
 
@@ -22,3 +22,20 @@ def login(payload: schemas.UserLogin, db: Session = Depends(get_db)):
 @router.get("/me", response_model=schemas.UserPublic)
 def read_current_user(current_user: models.User = Depends(get_current_user)):
     return current_user
+
+
+@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(
+    payload: schemas.PasswordChange,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    # 400 rather than 401 for a wrong current password: the frontend treats any
+    # 401 as an expired session and signs the user out.
+    if not verify_password(payload.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect.")
+    if payload.new_password == payload.current_password:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New password must be different from the current one.")
+
+    current_user.hashed_password = get_password_hash(payload.new_password)
+    db.commit()

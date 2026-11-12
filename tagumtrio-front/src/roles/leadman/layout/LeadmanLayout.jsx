@@ -1,5 +1,5 @@
-import { Navigate, Outlet, useNavigate } from 'react-router-dom'
-import { ClipboardList, FileText, History, Megaphone, ScanLine, Users } from 'lucide-react'
+import { Navigate, Outlet } from 'react-router-dom'
+import { ClipboardList, FileText, History, Megaphone, ScanLine, Settings, Users } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
 import PageTransition from '../../../shared/ui/PageTransition'
@@ -7,9 +7,8 @@ import ErrorBoundary from '../../../shared/ui/ErrorBoundary'
 import AppShell from '../../../shared/layout/AppShell'
 
 export default function LeadmanLayout() {
-  const { user, logout, t } = useAuth()
+  const { user, t } = useAuth()
   const { selectedLeadmanDepartment, notificationCounts = {} } = useAppData()
-  const navigate = useNavigate()
 
   if (!user) {
     return <Navigate to="/login" replace />
@@ -19,11 +18,6 @@ export default function LeadmanLayout() {
     return <Navigate to="/app" replace />
   }
 
-  function handleLogout() {
-    logout()
-    navigate('/login')
-  }
-
   const navItems = [
     { name: t('leadman.create_report', 'Create Report'), href: '/app/leadman', icon: ScanLine, end: true },
     { name: t('leadman.incoming_reports', 'Incoming Reports'), href: '/app/leadman/reports', icon: ClipboardList, hasUnread: Number(notificationCounts.daily_report_incoming || 0) > 0 || Number(notificationCounts.daily_report_rejected || 0) > 0 },
@@ -31,6 +25,7 @@ export default function LeadmanLayout() {
     { name: t('leadman.daily_report', 'Daily Report'), href: '/app/leadman/report', icon: FileText },
     { name: t('leadman.history', 'History'), href: '/app/leadman/history', icon: History },
     { name: t('nav.announcements', 'Announcements'), href: '/app/leadman/announcements', icon: Megaphone, hasUnread: Number(notificationCounts.announcement_new || 0) > 0 },
+    { name: t('nav.settings', 'Settings'), href: '/app/leadman/settings', icon: Settings },
   ]
 
   return (
@@ -38,7 +33,7 @@ export default function LeadmanLayout() {
       user={user}
       navItems={navItems}
       portalLabel={selectedLeadmanDepartment || user.department || t('leadman.assigned', 'Assigned leadman departments')}
-      onLogout={handleLogout}
+      settingsHref="/app/leadman/settings"
     >
       <ErrorBoundary>
         <PageTransition>

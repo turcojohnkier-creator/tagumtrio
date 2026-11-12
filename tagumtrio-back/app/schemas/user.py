@@ -17,17 +17,31 @@ class UserBase(BaseModel):
         return value.strip().lower()
 
 
+def _validate_new_password(value: str) -> str:
+    if len(value) < 6:
+        raise ValueError("Password must be at least 6 characters.")
+    if len(value.encode("utf-8")) > 72:
+        raise ValueError("Password must be 72 bytes or less.")
+    return value
+
+
 class UserCreate(UserBase):
     password: str
 
     @field_validator("password")
     @classmethod
     def validate_password(cls, value: str) -> str:
-        if len(value) < 6:
-            raise ValueError("Password must be at least 6 characters.")
-        if len(value.encode("utf-8")) > 72:
-            raise ValueError("Password must be 72 bytes or less.")
-        return value
+        return _validate_new_password(value)
+
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, value: str) -> str:
+        return _validate_new_password(value)
 
 
 class UserPublic(UserBase):

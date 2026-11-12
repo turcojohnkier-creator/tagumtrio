@@ -1,6 +1,6 @@
-import { Outlet, Navigate, useNavigate } from 'react-router-dom'
+import { Outlet, Navigate } from 'react-router-dom'
 import PageTransition from '../../shared/ui/PageTransition'
-import { Users, UserPlus, Building2, Factory, FileSpreadsheet, Megaphone, Tag } from 'lucide-react'
+import { Users, UserPlus, Building2, Factory, FileSpreadsheet, Megaphone, Tag, Settings } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useAppData } from '../../context/app-data-context'
 import { formatRole } from '../../lib/roles'
@@ -17,12 +17,12 @@ const allNavItems = [
   { name: 'Announcements', i18nKey: 'nav.announcements', href: '/app/announcements', icon: Megaphone, roles: ['production_incharge'], notificationType: 'announcement_new' },
   { name: 'Rate Management', i18nKey: 'nav.rate_management', href: '/app/gm/rates', icon: Tag, roles: ['gm'] },
   { name: 'Requests', i18nKey: 'nav.requests', href: '/app/requests', icon: FileSpreadsheet, roles: ['gm'], notificationType: 'leave_request_new' },
+  { name: 'Settings', i18nKey: 'nav.settings', href: '/app/settings', icon: Settings, roles: ['gm', 'hr', 'production_incharge', 'leadman'] },
 ]
 
 export default function MainLayout() {
-  const { user, logout, t } = useAuth()
+  const { user, t } = useAuth()
   const { notificationCounts = {} } = useAppData()
-  const navigate = useNavigate()
 
   if (!user) {
     return <Navigate to="/login" replace />
@@ -30,11 +30,6 @@ export default function MainLayout() {
 
   if (user.role === 'employee') {
     return <Navigate to="/app/portal" replace />
-  }
-
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
   }
 
   const filteredNav = allNavItems
@@ -55,7 +50,7 @@ export default function MainLayout() {
       user={user}
       navItems={filteredNav}
       portalLabel={t(`role.${user.role}`, formatRole(user.role))}
-      onLogout={handleLogout}
+      settingsHref="/app/settings"
     >
       <PageTransition>
         <Outlet />

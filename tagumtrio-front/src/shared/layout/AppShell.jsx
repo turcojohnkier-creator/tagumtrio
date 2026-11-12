@@ -1,10 +1,7 @@
-import { NavLink } from 'react-router-dom'
-import { ChevronDown, LogOut } from 'lucide-react'
-import { useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { Link, NavLink } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { formatRole } from '../../lib/roles'
 import { useAuth } from '../../context/auth-context'
-import { useDialog } from '../../context/dialog-context'
 import logo from '../../assets/tagumtrio-logo.jpg'
 
 function cn(...inputs) {
@@ -20,58 +17,18 @@ function getInitials(name) {
     .toUpperCase()
 }
 
-function UserMenuPanel({ user, onLogout, roleLabel, className, origin }) {
-  return (
-    <motion.div
-      className={cn('absolute z-30 w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg', className)}
-      initial={{ opacity: 0, scale: 0.95, y: origin === 'bottom' ? 6 : -6 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, y: origin === 'bottom' ? 6 : -6 }}
-      transition={{ duration: 0.15, ease: 'easeOut' }}
-      style={{ transformOrigin: origin === 'bottom' ? 'bottom left' : 'top right' }}
-    >
-      <div className="border-b border-zinc-200 px-4 py-3">
-        <p className="truncate text-sm font-medium text-zinc-900">{user?.name}</p>
-        <p className="truncate text-xs text-zinc-400">{roleLabel}</p>
-      </div>
-      <button
-        onClick={onLogout}
-        className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-rose-700 transition-colors hover:bg-rose-50"
-      >
-        <LogOut className="h-4 w-4" />
-        Sign out
-      </button>
-    </motion.div>
-  )
-}
-
 export default function AppShell({
   user,
   navItems = [],
   portalLabel,
-  onLogout,
+  settingsHref,
   headerCounts = [],
   children,
 }) {
-  const [sidebarMenuOpen, setSidebarMenuOpen] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { language, setLanguage, t } = useAuth()
-  const dialog = useDialog()
 
   const roleLabel = t(`role.${user?.role}`, formatRole(user?.role))
-
-  async function handleLogout() {
-    setSidebarMenuOpen(false)
-    setMobileMenuOpen(false)
-    const confirmed = await dialog.confirm({
-      kicker: 'Sign out',
-      title: 'Sign out of Tagum Trio Lumber Corporation?',
-      message: 'You will be returned to the login page and will need to sign in again to continue.',
-      confirmText: 'Sign out',
-      cancelText: 'Stay signed in',
-    })
-    if (confirmed) onLogout?.()
-  }
+  const settingsLabel = t('nav.settings', 'Settings')
 
   const languageToggle = () => (
     user?.role === 'gm' ? (
@@ -147,35 +104,20 @@ export default function AppShell({
 
           {languageToggle()}
 
-          <div className="relative">
-            <button
-              onClick={() => setSidebarMenuOpen((open) => !open)}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-white/10"
-              aria-expanded={sidebarMenuOpen}
-              aria-label="Toggle account menu"
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-white ring-1 ring-white/20">
-                {getInitials(user?.name)}
-              </div>
-              <div className="min-w-0 flex-1 text-left leading-tight">
-                <p className="truncate text-sm font-medium text-white">{user?.name}</p>
-                <p className="truncate text-[11px] text-emerald-200/70">{roleLabel}</p>
-              </div>
-              <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 text-emerald-200/70 transition-transform', sidebarMenuOpen && 'rotate-180')} />
-            </button>
-
-            <AnimatePresence>
-              {sidebarMenuOpen && (
-                <UserMenuPanel
-                  user={user}
-                  onLogout={handleLogout}
-                  roleLabel={roleLabel}
-                  className="bottom-full left-0 mb-2"
-                  origin="bottom"
-                />
-              )}
-            </AnimatePresence>
-          </div>
+          <Link
+            to={settingsHref}
+            className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-white/10"
+            aria-label={settingsLabel}
+            title={settingsLabel}
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-white ring-1 ring-white/20">
+              {getInitials(user?.name)}
+            </div>
+            <div className="min-w-0 flex-1 text-left leading-tight">
+              <p className="truncate text-sm font-medium text-white">{user?.name}</p>
+              <p className="truncate text-[11px] text-emerald-200/70">{roleLabel}</p>
+            </div>
+          </Link>
         </div>
       </aside>
 
@@ -195,31 +137,16 @@ export default function AppShell({
           <div className="flex items-center gap-2">
             {languageToggle()}
 
-            <div className="relative">
-              <button
-                onClick={() => setMobileMenuOpen((open) => !open)}
-                className="flex items-center gap-1.5 rounded-md px-1 py-1 transition-colors hover:bg-white/10"
-                aria-expanded={mobileMenuOpen}
-                aria-label="Toggle account menu"
-              >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-white ring-1 ring-white/20">
-                  {getInitials(user?.name)}
-                </div>
-                <ChevronDown className="h-3.5 w-3.5 text-emerald-200/70" />
-              </button>
-
-              <AnimatePresence>
-                {mobileMenuOpen && (
-                  <UserMenuPanel
-                    user={user}
-                    onLogout={handleLogout}
-                    roleLabel={roleLabel}
-                    className="right-0 top-11"
-                    origin="top"
-                  />
-                )}
-              </AnimatePresence>
-            </div>
+            <Link
+              to={settingsHref}
+              className="flex items-center rounded-md px-1 py-1 transition-colors hover:bg-white/10"
+              aria-label={settingsLabel}
+              title={settingsLabel}
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-white ring-1 ring-white/20">
+                {getInitials(user?.name)}
+              </div>
+            </Link>
           </div>
         </div>
       </header>

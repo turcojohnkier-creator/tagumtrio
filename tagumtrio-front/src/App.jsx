@@ -32,6 +32,7 @@ const MyLeaves = lazy(() => import('./roles/employee/pages/MyLeaves'))
 const MyPayslips = lazy(() => import('./roles/employee/pages/MyPayslips'))
 const ViewPayslip = lazy(() => import('./roles/employee/pages/ViewPayslip'))
 const Requests = lazy(() => import('./shared/pages/Requests'))
+const Settings = lazy(() => import('./shared/pages/Settings'))
 
 function RouteLoadingFallback() {
   return <div className="p-6 text-sm text-slate-500">Loading...</div>
@@ -54,6 +55,7 @@ export default function App() {
                   <Route path="leaves" element={<MyLeaves />} />
                   <Route path="payslips" element={<MyPayslips />} />
                   <Route path="payslips/:id" element={<ViewPayslip />} />
+                  <Route path="settings" element={<Settings />} />
                   <Route path="*" element={<Navigate to="/app/portal" replace />} />
                 </Route>
 
@@ -76,6 +78,7 @@ export default function App() {
                   <Route path="gm/overview" element={<GMOverview />} />
                   <Route path="requests" element={<Requests />} />
                   <Route path="announcements" element={<Announcements />} />
+                  <Route path="settings" element={<Settings />} />
                   <Route path="*" element={<Navigate to="" replace />} />
                 </Route>
 
@@ -86,6 +89,7 @@ export default function App() {
                   <Route path="report" element={<LeadmanDailyReport />} />
                   <Route path="history" element={<LeadmanHistory />} />
                   <Route path="announcements" element={<Announcements />} />
+                  <Route path="settings" element={<Settings />} />
                   <Route path="*" element={<Navigate to="/app/leadman" replace />} />
                 </Route>
 

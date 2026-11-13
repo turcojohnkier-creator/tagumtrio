@@ -13,6 +13,7 @@ import Card from '../../../shared/ui/Card'
 import Button, { LinkButton } from '../../../shared/ui/Button'
 import Badge from '../../../shared/ui/Badge'
 import EmptyState from '../../../shared/ui/EmptyState'
+import UserAvatar from '../../../shared/ui/UserAvatar'
 
 function formatReportDate(value) {
   if (!value) return '-'
@@ -83,6 +84,7 @@ function buildReportCards(reports = []) {
       verificationLabel,
       summary: report.summary || '',
       submittedBy: report.submittedByName || report.submitted_by_name || report.submittedBy || report.submitted_by || 'Unknown',
+      submittedById: report.submittedBy ?? report.submitted_by ?? null,
       totalAmount: entries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0),
     }
   }).sort((a, b) => new Date(b.scannedAt || 0) - new Date(a.scannedAt || 0))
@@ -124,8 +126,13 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
                 {report.entries.map((entry) => (
                   <tr key={entry.id || `${getEntryIdentifier(entry)}-${getEntryLabel(entry)}-${entry.scannedAt || ''}`} className="text-zinc-700 hover:bg-emerald-50/40">
                     <td className="px-4 py-4">
-                      <div className="font-medium text-zinc-900">{getEntryLabel(entry) || 'Untitled item'}</div>
-                      <div className="text-xs text-zinc-400">{getEntryIdentifier(entry) || '-'}</div>
+                      <div className="flex items-center gap-2.5">
+                        <UserAvatar userId={entry.employeeId ?? entry.raw?.employeeId} name={getEntryLabel(entry)} size="sm" />
+                        <div>
+                          <div className="font-medium text-zinc-900">{getEntryLabel(entry) || 'Untitled item'}</div>
+                          <div className="text-xs text-zinc-400">{getEntryIdentifier(entry) || '-'}</div>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-4 py-4 text-zinc-700">{resolveEntryDepartment(entry, report.department)}</td>
                     <td className="px-4 py-4 text-zinc-700">{(entry.product || entry.raw?.product || report.product) ? formatProductWithUnit(entry.product || entry.raw?.product || report.product, resolveEntryDepartment(entry, report.department)) : '-'}</td>
@@ -161,7 +168,10 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
           <div className="grid gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 md:grid-cols-2">
             <div>
               <p className="text-xs uppercase tracking-wide text-zinc-400">Submitted by</p>
-              <p className="mt-2 text-sm text-zinc-800">{report.submittedBy || 'Unknown'}</p>
+              <p className="mt-2 flex items-center gap-2 text-sm text-zinc-800">
+                <UserAvatar userId={report.submittedById} name={report.submittedBy} size="sm" />
+                <span>{report.submittedBy || 'Unknown'}</span>
+              </p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-zinc-400">Date and time scanned</p>

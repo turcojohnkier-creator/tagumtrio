@@ -148,6 +148,41 @@ export async function loginApi({ identifier, password, remember = true }) {
   return result
 }
 
+// Keep the cached session in sync after the user changes their own profile
+// (e.g. a new profile picture), without touching the token or where it lives.
+export function updateStoredSessionUser(user) {
+  const storage = findStorageWithKey(AUTH_SESSION_KEY)
+  if (!storage) return
+  try {
+    const parsed = JSON.parse(storage.getItem(AUTH_SESSION_KEY)) || {}
+    storage.setItem(AUTH_SESSION_KEY, JSON.stringify({ ...parsed, user: { ...(parsed.user || {}), ...user } }))
+  } catch {
+    // ignore a corrupt session entry; the next login rewrites it
+  }
+}
+
+// The backend returns avatar paths like "/api/v1/users/5/avatar?v=...".
+// Point them at the configured API host (the frontend and backend are on
+// different domains in production).
+export function resolveAvatarUrl(path) {
+  if (!path) return null
+  if (/^(https?:|data:|blob:)/i.test(path)) return path
+  if (path.startsWith('/api/')) return `${BASE_API_URL}${path.slice(4)}`
+  return path
+}
+
+export async function uploadAvatarApi(dataUrl) {
+  return apiRequest('/v1/me/avatar', {
+    method: 'PUT',
+    body: JSON.stringify({ image: dataUrl }),
+    timeoutMs: 45000,
+  })
+}
+
+export async function deleteAvatarApi() {
+  return apiRequest('/v1/me/avatar', { method: 'DELETE' })
+}
+
 export async function meApi() {
   return apiRequest('/auth/me')
 }

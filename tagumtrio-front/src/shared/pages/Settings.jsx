@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertCircle, Eye, EyeOff, KeyRound, Lock, LogOut, UserCircle2 } from 'lucide-react'
+import { AlertCircle, Camera, Eye, EyeOff, KeyRound, Lock, LogOut, Trash2, UserCircle2 } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useDialog } from '../../context/dialog-context'
-import { changePasswordApi } from '../../lib/api'
+import { changePasswordApi, deleteAvatarApi, uploadAvatarApi } from '../../lib/api'
+import { makeAvatarDataUrl } from '../../lib/image'
 import { formatRole } from '../../lib/roles'
 import PageHeader from '../ui/PageHeader'
 import Card, { SectionTitle } from '../ui/Card'
 import Button from '../ui/Button'
+import Avatar from '../ui/Avatar'
 
 const inputClassName = 'w-full rounded-xl border border-zinc-300 bg-zinc-50 py-3 pl-10 pr-12 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none'
 
@@ -39,7 +41,7 @@ function PasswordField({ label, value, onChange, autoComplete }) {
 }
 
 export default function Settings() {
-  const { user, logout, t } = useAuth()
+  const { user, logout, updateUser, t } = useAuth()
   const dialog = useDialog()
   const navigate = useNavigate()
 
@@ -48,6 +50,49 @@ export default function Settings() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
+  const [avatarBusy, setAvatarBusy] = useState(false)
+  const fileInputRef = useRef(null)
+
+  async function handleAvatarSelected(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      dialog.error({ title: t('settings.photo_failed'), message: t('settings.photo_not_image') })
+      return
+    }
+    setAvatarBusy(true)
+    try {
+      const dataUrl = await makeAvatarDataUrl(file)
+      const updated = await uploadAvatarApi(dataUrl)
+      updateUser(updated)
+      dialog.success({ title: t('settings.photo_updated'), message: t('settings.photo_updated_message') })
+    } catch (error) {
+      dialog.error({ title: t('settings.photo_failed'), message: error?.message || t('settings.photo_failed') })
+    } finally {
+      setAvatarBusy(false)
+    }
+  }
+
+  async function handleAvatarRemove() {
+    const confirmed = await dialog.confirm({
+      kicker: t('settings.photo'),
+      title: t('settings.photo_remove_title'),
+      message: t('settings.photo_remove_message'),
+      confirmText: t('settings.photo_remove'),
+      cancelText: t('ui.cancel', 'Cancel'),
+    })
+    if (!confirmed) return
+    setAvatarBusy(true)
+    try {
+      const updated = await deleteAvatarApi()
+      updateUser({ ...updated, avatar_url: null })
+    } catch (error) {
+      dialog.error({ title: t('settings.photo_failed'), message: error?.message || t('settings.photo_failed') })
+    } finally {
+      setAvatarBusy(false)
+    }
+  }
 
   function validate() {
     if (!currentPassword) return t('settings.err_current')
@@ -107,6 +152,32 @@ export default function Settings() {
 
       <Card>
         <SectionTitle icon={UserCircle2}>{t('settings.account')}</SectionTitle>
+        <div className="mb-6 flex flex-col items-center gap-4 sm:flex-row sm:items-center">
+          <Avatar name={user?.name} src={user?.avatar_url} size="2xl" className="bg-emerald-100 text-emerald-800 ring-4 ring-emerald-50" />
+          <div className="flex flex-col items-center gap-2 sm:items-start">
+            <p className="text-sm font-medium text-zinc-900">{t('settings.photo')}</p>
+            <p className="text-xs text-zinc-500">{t('settings.photo_hint')}</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleAvatarSelected}
+              />
+              <Button type="button" size="sm" disabled={avatarBusy} onClick={() => fileInputRef.current?.click()}>
+                <Camera className="h-4 w-4" />
+                {avatarBusy ? t('settings.photo_saving') : user?.avatar_url ? t('settings.photo_change') : t('settings.photo_upload')}
+              </Button>
+              {user?.avatar_url ? (
+                <Button type="button" size="sm" variant="outline" disabled={avatarBusy} onClick={handleAvatarRemove}>
+                  <Trash2 className="h-4 w-4" />
+                  {t('settings.photo_remove')}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        </div>
         <dl className="grid gap-4 sm:grid-cols-3">
           {accountRows.map((row) => (
             <div key={row.label} className="min-w-0">

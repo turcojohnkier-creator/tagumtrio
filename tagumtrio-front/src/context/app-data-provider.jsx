@@ -712,6 +712,20 @@ export function AppDataProvider({ children }) {
     return null
   }
 
+  // Profile picture URL for anyone shown by id/name (report submitters, report
+  // entries, leave requesters, ...). The signed-in user's own picture comes from
+  // the session so a fresh upload shows up immediately.
+  function getAvatarFor(employeeId, employeeName) {
+    if (user) {
+      const isSelf = employeeId !== undefined && employeeId !== null && employeeId !== ''
+        ? String(employeeId) === String(user.id)
+        : Boolean(employeeName) && String(employeeName).toLowerCase() === String(user.name || '').toLowerCase()
+      if (isSelf) return user.avatar_url || null
+    }
+    if ((employeeId === undefined || employeeId === null || employeeId === '') && !employeeName) return null
+    return resolveEmployeeRecord(employeeId, employeeName)?.avatar_url || null
+  }
+
   function flattenDailyReportEntries(reports = dailyReports) {
     return (Array.isArray(reports) ? reports : []).flatMap((report) => {
       const entries = Array.isArray(report.entries) ? report.entries : []
@@ -969,6 +983,7 @@ export function AppDataProvider({ children }) {
         selectedLeadmanDepartment,
         setSelectedLeadmanDepartment,
         refreshEmployees,
+        getAvatarFor,
       }}
     >
       {children}

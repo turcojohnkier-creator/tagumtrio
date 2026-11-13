@@ -3,18 +3,10 @@ import { motion } from 'framer-motion'
 import { formatRole } from '../../lib/roles'
 import { useAuth } from '../../context/auth-context'
 import logo from '../../assets/tagumtrio-logo.jpg'
+import Avatar from '../ui/Avatar'
 
 function cn(...inputs) {
   return inputs.filter(Boolean).join(' ')
-}
-
-function getInitials(name) {
-  return (name || 'U')
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .substring(0, 2)
-    .toUpperCase()
 }
 
 export default function AppShell({
@@ -110,9 +102,7 @@ export default function AppShell({
             aria-label={settingsLabel}
             title={settingsLabel}
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-white ring-1 ring-white/20">
-              {getInitials(user?.name)}
-            </div>
+            <Avatar name={user?.name} src={user?.avatar_url} size="md" className="bg-white/15 text-white ring-1 ring-white/20" />
             <div className="min-w-0 flex-1 text-left leading-tight">
               <p className="truncate text-sm font-medium text-white">{user?.name}</p>
               <p className="truncate text-[11px] text-emerald-200/70">{roleLabel}</p>
@@ -143,9 +133,7 @@ export default function AppShell({
               aria-label={settingsLabel}
               title={settingsLabel}
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-white ring-1 ring-white/20">
-                {getInitials(user?.name)}
-              </div>
+              <Avatar name={user?.name} src={user?.avatar_url} size="sm" className="bg-white/15 text-white ring-1 ring-white/20" />
             </Link>
           </div>
         </div>

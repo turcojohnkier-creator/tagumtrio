@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { FileText, CheckCircle, XCircle } from 'lucide-react'
+import { CheckCircle, XCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAppData } from '../../context/app-data-context'
 import { useAuth } from '../../context/auth-context'
@@ -10,6 +10,7 @@ import Card from '../ui/Card'
 import Button from '../ui/Button'
 import Badge from '../ui/Badge'
 import EmptyState from '../ui/EmptyState'
+import Avatar from '../ui/Avatar'
 
 const STATUS_TABS = ['pending', 'approved', 'rejected']
 
@@ -26,7 +27,7 @@ function leaveDurationDays(req) {
 }
 
 export default function Requests() {
-  const { leaveRequests = [], approveLeaveRequest, rejectLeaveRequest, formatDateTime, markNotificationsSeen } = useAppData()
+  const { leaveRequests = [], approveLeaveRequest, rejectLeaveRequest, formatDateTime, markNotificationsSeen, getAvatarFor } = useAppData()
   const { user, t } = useAuth()
   const dialog = useDialog()
 
@@ -34,9 +35,6 @@ export default function Requests() {
     markNotificationsSeen('leave_request_new')
   }, [])
 
-  if (user?.role === 'hr') {
-    return <Navigate to="/app/hr" replace />
-  }
   const [statusTab, setStatusTab] = useState('pending')
 
   const canApprove = user && ['leadman', 'production_incharge', 'hr', 'admin', 'gm'].includes(user.role)
@@ -45,6 +43,10 @@ export default function Requests() {
     () => (Array.isArray(leaveRequests) ? leaveRequests : []).filter((req) => String(req.status || '').toLowerCase() === statusTab),
     [leaveRequests, statusTab]
   )
+
+  if (user?.role === 'hr') {
+    return <Navigate to="/app/hr" replace />
+  }
 
   function requestName(req) {
     return req.employeeName || req.employee_name
@@ -148,9 +150,7 @@ export default function Requests() {
               <motion.div key={req.id} variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' } } }}>
               <Card className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                 <div className="flex gap-4">
-                  <div className={`p-3 rounded-xl h-fit ${req.leaveType ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`}>
-                    <FileText className="w-6 h-6" />
-                  </div>
+                  <Avatar name={requestName(req)} src={getAvatarFor?.(req.employeeId ?? req.employee_id, requestName(req))} size="lg" />
                   <div>
                     <div className="flex items-center gap-3">
                       <h3 className="font-heading text-lg font-bold text-zinc-900">{requestName(req)}</h3>

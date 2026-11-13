@@ -49,8 +49,15 @@ class UserPublic(UserBase):
     is_active: bool
     created_at: datetime
     archived_at: Optional[datetime] = None
+    avatar_url: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AvatarUpload(BaseModel):
+    # A data URL, e.g. "data:image/jpeg;base64,...". The frontend resizes the
+    # picture to 256px before sending, so this stays small.
+    image: str
 
 
 class UserLogin(BaseModel):

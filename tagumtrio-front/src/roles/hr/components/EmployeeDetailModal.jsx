@@ -1,11 +1,18 @@
-import { X, File, Info } from 'lucide-react'
+import { useState } from 'react'
+import { X, File, Info, ArrowRightLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { DEPARTMENTS } from '../../../constants/departments'
 import { formatEmployeeId } from '../../../lib/employeeId'
 import Button from '../../../shared/ui/Button'
 import Portal from '../../../shared/ui/Portal'
+import Avatar from '../../../shared/ui/Avatar'
 
-export default function EmployeeDetailModal({ employee, onClose, onToggleActive, actionLoading = false }) {
+export default function EmployeeDetailModal({ employee, onClose, onToggleActive, onReassign, actionLoading = false }) {
+  const currentDepartment = employee?.department || employee?.dept || employee?.departmentName || ''
+  // The parent remounts this modal (via `key`) when the employee or their
+  // department changes, so this initial value is always current.
+  const [targetDepartment, setTargetDepartment] = useState(currentDepartment)
+
   if (!employee) return null
 
   const id = employee.employeeId || employee.id || employee.employee_id || ''
@@ -35,7 +42,7 @@ export default function EmployeeDetailModal({ employee, onClose, onToggleActive,
         >
           <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-zinc-200 bg-zinc-50">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-2xl text-emerald-700 font-semibold border border-emerald-500/20">{name.split(' ').map(n=>n[0]).join('').substring(0,2)}</div>
+              <Avatar name={name} src={employee.avatar_url} size="lg" className="bg-emerald-500/10 text-emerald-700 border border-emerald-500/20" />
               <div>
                 <h3 className="font-heading text-lg font-bold text-zinc-900">{name}</h3>
                 <p className="text-xs text-zinc-500">{formatEmployeeId(id)}</p>
@@ -118,6 +125,35 @@ export default function EmployeeDetailModal({ employee, onClose, onToggleActive,
                   </div>
                 </div>
               </div>
+
+              {onReassign && String(role).toLowerCase() === 'employee' ? (
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                  <p className="text-xs uppercase tracking-wider text-zinc-400">Reassign Department</p>
+                  <p className="mt-2 text-xs text-zinc-500">
+                    Current: <span className="font-medium text-zinc-800">{currentDepartment || 'Unassigned'}</span>
+                  </p>
+                  <select
+                    value={targetDepartment}
+                    onChange={(event) => setTargetDepartment(event.target.value)}
+                    disabled={actionLoading}
+                    className="mt-3 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none"
+                    aria-label="New department"
+                  >
+                    {!currentDepartment ? <option value="">Select department</option> : null}
+                    {DEPARTMENTS.map((department) => (
+                      <option key={department} value={department}>{department}</option>
+                    ))}
+                  </select>
+                  <Button
+                    onClick={() => onReassign(employee, targetDepartment)}
+                    disabled={actionLoading || !targetDepartment || targetDepartment === currentDepartment}
+                    className="mt-3 w-full"
+                  >
+                    <ArrowRightLeft className="h-4 w-4" />
+                    {actionLoading ? 'Updating...' : 'Reassign'}
+                  </Button>
+                </div>
+              ) : null}
 
               <div className="rounded-xl border border-zinc-200 bg-white p-4 text-center">
                 <p className="text-sm text-zinc-500">Actions</p>

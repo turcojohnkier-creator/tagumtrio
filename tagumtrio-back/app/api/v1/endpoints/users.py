@@ -18,6 +18,10 @@ router = APIRouter(prefix="/employees", tags=["employees"])
 # accounts are not self-service and are not in scope for HR's create-account flow.
 HR_CREATABLE_ROLES = {"employee", "leadman", "production_incharge"}
 
+# Fields a PATCH may change. Everything else (role, identifier, password,
+# profile picture, ...) has its own dedicated flow and is ignored here.
+PATCHABLE_EMPLOYEE_FIELDS = {"name", "department", "departments", "is_active"}
+
 # How long an archived account is kept before it's permanently deleted.
 ARCHIVE_RETENTION_DAYS = 90
 
@@ -69,12 +73,20 @@ def create_employee_account(
 
 @router.patch("/{employee_id}", response_model=UserPublic)
 def patch_employee(employee_id: int, payload: dict, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    # Only leadman (for their team), production head, GM, or admin can update employee assignments
+    # Leadman (for their team), production in-charge, HR, GM, or admin can update employee assignments
     if current_user.role not in {"leadman", "production_incharge", "hr", "admin", "gm"}:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
     existing = db.get(User, employee_id)
-    old_department = existing.department if existing else None
+    if existing is None:
+        raise HTTPException(status_code=404, detail="User not found.")
+    old_department = existing.department
+
+    payload = {key: value for key, value in payload.items() if key in PATCHABLE_EMPLOYEE_FIELDS}
+    if not payload:
+        raise HTTPException(status_code=400, detail="Nothing to update.")
+    if "department" in payload and not (isinstance(payload["department"], str) and payload["department"].strip()):
+        raise HTTPException(status_code=400, detail="Department is required.")
 
     try:
         user = crud.update_user(db, employee_id, payload)

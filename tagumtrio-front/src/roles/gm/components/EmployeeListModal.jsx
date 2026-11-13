@@ -9,6 +9,7 @@ import { formatEmployeeId } from '../../../lib/employeeId'
 import Button from '../../../shared/ui/Button'
 import EmptyState from '../../../shared/ui/EmptyState'
 import Portal from '../../../shared/ui/Portal'
+import Avatar from '../../../shared/ui/Avatar'
 
 export default function EmployeeListModal({ department, onClose, employees = [], onReassigned }) {
   const dialog = useDialog()
@@ -139,9 +140,12 @@ export default function EmployeeListModal({ department, onClose, employees = [],
                   const employeeKey = emp.employeeId ?? emp.id
                   return (
                     <div key={employeeKey} className="grid grid-cols-[minmax(220px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_180px] gap-0 border-b border-zinc-200 px-5 py-4 text-sm text-zinc-800 hover:bg-zinc-50/70">
-                      <div>
-                        <div className="font-semibold text-zinc-900">{emp.employeeName || emp.name || emp.fullName || t('gm.modal.unknown')}</div>
-                        <div className="text-xs text-zinc-400">{emp.department || t('gm.modal.unassigned')}</div>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <Avatar name={emp.employeeName || emp.name || emp.fullName} src={emp.avatar_url} size="md" />
+                        <div className="min-w-0">
+                          <div className="font-semibold text-zinc-900">{emp.employeeName || emp.name || emp.fullName || t('gm.modal.unknown')}</div>
+                          <div className="text-xs text-zinc-400">{emp.department || t('gm.modal.unassigned')}</div>
+                        </div>
                       </div>
                       <div className="text-zinc-500">{formatEmployeeId(employeeKey)}</div>
                       <div className="text-zinc-500">{emp.role || t('gm.modal.role_default')}</div>

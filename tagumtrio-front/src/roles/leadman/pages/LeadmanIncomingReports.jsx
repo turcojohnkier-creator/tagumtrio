@@ -11,6 +11,7 @@ import PageHeader from '../../../shared/ui/PageHeader'
 import Button from '../../../shared/ui/Button'
 import Badge from '../../../shared/ui/Badge'
 import EmptyState from '../../../shared/ui/EmptyState'
+import UserAvatar from '../../../shared/ui/UserAvatar'
 
 function formatDateTime(value) {
   if (!value) return '—'
@@ -100,8 +101,9 @@ function ReportCard({ report, isExpanded, onToggleExpand, actionLoadingId, onVer
             <h3 className="truncate font-semibold text-zinc-900">{report.department || 'Unknown Department'}</h3>
             <Badge variant={getStatusVariant(report.status)}>{getStatusLabel(report.status)}</Badge>
           </div>
-          <p className="mt-1 text-sm text-zinc-500">
-            {report.submittedByName || report.submitted_by_name || 'Unknown'} • {formatDT(report.createdAt || report.created_at || report.reportDate)}
+          <p className="mt-1 flex items-center gap-2 text-sm text-zinc-500">
+            <UserAvatar userId={report.submittedBy ?? report.submitted_by} name={report.submittedByName || report.submitted_by_name} size="xs" />
+            <span>{report.submittedByName || report.submitted_by_name || 'Unknown'} • {formatDT(report.createdAt || report.created_at || report.reportDate)}</span>
           </p>
           <p className="mt-1 text-sm text-zinc-400">
             {entries.length} entr{entries.length === 1 ? 'y' : 'ies'} • {report.summary || 'No summary provided'}

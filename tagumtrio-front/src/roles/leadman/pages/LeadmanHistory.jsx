@@ -8,6 +8,7 @@ import PageHeader from '../../../shared/ui/PageHeader'
 import Card from '../../../shared/ui/Card'
 import Button from '../../../shared/ui/Button'
 import EmptyState from '../../../shared/ui/EmptyState'
+import UserAvatar from '../../../shared/ui/UserAvatar'
 
 function asText(v) { return String(v || '').toLowerCase() }
 
@@ -99,7 +100,11 @@ export default function LeadmanHistory() {
             <div key={report.id} className="rounded-xl border border-zinc-200 bg-zinc-50 py-2 px-3 flex items-center justify-between">
               <div>
                 <div className="font-medium text-zinc-900">{report.department} • {report.reportDate}</div>
-                <div className="text-xs text-zinc-500 mt-1">Submitted by {report.submittedByName || report.submittedBy || 'Unknown'} • {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</div>
+                <div className="text-xs text-zinc-500 mt-1 flex items-center gap-1.5">
+                  <span>Submitted by</span>
+                  <UserAvatar userId={report.submittedBy} name={report.submittedByName} size="xs" />
+                  <span>{report.submittedByName || report.submittedBy || 'Unknown'} • {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</span>
+                </div>
                 <div className="text-sm text-zinc-700 mt-1">Entries: {Array.isArray(report.entries) ? report.entries.length : 0}</div>
               </div>
               <Button variant="secondary" size="sm" onClick={() => setSelected(report)}>Open</Button>
@@ -116,7 +121,11 @@ export default function LeadmanHistory() {
                 <div>
                   <p className="text-xs uppercase tracking-wide text-zinc-400">Submitted daily report</p>
                   <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{selected.department} • {selected.reportDate}</h3>
-                  <p className="mt-1 text-sm text-zinc-500">Submitted by {selected.submittedByName || selected.submittedBy || 'Unknown'}</p>
+                  <p className="mt-1 flex items-center gap-1.5 text-sm text-zinc-500">
+                    <span>Submitted by</span>
+                    <UserAvatar userId={selected.submittedBy} name={selected.submittedByName} size="xs" />
+                    <span>{selected.submittedByName || selected.submittedBy || 'Unknown'}</span>
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => setSelected(null)} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700">Close</button>

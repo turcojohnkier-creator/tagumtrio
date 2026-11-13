@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import Portal from '../ui/Portal'
 import Button from '../ui/Button'
 import Badge from '../ui/Badge'
+import UserAvatar from '../ui/UserAvatar'
 import { useAuth } from '../../context/auth-context'
 import { getStatusLabel, getStatusVariant, normalizeStatus } from './report-status'
 
@@ -59,6 +60,7 @@ export default function ReportBundleModal({ bundle, onClose, onOpenReport, bundl
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
+                      <UserAvatar userId={report.submittedBy} name={report.submittedByName} size="sm" />
                       <p className="font-medium text-zinc-900">{report.submittedByName || report.submittedBy || t('report.detail.unknown')}</p>
                       <Badge variant={getStatusVariant(report.status)}>{t(`status.${normalizeStatus(report.status)}`, getStatusLabel(report.status))}</Badge>
                     </div>

@@ -6,6 +6,7 @@ import uuid
 from sqlalchemy.orm import Session
 
 from app.models.announcement import Announcement
+from app.models.user import User
 from app.schemas.announcement import AnnouncementCreate, AnnouncementPublic, AnnouncementUpdate
 from app.services.notification_service import notify_role
 
@@ -34,12 +35,37 @@ def _roles_from_db(stored: str | None) -> list[str] | None:
     return [role for role in stored.split(",") if role]
 
 
-def _to_public(record: Announcement) -> AnnouncementPublic:
+def _author_avatar_lookup(db: Session, records: list[Announcement]) -> dict[str, str | None]:
+    """Map announcement id -> its author's avatar URL.
+
+    Uses author_id when present. Older announcements only stored the author's
+    name, so fall back to a name match when exactly one user has that name.
+    """
+    author_ids = {r.author_id for r in records if r.author_id}
+    author_names = {r.author for r in records if not r.author_id and r.author}
+    by_id: dict[int, User] = {}
+    if author_ids:
+        by_id = {u.id: u for u in db.query(User).filter(User.id.in_(author_ids)).all()}
+    by_name: dict[str, User | None] = {}
+    if author_names:
+        for user in db.query(User).filter(User.name.in_(author_names)).all():
+            # Ambiguous names (two users with the same name) get no picture.
+            by_name[user.name] = None if user.name in by_name else user
+
+    result: dict[str, str | None] = {}
+    for record in records:
+        user = by_id.get(record.author_id) if record.author_id else by_name.get(record.author or "")
+        result[record.id] = user.avatar_url if user else None
+    return result
+
+
+def _to_public(record: Announcement, author_avatar_url: str | None = None) -> AnnouncementPublic:
     return AnnouncementPublic.model_validate({
         "id": record.id,
         "title": record.title,
         "body": record.body,
         "author": record.author,
+        "authorAvatarUrl": author_avatar_url,
         "pinned": record.pinned,
         "audience": record.audience,
         "visibility": record.visibility,
@@ -54,15 +80,17 @@ def list_announcements(db: Session, viewer_role: str | None = None) -> list[Anno
     # GM manages announcements, so it always sees everything regardless of targeting.
     if viewer_role and viewer_role != "gm":
         rows = [row for row in rows if not row.target_roles or viewer_role in row.target_roles.split(",")]
-    return [_to_public(row) for row in rows]
+    avatars = _author_avatar_lookup(db, rows)
+    return [_to_public(row, avatars.get(row.id)) for row in rows]
 
 
-def create_announcement(db: Session, payload: AnnouncementCreate) -> AnnouncementPublic:
+def create_announcement(db: Session, payload: AnnouncementCreate, author: User | None = None) -> AnnouncementPublic:
     record = Announcement(
         id=_make_id(),
         title=payload.title.strip(),
         body=payload.body.strip() if isinstance(payload.body, str) else payload.body,
         author=payload.author.strip() if isinstance(payload.author, str) else payload.author,
+        author_id=author.id if author is not None else None,
         pinned=bool(payload.pinned),
         audience=(payload.audience or "All employees").strip(),
         visibility=(payload.visibility or "all_employees").strip(),
@@ -84,7 +112,7 @@ def create_announcement(db: Session, payload: AnnouncementCreate) -> Announcemen
             ANNOUNCEMENT_LINKS.get(role),
         )
 
-    return _to_public(record)
+    return _to_public(record, _author_avatar_lookup(db, [record]).get(record.id))
 
 
 def update_announcement(db: Session, announcement_id: str, payload: AnnouncementUpdate) -> AnnouncementPublic:
@@ -109,7 +137,7 @@ def update_announcement(db: Session, announcement_id: str, payload: Announcement
 
     db.commit()
     db.refresh(record)
-    return _to_public(record)
+    return _to_public(record, _author_avatar_lookup(db, [record]).get(record.id))
 
 
 def delete_announcement(db: Session, announcement_id: str) -> None:

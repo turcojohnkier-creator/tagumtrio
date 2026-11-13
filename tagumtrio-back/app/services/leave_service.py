@@ -70,14 +70,16 @@ def create_leave_request(db: Session, payload: LeaveRequestCreate) -> LeaveReque
     db.commit()
     db.refresh(record)
 
-    notify_role(
-        db,
-        "gm",
-        "leave_request_new",
-        "New leave request",
-        f"{record.employee_name} requested {record.leave_type} leave.",
-        "/app/requests",
-    )
+    # GM and Production In-Charge both review leave requests.
+    for reviewer_role in ("gm", "production_incharge"):
+        notify_role(
+            db,
+            reviewer_role,
+            "leave_request_new",
+            "New leave request",
+            f"{record.employee_name} requested {record.leave_type} leave.",
+            "/app/requests",
+        )
 
     data = {
         "id": record.id,

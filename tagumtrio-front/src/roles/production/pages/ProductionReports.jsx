@@ -5,6 +5,7 @@ import { useAppData } from '../../../context/app-data-context'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Badge from '../../../shared/ui/Badge'
 import EmptyState from '../../../shared/ui/EmptyState'
+import UserAvatar from '../../../shared/ui/UserAvatar'
 
 function toDateKey(value) {
   if (!value) return ''
@@ -130,8 +131,10 @@ export default function ProductionReports() {
               <h3 className="truncate font-semibold text-zinc-900">{report.department || 'Unknown Department'} • {report.reportDate || report.report_date || 'No date'}</h3>
               <Badge variant={getStatusVariant(report.status)}>{getStatusLabel(report.status)}</Badge>
             </div>
-            <p className="mt-1 text-sm text-zinc-500">
-              Submitted by {report.submittedByName || report.submitted_by_name || 'Unknown'} • {formatProviderDateTime ? formatProviderDateTime(report.createdAt || report.created_at || report.reportDate) : formatDateTime(report.createdAt || report.created_at || report.reportDate)}
+            <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-zinc-500">
+              <span>Submitted by</span>
+              <UserAvatar userId={report.submittedBy ?? report.submitted_by} name={report.submittedByName || report.submitted_by_name} size="xs" />
+              {report.submittedByName || report.submitted_by_name || 'Unknown'} • {formatProviderDateTime ? formatProviderDateTime(report.createdAt || report.created_at || report.reportDate) : formatDateTime(report.createdAt || report.created_at || report.reportDate)}
             </p>
             <p className="mt-1 text-sm text-zinc-400">
               {entries.length} entr{entries.length === 1 ? 'y' : 'ies'} • {report.summary || 'No summary provided'}

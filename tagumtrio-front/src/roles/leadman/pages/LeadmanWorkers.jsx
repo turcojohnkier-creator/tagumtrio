@@ -7,6 +7,7 @@ import PageHeader from '../../../shared/ui/PageHeader'
 import Card, { SectionTitle } from '../../../shared/ui/Card'
 import Badge from '../../../shared/ui/Badge'
 import EmptyState from '../../../shared/ui/EmptyState'
+import Avatar from '../../../shared/ui/Avatar'
 
 export default function LeadmanWorkers() {
   const { user } = useAuth()
@@ -28,6 +29,7 @@ export default function LeadmanWorkers() {
         employeeId: String(employee.identifier ?? employee.employeeId ?? ''),
         employeeName: employee.name || employee.employeeName || '',
         department: employee.department || selectedDepartment,
+        avatar_url: employee.avatar_url || null,
       }))
       .filter((employee) => employee.employeeId && employee.employeeName)
       .filter((employee) => employee.employeeName.toLowerCase().includes(query.toLowerCase()) || employee.employeeId.toLowerCase().includes(query.toLowerCase()))
@@ -82,7 +84,12 @@ export default function LeadmanWorkers() {
                 {deployedEmployees.map((employee, index) => (
                   <tr key={employee.employeeId} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
                     <td className="px-4 py-3 font-medium text-zinc-900">{formatEmployeeId(employee.employeeId)}</td>
-                    <td className="px-4 py-3 text-zinc-900">{employee.employeeName}</td>
+                    <td className="px-4 py-3 text-zinc-900">
+                      <div className="flex items-center gap-2.5">
+                        <Avatar name={employee.employeeName} src={employee.avatar_url} size="sm" />
+                        <span>{employee.employeeName}</span>
+                      </div>
+                    </td>
                     <td className="px-4 py-3">{employee.department || selectedDepartment}</td>
                     <td className="px-4 py-3">
                       <Badge variant="success">Active</Badge>

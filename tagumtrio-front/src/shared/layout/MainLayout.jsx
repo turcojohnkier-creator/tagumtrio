@@ -16,7 +16,7 @@ const allNavItems = [
   { name: 'Announcements', i18nKey: 'nav.announcements', href: '/app/gm/announcements', icon: Megaphone, roles: ['gm'] },
   { name: 'Announcements', i18nKey: 'nav.announcements', href: '/app/announcements', icon: Megaphone, roles: ['production_incharge'], notificationType: 'announcement_new' },
   { name: 'Rate Management', i18nKey: 'nav.rate_management', href: '/app/gm/rates', icon: Tag, roles: ['gm'] },
-  { name: 'Requests', i18nKey: 'nav.requests', href: '/app/requests', icon: FileSpreadsheet, roles: ['gm'], notificationType: 'leave_request_new' },
+  { name: 'Requests', i18nKey: 'nav.requests', href: '/app/requests', icon: FileSpreadsheet, roles: ['gm', 'production_incharge'], notificationType: 'leave_request_new' },
   { name: 'Settings', i18nKey: 'nav.settings', href: '/app/settings', icon: Settings, roles: ['gm', 'hr', 'production_incharge', 'leadman'] },
 ]
 

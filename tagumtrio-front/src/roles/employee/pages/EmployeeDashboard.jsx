@@ -8,6 +8,7 @@ import { toManilaDateKey } from '../../../lib/datetime'
 import { formatEmployeeId } from '../../../lib/employeeId'
 import Card, { SectionTitle } from '../../../shared/ui/Card'
 import Button from '../../../shared/ui/Button'
+import Avatar from '../../../shared/ui/Avatar'
 
 const MONTHLY_LEAVE_LIMIT = 3
 
@@ -163,9 +164,7 @@ export default function EmployeeDashboard() {
       <div className="rounded-xl border border-emerald-700 bg-emerald-700 p-6 shadow-sm">
         <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/15 text-xl font-bold text-white ring-4 ring-white/20">
-              {String(user?.name || 'EM').split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase()}
-            </div>
+            <Avatar name={user?.name || 'Employee'} src={user?.avatar_url} size="xl" className="bg-white/15 text-white ring-4 ring-white/20" />
             <div>
               <h2 className="font-heading text-xl font-bold text-white">{user?.name || 'Employee'}</h2>
               <p className="mt-1 font-semibold text-emerald-50">{currentDepartment ? `${currentDepartment} Department` : 'Department not yet assigned'}</p>

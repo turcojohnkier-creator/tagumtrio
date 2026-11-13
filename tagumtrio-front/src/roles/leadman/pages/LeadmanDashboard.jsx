@@ -27,6 +27,7 @@ export default function LeadmanDashboard() {
         employeeId: employee.employeeId,
         employeeName: employee.name,
         department: employee.department || selectedDepartment,
+        avatar_url: employee.avatar_url || null,
       }))
       .filter((employee) => employee.employeeId && employee.employeeName)
   }, [employees, selectedDepartment])

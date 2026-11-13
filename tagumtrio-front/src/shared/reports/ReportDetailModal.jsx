@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import Portal from '../ui/Portal'
 import Button from '../ui/Button'
 import Badge from '../ui/Badge'
+import UserAvatar from '../ui/UserAvatar'
 import { useAuth } from '../../context/auth-context'
 import DailyReportTable from './DailyReportTable'
 import { getReportPhotos } from './report-entry-utils'
@@ -52,7 +53,11 @@ export default function ReportDetailModal({ report, onClose }) {
                 <h3 className="font-heading text-lg font-bold text-zinc-900">{report.department || t('report.detail.unknown_department')}</h3>
                 <Badge variant={getStatusVariant(report.status)}>{t(`status.${normalizeStatus(report.status)}`, getStatusLabel(report.status))}</Badge>
               </div>
-              <p className="mt-1 text-sm text-zinc-500">{t('report.detail.submitted_by')} {report.submittedByName || report.submittedBy || t('report.detail.unknown')} • {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</p>
+              <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-zinc-500">
+                <span>{t('report.detail.submitted_by')}</span>
+                <UserAvatar userId={report.submittedBy} name={report.submittedByName} size="xs" />
+                <span>{report.submittedByName || report.submittedBy || t('report.detail.unknown')} • {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</span>
+              </p>
             </div>
             <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
               <X className="h-4 w-4" />

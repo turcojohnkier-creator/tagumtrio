@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AuthContext } from './auth-context'
-import { clearAuthToken, loginApi, setAuthToken } from '../lib/api'
+import { clearAuthToken, loginApi, setAuthToken, updateStoredSessionUser } from '../lib/api'
 import { DEPARTMENTS } from '../constants/departments'
 
 const AUTH_SESSION_KEY = 'triops-auth-session'
@@ -28,6 +28,7 @@ function buildSessionUser(record) {
     identifier: record.identifier,
     role: normalizedRole,
     created_at: record.created_at || record.createdAt,
+    avatar_url: record.avatar_url || null,
   }
 
   if (normalizedRole === 'leadman') {
@@ -199,6 +200,18 @@ export function AuthProvider({ children }) {
       'settings.sign_out_title': 'Sign out of Tagum Trio Lumber Corporation?',
       'settings.sign_out_message': 'You will be returned to the login page and will need to sign in again to continue.',
       'settings.stay_signed_in': 'Stay signed in',
+      'settings.photo': 'Profile picture',
+      'settings.photo_hint': 'JPG, PNG or WebP. Shown next to your name everywhere in the system.',
+      'settings.photo_upload': 'Upload photo',
+      'settings.photo_change': 'Change photo',
+      'settings.photo_saving': 'Saving...',
+      'settings.photo_remove': 'Remove photo',
+      'settings.photo_remove_title': 'Remove your profile picture?',
+      'settings.photo_remove_message': 'Your initials will be shown instead.',
+      'settings.photo_updated': 'Profile picture updated',
+      'settings.photo_updated_message': 'Your new photo now appears next to your name.',
+      'settings.photo_failed': 'Unable to update profile picture',
+      'settings.photo_not_image': 'Please choose an image file.',
 
       'gm.rate.title': 'Rate Management',
       'gm.rate.add_label': 'Add rate',
@@ -485,6 +498,18 @@ export function AuthProvider({ children }) {
       'settings.sign_out_title': '确定要退出 Tagum Trio Lumber Corporation 吗？',
       'settings.sign_out_message': '您将返回登录页面，需要重新登录才能继续。',
       'settings.stay_signed_in': '保持登录',
+      'settings.photo': '头像',
+      'settings.photo_hint': '支持 JPG、PNG 或 WebP。头像会显示在系统中您名字旁边。',
+      'settings.photo_upload': '上传照片',
+      'settings.photo_change': '更换照片',
+      'settings.photo_saving': '保存中...',
+      'settings.photo_remove': '移除照片',
+      'settings.photo_remove_title': '移除您的头像？',
+      'settings.photo_remove_message': '将改为显示您的姓名缩写。',
+      'settings.photo_updated': '头像已更新',
+      'settings.photo_updated_message': '您的新照片现在会显示在您的名字旁边。',
+      'settings.photo_failed': '无法更新头像',
+      'settings.photo_not_image': '请选择图片文件。',
 
       'gm.rate.title': '价格管理',
       
@@ -786,7 +811,15 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
+  // Apply a fresh user record from the API (e.g. after changing the profile
+  // picture) to both React state and the cached session.
+  const updateUser = (record) => {
+    if (!record) return
+    updateStoredSessionUser(record)
+    setUser((current) => buildSessionUser({ ...(current || {}), ...record }))
+  }
+
   return (
-    <AuthContext.Provider value={{ user, users, login, loginWithCredentials, logout, language, setLanguage, t }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, users, login, loginWithCredentials, logout, updateUser, language, setLanguage, t }}>{children}</AuthContext.Provider>
   )
 }

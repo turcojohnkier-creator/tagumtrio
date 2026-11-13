@@ -3,12 +3,14 @@ import { Camera, Image as ImageIcon, Plus, X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Portal from '../../../shared/ui/Portal'
 import Button from '../../../shared/ui/Button'
+import UserAvatar from '../../../shared/ui/UserAvatar'
 import DailyReportTable from '../../../shared/reports/DailyReportTable'
 import { useAppData } from '../../../context/app-data-context'
 import { formatEmployeeId } from '../../../lib/employeeId'
 import { formatProductWithUnit } from '../../../lib/units'
 import { buildDepartmentReportSummary, getDepartmentReportFieldSpec } from '../../../constants/department-report-fields'
 import { getNextDepartmentOptions } from '../../../constants/department-flow'
+import { compressImageFile } from '../../../lib/image'
 
 function normalizeEmployeeId(employee) {
   return String(employee.employeeId || employee.id || employee.identifier || '').trim()
@@ -50,31 +52,6 @@ function generateExtraSlotKey() {
 function deriveExtraSlotKeys(photoPreview) {
   if (!photoPreview || typeof photoPreview !== 'object') return []
   return Object.keys(photoPreview).filter((key) => !FIXED_PHOTO_KEYS.includes(key))
-}
-
-// Downscale + re-encode before staging so a slow connection has far less to
-// upload — phone camera photos can be several MB each; this brings them down
-// to a few hundred KB without a visible quality loss in the verification photo.
-function compressImageFile(file, { maxDimension = 1600, quality = 0.7 } = {}) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onerror = () => reject(reader.error || new Error('Unable to read image file.'))
-    reader.onload = () => {
-      const img = new Image()
-      img.onerror = () => reject(new Error('Unable to load image file.'))
-      img.onload = () => {
-        const scale = Math.min(1, maxDimension / Math.max(img.width, img.height))
-        const canvas = document.createElement('canvas')
-        canvas.width = Math.round(img.width * scale)
-        canvas.height = Math.round(img.height * scale)
-        const ctx = canvas.getContext('2d')
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-        resolve(canvas.toDataURL('image/jpeg', quality))
-      }
-      img.src = reader.result
-    }
-    reader.readAsDataURL(file)
-  })
 }
 
 function EmployeePickerModal({ open, department, employeeOptions, selectedEmployeeIds, onToggleEmployee, onClose }) {
@@ -120,7 +97,12 @@ function EmployeePickerModal({ open, department, employeeOptions, selectedEmploy
                         />
                       </td>
                       <td className="px-4 py-3 align-middle font-medium text-zinc-900">{formatEmployeeId(employeeId)}</td>
-                      <td className="px-4 py-3 align-middle">{employee.employeeName || employee.name || employee.fullName}</td>
+                      <td className="px-4 py-3 align-middle">
+                        <div className="flex items-center gap-2.5">
+                          <UserAvatar userId={employee.employeeId ?? employee.id} name={employee.employeeName || employee.name || employee.fullName} size="sm" />
+                          <span>{employee.employeeName || employee.name || employee.fullName}</span>
+                        </div>
+                      </td>
                       <td className="px-4 py-3 align-middle text-zinc-700">{employee.department || department || employee.dept}</td>
                     </tr>
                   )

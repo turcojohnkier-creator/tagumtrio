@@ -32,6 +32,7 @@ class AnnouncementPublic(BaseModel):
     title: str
     body: str | None = None
     author: str | None = None
+    author_avatar_url: str | None = Field(default=None, alias="authorAvatarUrl")
     pinned: bool
     audience: str = Field(default="All employees")
     visibility: str = Field(default="all_employees")

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, String, Text, Boolean
+from sqlalchemy import DateTime, Integer, String, Text, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -14,6 +14,8 @@ class Announcement(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     body: Mapped[str | None] = mapped_column(Text, nullable=True)
     author: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # The user who posted it, used to show their profile picture.
+    author_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     pinned: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
     audience: Mapped[str] = mapped_column(String(64), nullable=False, default="All employees", index=True)
     visibility: Mapped[str] = mapped_column(String(64), nullable=False, default="all_employees", index=True)

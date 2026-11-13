@@ -3,13 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Languages, Megaphone, MoreHorizontal, Pin, PinOff } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { translateTextApi } from '../../lib/api'
-
-function initials(name) {
-  const parts = String(name || 'Tagum Trio').trim().split(/\s+/).filter(Boolean)
-  const first = parts[0]?.[0] || 'T'
-  const second = parts[1]?.[0] || parts[0]?.[1] || 'R'
-  return `${first}${second}`.toUpperCase()
-}
+import Avatar from './Avatar'
 
 function formatTime(value) {
   if (!value) return 'Recently posted'
@@ -66,9 +60,12 @@ export default function AnnouncementPost({ announcement, compact = false, showAc
   return (
     <article className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
       <div className="flex items-start gap-4 border-b border-zinc-200 px-6 py-5">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-sm font-semibold text-white">
-          {initials(author)}
-        </div>
+        <Avatar
+          name={author}
+          src={announcement.authorAvatarUrl || announcement.author_avatar_url}
+          size="h-11 w-11 text-sm"
+          className="bg-emerald-600 text-white"
+        />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className={`${compact ? 'text-base' : 'text-lg'} font-semibold text-zinc-900`}>{title || 'Announcement'}</h3>

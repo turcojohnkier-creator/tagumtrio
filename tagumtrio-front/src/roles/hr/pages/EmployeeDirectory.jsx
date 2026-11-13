@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { useAppData } from '../../../context/app-data-context'
+import { useDialog } from '../../../context/dialog-context'
 import { updateEmployeeApi } from '../../../lib/api'
 import { formatRole } from '../../../lib/roles'
 import { formatEmployeeId } from '../../../lib/employeeId'
@@ -11,6 +12,7 @@ import Card from '../../../shared/ui/Card'
 import Button from '../../../shared/ui/Button'
 import Badge from '../../../shared/ui/Badge'
 import EmptyState from '../../../shared/ui/EmptyState'
+import Avatar from '../../../shared/ui/Avatar'
 
 // Kept in sync with ARCHIVE_RETENTION_DAYS in tagumtrio-back's
 // app/api/v1/endpoints/users.py — the backend is the source of truth for the
@@ -26,7 +28,8 @@ function daysUntilPurge(archivedAt) {
 }
 
 export default function EmployeeDirectory() {
-  const { employees = [], employeesLoading, refreshEmployees } = useAppData()
+  const { employees = [], employeesLoading, refreshEmployees, updateEmployeeRecord } = useAppData()
+  const dialog = useDialog()
   const [searchText, setSearchText] = useState('')
   const [roleFilter, setRoleFilter] = useState('All Roles')
   const [sortByRole, setSortByRole] = useState(false)
@@ -59,16 +62,51 @@ export default function EmployeeDirectory() {
     setActionLoading(true)
     try {
       const updated = await updateEmployeeApi(id, { is_active: !employee.is_active })
-      setLocalEmployees((current) => current.map((emp) => (
-        String(emp.employeeId || emp.id || emp.employee_id) === String(id) ? { ...emp, ...updated } : emp
-      )))
-      setSelectedEmployee((current) => (
-        current && String(current.employeeId || current.id || current.employee_id) === String(id)
-          ? { ...current, ...updated }
-          : current
-      ))
+      applyEmployeeUpdate(id, updated)
     } catch (error) {
       console.error('Failed to update account status', error)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  // Mirror a saved change into this page, the open modal, and the shared
+  // employee list (so other pages and the next re-sync see it too).
+  function applyEmployeeUpdate(id, updated) {
+    const matches = (emp) => String(emp.employeeId || emp.id || emp.employee_id) === String(id)
+    setLocalEmployees((current) => current.map((emp) => (matches(emp) ? { ...emp, ...updated } : emp)))
+    setSelectedEmployee((current) => (current && matches(current) ? { ...current, ...updated } : current))
+    updateEmployeeRecord?.(id, updated)
+  }
+
+  const handleReassign = async (employee, department) => {
+    const id = employee.employeeId || employee.id || employee.employee_id
+    const name = employee.employeeName || employee.name || 'this employee'
+    const fromDepartment = employee.department || 'Unassigned'
+    if (id === undefined || id === null || !department || department === employee.department) return
+
+    const confirmed = await dialog.confirm({
+      kicker: 'Reassign department',
+      title: `Move ${name} to ${department}?`,
+      message: `${name} will be moved from ${fromDepartment} to ${department}. They and the ${department} leadman will be notified.`,
+      confirmText: 'Reassign',
+      cancelText: 'Cancel',
+    })
+    if (!confirmed) return
+
+    setActionLoading(true)
+    try {
+      const updated = await updateEmployeeApi(id, { department })
+      applyEmployeeUpdate(id, updated)
+      dialog.success({
+        title: 'Employee reassigned',
+        message: `${name} is now in ${department}.`,
+      })
+    } catch (error) {
+      dialog.error({
+        title: 'Reassignment failed',
+        message: error?.message || 'Unable to reassign this employee.',
+      })
     } finally {
       setActionLoading(false)
     }
@@ -139,7 +177,12 @@ export default function EmployeeDirectory() {
                   return (
                     <motion.tr key={id} variants={{ hidden: { opacity: 0, y: 4 }, show: { opacity: 1, y: 0, transition: { duration: 0.18, ease: 'easeOut' } } }} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
                       <td className="px-4 py-3 font-medium text-zinc-900">{formatEmployeeId(id)}</td>
-                      <td className="px-4 py-3 text-zinc-900">{name}</td>
+                      <td className="px-4 py-3 text-zinc-900">
+                        <div className="flex items-center gap-2.5">
+                          <Avatar name={name} src={emp.avatar_url} size="sm" />
+                          <span>{name}</span>
+                        </div>
+                      </td>
                       <td className="px-4 py-3">{formatRole(emp.role)}</td>
                       <td className="px-4 py-3">{department}</td>
                       <td className="px-4 py-3">
@@ -275,9 +318,11 @@ export default function EmployeeDirectory() {
 
       {selectedEmployee && (
         <EmployeeDetailModal
+          key={`${selectedEmployee.employeeId || selectedEmployee.id}-${selectedEmployee.department || ''}`}
           employee={selectedEmployee}
           onClose={() => setSelectedEmployee(null)}
           onToggleActive={handleToggleActive}
+          onReassign={handleReassign}
           actionLoading={actionLoading}
         />
       )}

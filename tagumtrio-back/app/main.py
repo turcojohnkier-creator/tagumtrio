@@ -17,6 +17,7 @@ from app.api.v1.endpoints.daily_reports import router as daily_reports_router
 from app.api.v1.endpoints.rates import router as rates_router
 from app.api.v1.endpoints.notifications import router as notifications_router
 from app.api.v1.endpoints.translate import router as translate_router
+from app.api.v1.endpoints.avatars import router as avatars_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -27,6 +28,10 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS start_date VARCHAR(32)"))
     connection.execute(text("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS end_date VARCHAR(32)"))
     connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ"))
+    connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_data BYTEA"))
+    connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_mime VARCHAR"))
+    connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_updated_at TIMESTAMPTZ"))
+    connection.execute(text("ALTER TABLE announcements ADD COLUMN IF NOT EXISTS author_id INTEGER"))
 
 app = FastAPI(title="TriOPS Backend")
 
@@ -47,6 +52,7 @@ app.include_router(daily_reports_router, prefix="/api/v1")
 app.include_router(rates_router, prefix="/api/v1")
 app.include_router(notifications_router, prefix="/api/v1")
 app.include_router(translate_router, prefix="/api/v1")
+app.include_router(avatars_router, prefix="/api/v1")
 
 
 @app.get("/api/health")

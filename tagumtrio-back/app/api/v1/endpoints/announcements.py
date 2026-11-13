@@ -29,7 +29,7 @@ def post_announcement(
 ) -> AnnouncementPublic:
     if not payload.title.strip():
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail="Title is required")
-    return create_announcement(db, payload)
+    return create_announcement(db, payload, author=current_user)
 
 
 @router.patch("/{announcement_id}", response_model=AnnouncementPublic)

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { useAppData } from '../../../context/app-data-context'
-import { useDialog } from '../../../context/dialog-context'
 import { updateEmployeeApi } from '../../../lib/api'
 import { formatRole } from '../../../lib/roles'
 import { formatEmployeeId } from '../../../lib/employeeId'
@@ -29,7 +28,6 @@ function daysUntilPurge(archivedAt) {
 
 export default function EmployeeDirectory() {
   const { employees = [], employeesLoading, refreshEmployees, updateEmployeeRecord } = useAppData()
-  const dialog = useDialog()
   const [searchText, setSearchText] = useState('')
   const [roleFilter, setRoleFilter] = useState('All Roles')
   const [sortByRole, setSortByRole] = useState(false)
@@ -77,39 +75,6 @@ export default function EmployeeDirectory() {
     setLocalEmployees((current) => current.map((emp) => (matches(emp) ? { ...emp, ...updated } : emp)))
     setSelectedEmployee((current) => (current && matches(current) ? { ...current, ...updated } : current))
     updateEmployeeRecord?.(id, updated)
-  }
-
-  const handleReassign = async (employee, department) => {
-    const id = employee.employeeId || employee.id || employee.employee_id
-    const name = employee.employeeName || employee.name || 'this employee'
-    const fromDepartment = employee.department || 'Unassigned'
-    if (id === undefined || id === null || !department || department === employee.department) return
-
-    const confirmed = await dialog.confirm({
-      kicker: 'Reassign department',
-      title: `Move ${name} to ${department}?`,
-      message: `${name} will be moved from ${fromDepartment} to ${department}. They and the ${department} leadman will be notified.`,
-      confirmText: 'Reassign',
-      cancelText: 'Cancel',
-    })
-    if (!confirmed) return
-
-    setActionLoading(true)
-    try {
-      const updated = await updateEmployeeApi(id, { department })
-      applyEmployeeUpdate(id, updated)
-      dialog.success({
-        title: 'Employee reassigned',
-        message: `${name} is now in ${department}.`,
-      })
-    } catch (error) {
-      dialog.error({
-        title: 'Reassignment failed',
-        message: error?.message || 'Unable to reassign this employee.',
-      })
-    } finally {
-      setActionLoading(false)
-    }
   }
 
   const filteredEmployees = useMemo(() => {
@@ -318,11 +283,9 @@ export default function EmployeeDirectory() {
 
       {selectedEmployee && (
         <EmployeeDetailModal
-          key={`${selectedEmployee.employeeId || selectedEmployee.id}-${selectedEmployee.department || ''}`}
           employee={selectedEmployee}
           onClose={() => setSelectedEmployee(null)}
           onToggleActive={handleToggleActive}
-          onReassign={handleReassign}
           actionLoading={actionLoading}
         />
       )}

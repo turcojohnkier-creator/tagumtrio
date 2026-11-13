@@ -7,7 +7,7 @@ import { formatRole } from '../../lib/roles'
 import AppShell from './AppShell'
 
 const allNavItems = [
-  { name: 'Departments Overview', i18nKey: 'nav.departments_overview', href: '/app/gm/overview', icon: Building2, roles: ['gm'] },
+  { name: 'Departments Overview', i18nKey: 'nav.departments_overview', href: '/app/gm/overview', icon: Building2, roles: ['gm', 'hr'] },
   { name: 'Employees', i18nKey: 'nav.employees', href: '/app/gm/employees', icon: Users, roles: ['gm'] },
   { name: 'Production', i18nKey: 'nav.production', href: '/app/production', icon: Factory, roles: ['production_incharge', 'leadman', 'gm'], notificationType: 'daily_report_gm_pending' },
   { name: 'Reports', i18nKey: 'nav.reports', href: '/app/production/reports', icon: FileSpreadsheet, roles: ['production_incharge'] },

@@ -1,23 +1,39 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Check, CircleAlert, ChevronDown, Image as ImageIcon } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import {
+  ArrowRight, Check, CheckCircle2, ChevronLeft, ChevronRight, CircleAlert, Inbox, Pencil, Undo2, X,
+} from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 import { useDialog } from '../../../context/dialog-context'
 import { useAppData } from '../../../context/app-data-context'
 import { fetchDailyReportsApi, updateDailyReportApi } from '../../../lib/api'
-import DailyReportTable from '../../../shared/reports/DailyReportTable'
+import { formatProductWithUnit } from '../../../lib/units'
+import { extractNote, groupBatches, summarizeBatches } from '../../../shared/reports/report-entry-utils'
 import ReportEntryForm from '../components/ReportEntryForm'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Button from '../../../shared/ui/Button'
 import Badge from '../../../shared/ui/Badge'
 import EmptyState from '../../../shared/ui/EmptyState'
 import UserAvatar from '../../../shared/ui/UserAvatar'
+import Portal from '../../../shared/ui/Portal'
 
-function formatDateTime(value) {
+function fallbackFormatDateTime(value) {
   if (!value) return '—'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return String(value)
   return date.toLocaleString()
+}
+
+function formatWorkDate(value) {
+  if (!value) return '—'
+  const date = new Date(`${String(value).slice(0, 10)}T00:00:00`)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function peso(value) {
+  return `₱${Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
 }
 
 function normalizeText(value) {
@@ -48,17 +64,16 @@ function getStatusVariant(status) {
     case 'rejected':
       return 'danger'
     default:
-      return 'neutral'
+      return 'warning'
   }
 }
 
-function getReportPhotos(report) {
-  const entries = Array.isArray(report?.entries) ? report.entries : []
-  return entries.flatMap((entry) => {
-    if (Array.isArray(entry?.photos)) return entry.photos
-    if (entry?.photos && typeof entry.photos === 'object') return Object.values(entry.photos)
-    return entry?.photoUrls || entry?.imageUrls || []
-  }).filter(Boolean)
+// Batches + totals + the human-written note, derived once per report.
+function useReportView(report) {
+  return useMemo(() => {
+    const batches = groupBatches(report.entries, report.department)
+    return { batches, ...summarizeBatches(batches), note: extractNote(report.summary) }
+  }, [report.entries, report.department, report.summary])
 }
 
 function buildEntriesFromPayloads(payloads, batchCapturedAt) {
@@ -74,153 +89,316 @@ function buildEntriesFromPayloads(payloads, batchCapturedAt) {
     photos: payload.photos,
     notes: payload.notes,
     scannedAt: batchCapturedAt,
+    batchId: payload.batchId,
   }))
 }
 
-// Defined at module scope (not inside LeadmanIncomingReports) so React keeps
-// treating it as the same component across parent re-renders — otherwise a
-// new function identity every render makes React remount the whole subtree
-// on every keystroke, dropping focus from the textarea below after one letter.
-// The note text is also kept as local state here rather than lifted into the
-// parent, so typing never triggers a parent re-render in the first place.
-function ReportCard({ report, isExpanded, onToggleExpand, actionLoadingId, onVerify, onReject, onViewPhotos, formatDateTime: formatDT }) {
-  const [note, setNote] = useState('')
-  const entries = Array.isArray(report.entries) ? report.entries : []
-  const photos = getReportPhotos(report)
-  const status = normalizeText(report.status)
+/* ---------- the report table ---------- */
+
+// Leadmen can attach any number of photos, so the cell has a fixed footprint:
+// a 2×2 grid. Up to 4 photos show as-is; with 5+ the 4th tile becomes "+N"
+// and opens the viewer, where every photo can be browsed.
+const MAX_THUMB_TILES = 4
+
+function PhotoThumbs({ photos, onOpen }) {
+  if (!photos.length) return <span className="text-xs text-zinc-400">None</span>
+  const overflow = photos.length > MAX_THUMB_TILES
+  const shown = overflow ? photos.slice(0, MAX_THUMB_TILES - 1) : photos
+  const tile = 'h-11 w-11 overflow-hidden rounded-md border focus:outline-none focus:ring-2 focus:ring-emerald-500'
 
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 transition-colors hover:border-zinc-300">
-      <button
-        type="button"
-        onClick={onToggleExpand}
-        className="flex w-full items-center justify-between gap-4 p-4 text-left hover:bg-white/70"
-      >
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate font-semibold text-zinc-900">{report.department || 'Unknown Department'}</h3>
-            <Badge variant={getStatusVariant(report.status)}>{getStatusLabel(report.status)}</Badge>
-          </div>
-          <p className="mt-1 flex items-center gap-2 text-sm text-zinc-500">
-            <UserAvatar userId={report.submittedBy ?? report.submitted_by} name={report.submittedByName || report.submitted_by_name} size="xs" />
-            <span>{report.submittedByName || report.submitted_by_name || 'Unknown'} • {formatDT(report.createdAt || report.created_at || report.reportDate)}</span>
-          </p>
-          <p className="mt-1 text-sm text-zinc-400">
-            {entries.length} entr{entries.length === 1 ? 'y' : 'ies'} • {report.summary || 'No summary provided'}
-          </p>
+    <div className="grid w-max grid-cols-2 gap-1.5">
+      {shown.map((photo, index) => (
+        <button
+          key={`${photo.label}-${index}`}
+          type="button"
+          onClick={() => onOpen(photos, index)}
+          title={`${photo.label} — click to enlarge`}
+          className={`group relative border-zinc-200 bg-zinc-100 ${tile}`}
+        >
+          <img src={photo.src} alt={photo.label} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
+          <span className="absolute inset-x-0 bottom-0 truncate bg-black/55 px-0.5 text-center text-[9px] font-medium leading-tight text-white">{photo.label}</span>
+        </button>
+      ))}
+      {overflow ? (
+        <button
+          type="button"
+          onClick={() => onOpen(photos, MAX_THUMB_TILES - 1)}
+          title={`View all ${photos.length} photos`}
+          className={`relative flex items-center justify-center border-zinc-300 bg-zinc-800 text-white ${tile}`}
+        >
+          <img src={photos[MAX_THUMB_TILES - 1].src} alt="" className="absolute inset-0 h-full w-full object-cover opacity-35" />
+          <span className="relative text-xs font-bold">+{photos.length - (MAX_THUMB_TILES - 1)}</span>
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
+// Same look and column order as the system's daily report table, plus the
+// workers named inline and the proof photos visible, and a totals row.
+function VerificationTable({ view, onOpenPhotos }) {
+  const { t } = useAuth()
+  const th = 'px-4 py-3 font-medium whitespace-nowrap'
+
+  if (view.batches.length === 0) {
+    return <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 text-sm text-zinc-500">{t('table.no_entries', 'No entries in this report.')}</div>
+  }
+
+  return (
+    <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-emerald-50/70 text-emerald-800">
+          <tr>
+            <th className={th}>{t('table.department', 'Department')}</th>
+            <th className={th}>{t('table.product', 'Product')}</th>
+            <th className={`${th} text-right`}>{t('table.quantity', 'Quantity')}</th>
+            <th className={th}>{t('table.date', 'Date')}</th>
+            <th className={th}>{t('table.employees', 'Employees')}</th>
+            <th className={th}>{t('table.photos', 'Photos')}</th>
+            <th className={`${th} text-right`}>{t('table.amount', 'Amount')}</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-zinc-100 bg-white align-top">
+          {view.batches.map((batch, index) => (
+            <tr key={batch.key} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
+              <td className="px-4 py-3 whitespace-nowrap">{batch.department || '—'}</td>
+              <td className="px-4 py-3 font-medium text-zinc-900 whitespace-nowrap">{formatProductWithUnit(batch.product, batch.department) || '—'}</td>
+              <td className="px-4 py-3 text-right font-heading text-base font-bold tabular-nums text-zinc-900">{batch.quantity.toLocaleString()}</td>
+              <td className="px-4 py-3 whitespace-nowrap">{batch.date ? formatWorkDate(batch.date) : '—'}</td>
+              <td className="px-4 py-3">
+                <ul className="space-y-1">
+                  {batch.workers.map((worker, workerIndex) => (
+                    <li key={`${worker.id ?? worker.name}-${workerIndex}`} className="flex items-center gap-2 whitespace-nowrap">
+                      <UserAvatar userId={worker.id} name={worker.name} size="xs" />
+                      <span className="font-medium text-zinc-800">{worker.name || 'Unknown'}</span>
+                      {worker.identifier ? <span className="text-xs text-zinc-400">{worker.identifier}</span> : null}
+                    </li>
+                  ))}
+                </ul>
+              </td>
+              <td className="px-4 py-3"><PhotoThumbs photos={batch.photos} onOpen={onOpenPhotos} /></td>
+              <td className="px-4 py-3 text-right font-semibold text-emerald-700 whitespace-nowrap">{peso(batch.amount)}</td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot className="border-t-2 border-zinc-200 bg-zinc-50 text-zinc-900">
+          <tr>
+            <td className="px-4 py-3 font-semibold" colSpan={2}>Total ({view.batchCount} batch{view.batchCount === 1 ? '' : 'es'})</td>
+            <td className="px-4 py-3 text-right font-heading text-base font-bold tabular-nums">{view.totalQuantity.toLocaleString()}</td>
+            <td className="px-4 py-3" />
+            <td className="px-4 py-3 font-semibold">{view.workerCount} worker{view.workerCount === 1 ? '' : 's'}</td>
+            <td className="px-4 py-3 text-zinc-500">{view.photos.length} photo{view.photos.length === 1 ? '' : 's'}</td>
+            <td className="px-4 py-3 text-right font-bold text-emerald-700 whitespace-nowrap">{peso(view.totalAmount)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  )
+}
+
+function ReportHeading({ report, toDepartment, formatDT }) {
+  return (
+    <div className="min-w-0">
+      <h3 className="flex flex-wrap items-center gap-2 font-heading text-lg font-bold text-zinc-900">
+        <span>{report.department || 'Unknown department'}</span>
+        <ArrowRight className="h-4 w-4 text-zinc-400" />
+        <span className="text-zinc-500">{toDepartment || 'Next department'}</span>
+      </h3>
+      <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-500">
+        <span className="font-medium text-zinc-700">Work date {formatWorkDate(report.reportDate)}</span>
+        <span className="text-zinc-300">•</span>
+        <span className="inline-flex items-center gap-1.5">
+          <UserAvatar userId={report.submittedBy} name={report.submittedByName} size="xs" />
+          {report.submittedByName || 'Unknown leadman'}
+        </span>
+        <span className="text-zinc-300">•</span>
+        <span>Sent {formatDT(report.createdAt || report.reportDate)}</span>
+      </p>
+    </div>
+  )
+}
+
+/* ---------- incoming / verified report ---------- */
+
+// Module scope (not inside the page) so React keeps the same component across
+// the page's 5s polling re-renders — the reject note lives in local state here,
+// so typing never loses focus.
+function IncomingReport({ report, currentDepartment, busy, onVerify, onReject, onOpenPhotos, formatDT }) {
+  const [rejecting, setRejecting] = useState(false)
+  const [note, setNote] = useState('')
+  const view = useReportView(report)
+  const isPending = normalizeText(report.status) === 'submitted'
+
+  return (
+    <div className={`space-y-4 rounded-xl border bg-white p-4 shadow-sm sm:p-5 ${isPending ? 'border-amber-200' : 'border-zinc-200'}`}>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <ReportHeading report={report} toDepartment={report.targetDepartment || currentDepartment} formatDT={formatDT} />
+        {isPending ? (
+          !rejecting ? (
+            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+              <Button type="button" variant="secondary" disabled={busy} onClick={() => setRejecting(true)}>
+                <CircleAlert className="h-4 w-4" />
+                Reject…
+              </Button>
+              <Button type="button" disabled={busy} onClick={() => onVerify(report, '')}>
+                <Check className="h-4 w-4" />
+                {busy ? 'Updating…' : 'Verify report'}
+              </Button>
+            </div>
+          ) : null
+        ) : (
+          <Badge variant={getStatusVariant(report.status)}>{getStatusLabel(report.status)}</Badge>
+        )}
+      </div>
+
+      {view.note ? (
+        <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800">
+          <span className="font-semibold">Note:</span> {view.note}
         </div>
-        <ChevronDown className={`h-5 w-5 shrink-0 text-zinc-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-      </button>
+      ) : null}
 
-      {isExpanded ? (
-        <div className="border-t border-zinc-200 bg-white/40 p-4 space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-zinc-400">From department</p>
-              <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{report.department || '—'}</p>
-            </div>
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-zinc-400">Status</p>
-              <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{getStatusLabel(report.status)}</p>
-            </div>
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-zinc-400">Entries</p>
-              <p className="mt-2 font-heading text-lg font-bold text-zinc-900">{entries.length}</p>
-            </div>
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-zinc-400">Created</p>
-              <p className="mt-2 text-sm font-semibold text-zinc-900">{formatDT(report.createdAt || report.created_at || report.reportDate)}</p>
-            </div>
+      <VerificationTable view={view} onOpenPhotos={onOpenPhotos} />
+
+      {isPending && rejecting ? (
+        <div className="space-y-3 rounded-lg border border-rose-200 bg-rose-50/60 p-4">
+          <label htmlFor={`reject-${report.id}`} className="text-sm font-semibold text-rose-800">
+            Why are you rejecting this report?
+          </label>
+          <textarea
+            id={`reject-${report.id}`}
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="e.g. Quantity received was 10, not 12. Please recount and resubmit."
+            autoFocus
+            className="min-h-[88px] w-full rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-rose-400"
+          />
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="secondary" onClick={() => { setRejecting(false); setNote('') }}>Cancel</Button>
+            <Button type="button" variant="danger" disabled={busy || !note.trim()} onClick={() => onReject(report, note.trim())}>
+              <CircleAlert className="h-4 w-4" />
+              {busy ? 'Updating…' : 'Send back to leadman'}
+            </Button>
           </div>
-
-          {photos.length > 0 ? (
-            <div>
-              <p className="mb-2 text-xs uppercase tracking-wide text-zinc-400">Photos</p>
-              <button
-                type="button"
-                onClick={() => onViewPhotos(photos)}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:border-zinc-300 hover:bg-white"
-              >
-                <ImageIcon className="h-4 w-4" />
-                View photos
-              </button>
-            </div>
-          ) : null}
-
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-            <p className="text-xs uppercase tracking-wide text-zinc-400">Notes</p>
-            <p className="mt-2 text-sm text-zinc-800">{report.summary || 'No notes provided.'}</p>
-          </div>
-
-          {status === 'submitted' ? (
-            <div className="grid gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
-              <div>
-                <label className="text-xs uppercase tracking-wide text-zinc-400">Verification notes</label>
-                <textarea
-                  value={note}
-                  onChange={(event) => setNote(event.target.value)}
-                  placeholder="Required when rejecting — explain what needs to be corrected."
-                  className="mt-2 min-h-[96px] w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-500"
-                />
-              </div>
-              <div className="flex flex-col gap-2 lg:w-[220px]">
-                <Button
-                  type="button"
-                  disabled={actionLoadingId === report.id}
-                  onClick={() => onVerify(report, note)}
-                >
-                  <Check className="h-4 w-4" />
-                  {actionLoadingId === report.id ? 'Updating...' : 'Verify report'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="danger"
-                  disabled={actionLoadingId === report.id || !note}
-                  onClick={() => onReject(report, note)}
-                >
-                  <CircleAlert className="h-4 w-4" />
-                  Reject (note required)
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
-              This report has already been verified and moved forward.
-            </div>
-          )}
         </div>
       ) : null}
     </div>
   )
 }
 
-// Reports THIS leadman submitted (to the next department) that came back
-// rejected — a different, opposite dataset from the Incoming/Verified tabs
-// above (which are about reports flowing the other direction, into this
-// department). Rendered as a simple row + "Edit & Resubmit", not the
-// verify/reject ReportCard, since there's nothing to verify here.
-function RejectedReportRow({ report, formatDateTime: formatDT, onEdit, onOpen }) {
+/* ---------- reports this leadman sent that came back rejected ---------- */
+
+function ReturnedReport({ report, formatDT, onEdit, onOpenPhotos }) {
+  const view = useReportView(report)
   return (
-    <div className="rounded-lg border border-rose-200 bg-rose-50/50 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="truncate font-semibold text-zinc-900">{report.department || 'Unknown Department'}</h3>
-          <Badge variant="danger">Rejected</Badge>
-        </div>
-        <p className="mt-1 text-sm text-zinc-500">
-          Sent {formatDT(report.createdAt || report.created_at || report.reportDate)} • {Array.isArray(report.entries) ? report.entries.length : 0} entr{Array.isArray(report.entries) && report.entries.length === 1 ? 'y' : 'ies'}
-        </p>
-        <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
-          Rejected: {report.summary || 'No reason provided.'}
-        </div>
+    <div className="space-y-4 rounded-xl border border-rose-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <ReportHeading report={report} toDepartment={report.targetDepartment} formatDT={formatDT} />
+        <Button className="shrink-0" onClick={() => onEdit(report)}>
+          <Pencil className="h-4 w-4" />
+          Edit & resubmit
+        </Button>
       </div>
-      <div className="flex shrink-0 gap-2">
-        <Button variant="danger" size="sm" onClick={() => onEdit(report)}>Edit & Resubmit</Button>
-        <Button variant="secondary" size="sm" onClick={() => onOpen(report)}>Open</Button>
+
+      <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-rose-600">Reason from {report.targetDepartment || 'the next department'}</p>
+        <p className="mt-1 text-sm font-medium text-rose-900">{view.note || 'No reason was given.'}</p>
       </div>
+
+      <VerificationTable view={view} onOpenPhotos={onOpenPhotos} />
     </div>
   )
 }
+
+/* ---------- modals ---------- */
+
+function PhotoViewer({ photos, index, onChange, onClose }) {
+  const photo = photos[index]
+  const activeThumbRef = useRef(null)
+
+  // Keep the current photo's thumbnail visible as the leadman steps through a long set.
+  useEffect(() => {
+    activeThumbRef.current?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' })
+  }, [index])
+
+  useEffect(() => {
+    function onKey(event) {
+      if (event.key === 'Escape') onClose()
+      if (event.key === 'ArrowRight') onChange((index + 1) % photos.length)
+      if (event.key === 'ArrowLeft') onChange((index - 1 + photos.length) % photos.length)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [index, photos.length, onChange, onClose])
+
+  if (!photo) return null
+  const many = photos.length > 1
+
+  return (
+    <Portal>
+      <div className="fixed inset-0 z-[60] flex flex-col bg-black/85 p-4" onClick={onClose}>
+        <div className="flex items-center justify-between text-white" onClick={(event) => event.stopPropagation()}>
+          <p className="text-sm font-semibold">{photo.label} <span className="font-normal text-white/60">· {index + 1} of {photos.length}</span></p>
+          <button type="button" onClick={onClose} aria-label="Close photos" className="rounded-full bg-white/10 p-2 hover:bg-white/20">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="relative flex min-h-0 flex-1 items-center justify-center py-4">
+          {many ? (
+            <button type="button" aria-label="Previous photo" onClick={(event) => { event.stopPropagation(); onChange((index - 1 + photos.length) % photos.length) }} className="absolute left-0 rounded-full bg-white/10 p-2 text-white hover:bg-white/20">
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+          ) : null}
+          <img src={photo.src} alt={photo.label} onClick={(event) => event.stopPropagation()} className="max-h-full max-w-full rounded-lg object-contain" />
+          {many ? (
+            <button type="button" aria-label="Next photo" onClick={(event) => { event.stopPropagation(); onChange((index + 1) % photos.length) }} className="absolute right-0 rounded-full bg-white/10 p-2 text-white hover:bg-white/20">
+              <ChevronRight className="h-6 w-6" />
+            </button>
+          ) : null}
+        </div>
+        {many ? (
+          // Scrollable strip for any number of photos. `mx-auto w-max` centers
+          // a short strip but, unlike justify-center, never clips the first
+          // thumbnails off-screen when the strip is wider than the viewport.
+          <div className="overflow-x-auto pb-1" onClick={(event) => event.stopPropagation()}>
+            <div className="mx-auto flex w-max gap-2">
+              {photos.map((item, itemIndex) => (
+                <button
+                  key={`${item.label}-${itemIndex}`}
+                  ref={itemIndex === index ? activeThumbRef : null}
+                  type="button"
+                  onClick={() => onChange(itemIndex)}
+                  title={item.label}
+                  className={`h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 ${itemIndex === index ? 'border-emerald-400' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                >
+                  <img src={item.src} alt={item.label} className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </Portal>
+  )
+}
+
+function HeaderCounter({ icon: Icon, label, value, onClick, active }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors ${active ? 'border-white/60 bg-white/25' : 'border-white/20 bg-white/10 hover:bg-white/15'}`}
+    >
+      <Icon className="h-5 w-5 text-emerald-50" />
+      <div>
+        <p className="font-heading text-xl font-bold leading-none text-white tabular-nums">{value}</p>
+        <p className="mt-1 text-xs text-emerald-50/90">{label}</p>
+      </div>
+    </button>
+  )
+}
+
+/* ---------- page ---------- */
 
 export default function LeadmanIncomingReports() {
   const { user } = useAuth()
@@ -246,11 +424,8 @@ export default function LeadmanIncomingReports() {
   const [reports, setReports] = useState([])
   const [myRejectedReports, setMyRejectedReports] = useState([])
   const [loading, setLoading] = useState(true)
-  const [expandedReportId, setExpandedReportId] = useState(null)
-  const [showPhotoModal, setShowPhotoModal] = useState(false)
-  const [selectedPhotos, setSelectedPhotos] = useState([])
+  const [photoViewer, setPhotoViewer] = useState(null)
   const [actionLoadingId, setActionLoadingId] = useState('')
-  const [selectedRejected, setSelectedRejected] = useState(null)
   const [resubmitting, setResubmitting] = useState(null)
 
   const loadReports = useCallback(async () => {
@@ -302,11 +477,6 @@ export default function LeadmanIncomingReports() {
     [reports]
   )
 
-  const verifiedReports = useMemo(
-    () => reports.filter((report) => ['leadman_verified', 'gm_submitted'].includes(normalizeText(report.status))),
-    [reports]
-  )
-
   const departmentEmployees = useMemo(() => {
     return employees
       .filter((employee) => String(employee.department || '').toLowerCase() === String(currentDepartment || '').toLowerCase())
@@ -323,8 +493,8 @@ export default function LeadmanIncomingReports() {
     const confirmed = await dialog.confirm({
       title: status === 'rejected' ? 'Reject this report?' : 'Verify this report?',
       message: status === 'rejected'
-        ? 'Reject this report and send it back to the original leadman for correction.'
-        : `Mark report ${report.id} as verified?`,
+        ? `Send this report back to ${report.submittedByName || 'the submitting leadman'} for correction?`
+        : `Confirm you received what ${report.department} reported and mark it as verified?`,
       confirmText: status === 'rejected' ? 'Reject' : 'Verify',
       cancelText: 'Cancel',
     })
@@ -340,8 +510,10 @@ export default function LeadmanIncomingReports() {
       })
       await loadReports()
       dialog.success({
-        title: 'Report updated',
-        message: `Report ${report.id} has been updated to ${getStatusLabel(status)}.`,
+        title: status === 'rejected' ? 'Report sent back' : 'Report verified',
+        message: status === 'rejected'
+          ? `The report from ${report.department} was returned for correction.`
+          : `The report from ${report.department} is verified and ready for production in-charge.`,
       })
     } catch (error) {
       dialog.error({
@@ -386,12 +558,63 @@ export default function LeadmanIncomingReports() {
     loadMyRejected()
   }
 
-  function handleViewPhotos(photos) {
-    setSelectedPhotos(photos)
-    setShowPhotoModal(true)
+  const openPhotos = useCallback((photos, index = 0) => {
+    if (Array.isArray(photos) && photos.length > 0) setPhotoViewer({ photos, index })
+  }, [])
+  const changePhoto = useCallback((index) => setPhotoViewer((current) => (current ? { ...current, index } : current)), [])
+  const closePhotos = useCallback(() => setPhotoViewer(null), [])
+
+  function selectTab(tab) {
+    setActiveTab(tab)
+    if (tab === 'rejected') markNotificationsSeen('daily_report_rejected')
   }
 
-  const resolvedFormatDateTime = formatProviderDateTime || formatDateTime
+  const formatDT = formatProviderDateTime || fallbackFormatDateTime
+  const hasRejectedUnread = Number(notificationCounts?.daily_report_rejected || 0) > 0
+
+  const tabs = [
+    { key: 'incoming', label: 'To verify', count: incomingReports.length },
+    { key: 'rejected', label: 'Returned to me', count: myRejectedReports.length, dot: hasRejectedUnread },
+  ]
+
+  const itemMotion = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }
+
+  function renderList() {
+    if (loading) {
+      return <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">Loading reports...</div>
+    }
+
+    if (activeTab === 'rejected') {
+      if (myRejectedReports.length === 0) {
+        return <EmptyState title="Nothing returned to you" description="If the next department rejects a report you sent, it will show up here so you can fix and resubmit it." />
+      }
+      return myRejectedReports.map((report) => (
+        <motion.div key={report.id} variants={itemMotion}>
+          <ReturnedReport report={report} formatDT={formatDT} onEdit={openResubmit} onOpenPhotos={openPhotos} />
+        </motion.div>
+      ))
+    }
+
+    // Reports already verified leave this queue; they're on the History page
+    // under "Verified by me".
+    if (incomingReports.length === 0) {
+      return <EmptyState title="All caught up" description={`No reports are waiting for ${currentDepartment || 'your department'} to verify.`} />
+    }
+
+    return incomingReports.map((report) => (
+      <motion.div key={report.id} variants={itemMotion}>
+        <IncomingReport
+          report={report}
+          currentDepartment={currentDepartment}
+          busy={actionLoadingId === report.id}
+          onVerify={(r, note) => patchReport(r, 'leadman_verified', note)}
+          onReject={(r, note) => patchReport(r, 'rejected', note)}
+          onOpenPhotos={openPhotos}
+          formatDT={formatDT}
+        />
+      </motion.div>
+    ))
+  }
 
   return (
     <div className="space-y-6">
@@ -399,154 +622,95 @@ export default function LeadmanIncomingReports() {
         tone="brand"
         eyebrow="Leadman verification"
         title="Incoming Reports"
-        actions={(
-          <div className="rounded-lg border border-white/20 bg-white/10 p-3">
-            <p className="text-xs uppercase tracking-wider text-emerald-50/90">Department</p>
-            <select value={currentDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-1.5 min-w-[220px] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none">
+        description="Check what the previous department handed over to you, then verify it or send it back."
+        actions={assignedDepartments.length > 1 ? (
+          <label className="flex flex-col rounded-lg border border-white/20 bg-white/10 p-2.5">
+            <span className="text-xs text-emerald-50/90">Receiving department</span>
+            <select value={currentDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-1 min-w-[200px] rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none">
               {assignedDepartments.map((department) => (
                 <option key={department} value={department}>{department}</option>
               ))}
             </select>
+          </label>
+        ) : (
+          <div className="rounded-lg border border-white/20 bg-white/10 px-3 py-2.5">
+            <p className="text-xs text-emerald-50/90">Receiving department</p>
+            <p className="mt-0.5 font-semibold text-white">{currentDepartment || '—'}</p>
           </div>
         )}
-      />
+      >
+        <div className="flex flex-wrap items-stretch gap-2">
+          <HeaderCounter icon={Inbox} label="To verify" value={incomingReports.length} active={activeTab === 'incoming'} onClick={() => selectTab('incoming')} />
+          <HeaderCounter icon={Undo2} label="Returned to me" value={myRejectedReports.length} active={activeTab === 'rejected'} onClick={() => selectTab('rejected')} />
+          <Link
+            to="/app/leadman/history"
+            className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/15"
+          >
+            <CheckCircle2 className="h-5 w-5 text-emerald-50" />
+            Verified reports are in History
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </PageHeader>
 
-      <div className="flex gap-2 border-b border-zinc-200">
-        <button
-          type="button"
-          onClick={() => setActiveTab('incoming')}
-          className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'incoming' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
-        >
-          Incoming ({incomingReports.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('verified')}
-          className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'verified' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
-        >
-          Verified ({verifiedReports.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => { setActiveTab('rejected'); markNotificationsSeen('daily_report_rejected') }}
-          className={`relative px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'rejected' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
-        >
-          Rejected ({myRejectedReports.length})
-          {Number(notificationCounts?.daily_report_rejected || 0) > 0 ? (
-            <span className="absolute right-1 top-2 h-2 w-2 rounded-full bg-rose-500" />
-          ) : null}
-        </button>
+      <div className="flex gap-1 overflow-x-auto border-b border-zinc-200">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => selectTab(tab.key)}
+            className={`relative shrink-0 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === tab.key ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
+          >
+            {tab.label}
+            <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${activeTab === tab.key ? 'bg-emerald-100 text-emerald-700' : 'bg-zinc-100 text-zinc-500'}`}>{tab.count}</span>
+            {tab.dot ? <span className="absolute right-1 top-2 h-2 w-2 rounded-full bg-rose-500" /> : null}
+          </button>
+        ))}
       </div>
 
       <motion.div
-        className="space-y-3"
-        initial="hidden" animate="show"
+        className="space-y-4"
+        initial="hidden"
+        animate="show"
         variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
       >
-        {loading ? (
-          <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">Loading reports...</div>
-        ) : activeTab === 'rejected' ? (
-          myRejectedReports.length === 0 ? (
-            <EmptyState title="No rejected reports" description="Reports the next department sends back for correction will appear here." />
-          ) : (
-            myRejectedReports.map((report) => (
-              <motion.div key={report.id} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }}>
-                <RejectedReportRow
-                  report={report}
-                  formatDateTime={resolvedFormatDateTime}
-                  onEdit={openResubmit}
-                  onOpen={setSelectedRejected}
-                />
-              </motion.div>
-            ))
-          )
-        ) : (() => {
-          const activeReports = activeTab === 'incoming' ? incomingReports : verifiedReports
-          const emptyText = activeTab === 'incoming'
-            ? { title: 'No incoming reports', description: 'No reports from the previous department are awaiting your verification.' }
-            : { title: 'No verified reports yet' }
-
-          if (activeReports.length === 0) return <EmptyState title={emptyText.title} description={emptyText.description} />
-
-          return activeReports.map((report) => (
-            <motion.div key={report.id} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }}>
-              <ReportCard
-                report={report}
-                isExpanded={expandedReportId === report.id}
-                onToggleExpand={() => setExpandedReportId((current) => (current === report.id ? null : report.id))}
-                actionLoadingId={actionLoadingId}
-                onVerify={(r, note) => patchReport(r, 'leadman_verified', note)}
-                onReject={(r, note) => patchReport(r, 'rejected', note)}
-                onViewPhotos={handleViewPhotos}
-                formatDateTime={resolvedFormatDateTime}
-              />
-            </motion.div>
-          ))
-        })()}
+        {renderList()}
       </motion.div>
 
-      {showPhotoModal ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/75 p-4">
-          <div className="flex min-h-full items-center justify-center py-8">
-            <div className="max-h-[85vh] w-full max-w-4xl overflow-y-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-4">
-                <h3 className="font-heading text-lg font-bold text-zinc-900">Verification photos</h3>
-                <button type="button" onClick={() => setShowPhotoModal(false)} className="text-zinc-500 hover:text-zinc-900">Close</button>
-              </div>
-              <div className="grid grid-cols-2 gap-4 p-6 md:grid-cols-4">
-                {selectedPhotos.map((photo, index) => (
-                  <div key={index} className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
-                    <img src={photo} alt={`Verification ${index + 1}`} className="h-40 w-full object-cover" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {selectedRejected ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-4xl rounded-xl border border-zinc-200 bg-white shadow-sm">
-            <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-zinc-400">Rejected report</p>
-                <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{selectedRejected.department} • {selectedRejected.reportDate}</h3>
-              </div>
-              <button onClick={() => setSelectedRejected(null)} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700">Close</button>
-            </div>
-            <div className="max-h-[72vh] overflow-auto px-5 py-4 space-y-4">
-              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                Rejected: {selectedRejected.summary || 'No reason provided.'}
-              </div>
-              <DailyReportTable entries={selectedRejected.entries || []} fallbackDepartment={selectedRejected.department} />
-            </div>
-          </div>
-        </div>
+      {photoViewer ? (
+        <PhotoViewer photos={photoViewer.photos} index={photoViewer.index} onChange={changePhoto} onClose={closePhotos} />
       ) : null}
 
       {resubmitting ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-3xl max-h-[90vh] overflow-auto rounded-xl border border-zinc-200 bg-white shadow-sm p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-zinc-400">Edit & resubmit</p>
-                <h3 className="font-heading text-lg font-bold text-zinc-900">{resubmitting.report.department} • {resubmitting.report.reportDate}</h3>
+        <Portal>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
+            <div className="flex min-h-full items-center justify-center py-8">
+              <div className="w-full max-w-3xl rounded-xl border border-zinc-200 bg-white shadow-sm">
+                <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-zinc-400">Edit & resubmit</p>
+                    <h3 className="mt-0.5 font-heading text-lg font-bold text-zinc-900">{resubmitting.report.department} • {formatWorkDate(resubmitting.report.reportDate)}</h3>
+                  </div>
+                  <button type="button" onClick={() => setResubmitting(null)} aria-label="Close" className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 hover:bg-zinc-100">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="max-h-[78vh] overflow-auto p-6">
+                  <ReportEntryForm
+                    department={resubmitting.report.department}
+                    employeeOptions={departmentEmployees}
+                    submitLabel="Resubmit Report"
+                    initialValues={resubmitting.initialValues}
+                    initialSelectedEmployeeIds={resubmitting.initialSelectedEmployeeIds}
+                    initialTargetDepartment={resubmitting.initialTargetDepartment}
+                    initialPhotoPreview={resubmitting.initialPhotoPreview}
+                    onSubmit={handleResubmit}
+                  />
+                </div>
               </div>
-              <button onClick={() => setResubmitting(null)} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700">Close</button>
             </div>
-            <ReportEntryForm
-              department={resubmitting.report.department}
-              employeeOptions={departmentEmployees}
-              submitLabel="Resubmit Report"
-              initialValues={resubmitting.initialValues}
-              initialSelectedEmployeeIds={resubmitting.initialSelectedEmployeeIds}
-              initialTargetDepartment={resubmitting.initialTargetDepartment}
-              initialPhotoPreview={resubmitting.initialPhotoPreview}
-              onSubmit={handleResubmit}
-            />
           </div>
-        </div>
+        </Portal>
       ) : null}
     </div>
   )

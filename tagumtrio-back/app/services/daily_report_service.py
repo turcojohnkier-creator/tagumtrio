@@ -4,6 +4,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 import uuid
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.models.daily_report import DailyReport
@@ -39,6 +40,12 @@ def _to_public(record: DailyReport) -> DailyReportPublic:
         "summary": record.summary,
         "entries": record.entries or [],
         "created_at": record.created_at,
+        "verified_by": record.verified_by,
+        "verified_at": record.verified_at,
+        "compiled_by": record.compiled_by,
+        "compiled_at": record.compiled_at,
+        "approved_by": record.approved_by,
+        "approved_at": record.approved_at,
     })
 
 
@@ -99,12 +106,65 @@ def list_daily_reports_for_employee(db: Session, employee_id: int) -> list[Daily
     return [_to_public(row) for row in matching]
 
 
-def update_daily_report(db: Session, report_id: str, payload: DailyReportUpdate) -> DailyReportPublic:
+def _entry_belongs_to(entry, employee_id: int) -> bool:
+    return isinstance(entry, dict) and str(entry.get('employeeId')) == str(employee_id)
+
+
+HISTORY_ROLES = {"employee", "leadman", "production_incharge", "gm"}
+
+
+def list_report_history(db: Session, user, limit: int = 100) -> list[DailyReportPublic]:
+    """Recent reports the given user took part in, scoped by role.
+
+    - employee: reports they appear in (any stage except rejected), with
+      entries trimmed to their own rows so coworkers' pay stays private
+    - leadman: reports they submitted, plus reports they verified/rejected
+    - production_incharge: reports they compiled
+    - gm: reports they approved
+    """
+    role = getattr(user, 'role', None)
+    query = db.query(DailyReport)
+
+    if role == 'employee':
+        rows = query.filter(DailyReport.status != 'rejected').order_by(DailyReport.created_at.desc()).all()
+        result: list[DailyReportPublic] = []
+        for row in rows:
+            own_entries = [entry for entry in (row.entries or []) if _entry_belongs_to(entry, user.id)]
+            if not own_entries:
+                continue
+            public = _to_public(row)
+            public.entries = own_entries
+            result.append(public)
+            if len(result) >= limit:
+                break
+        return result
+
+    if role == 'leadman':
+        query = query.filter(
+            or_(DailyReport.submitted_by == user.id, DailyReport.verified_by == user.id)
+        ).order_by(DailyReport.created_at.desc())
+    elif role == 'production_incharge':
+        query = query.filter(DailyReport.compiled_by == user.id).order_by(DailyReport.compiled_at.desc())
+    elif role == 'gm':
+        query = query.filter(DailyReport.approved_by == user.id).order_by(DailyReport.approved_at.desc())
+    else:
+        return []
+
+    return [_to_public(row) for row in query.limit(limit).all()]
+
+
+def update_daily_report(db: Session, report_id: str, payload: DailyReportUpdate, actor_id: int | None = None) -> DailyReportPublic:
     record = db.query(DailyReport).filter(DailyReport.id == report_id).first()
     if record is None:
         raise ValueError("Daily report not found")
 
     record.status = payload.status
+    if payload.status in ('leadman_verified', 'rejected'):
+        record.verified_by = actor_id
+        record.verified_at = datetime.now(timezone.utc)
+    if payload.status == 'compiled':
+        record.compiled_by = actor_id
+        record.compiled_at = datetime.now(timezone.utc)
     if payload.notes:
         existing_summary = record.summary or ''
         if existing_summary and payload.notes not in existing_summary:
@@ -152,6 +212,9 @@ def resubmit_daily_report(db: Session, report_id: str, payload: DailyReportResub
     record.summary = payload.summary
     record.entries = [e.model_dump() if hasattr(e, 'model_dump') else e for e in (payload.entries or [])]
     record.status = _initial_status(payload.targetDepartment)
+    # The rejection is undone — the report awaits a fresh review.
+    record.verified_by = None
+    record.verified_at = None
 
     db.add(record)
     db.commit()
@@ -201,6 +264,8 @@ def approve_daily_report(db: Session, report_id: str, approved_by: int | None) -
         ))
 
     record.status = 'approved'
+    record.approved_by = approved_by
+    record.approved_at = datetime.now(timezone.utc)
     db.add(record)
     db.commit()
     db.refresh(record)

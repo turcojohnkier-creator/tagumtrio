@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { CalendarClock, FileText, LayoutDashboard, Megaphone, Settings } from 'lucide-react'
+import { CalendarClock, FileText, History, LayoutDashboard, Megaphone, Settings } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
 import PageTransition from '../../../shared/ui/PageTransition'
@@ -10,6 +10,7 @@ const navItemDefs = [
   { name: 'Announcements', href: '/app/portal/announcements', icon: Megaphone, notificationType: 'announcement_new' },
   { name: 'Leave', href: '/app/portal/leaves', icon: CalendarClock, notificationType: 'leave_request_status' },
   { name: 'Payslips', href: '/app/portal/payslips', icon: FileText },
+  { name: 'History', href: '/app/portal/history', icon: History },
   { name: 'Settings', href: '/app/portal/settings', icon: Settings },
 ]
 

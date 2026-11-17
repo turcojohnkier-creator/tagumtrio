@@ -8,10 +8,12 @@ from app.deps import get_current_user
 from app.models.daily_report import DailyReport
 from app.schemas.daily_report import DailyReportCreate, DailyReportPublic, DailyReportResubmit, DailyReportUpdate
 from app.services.daily_report_service import (
+    HISTORY_ROLES,
     approve_daily_report,
     create_daily_report,
     list_daily_reports,
     list_daily_reports_for_employee,
+    list_report_history,
     resubmit_daily_report,
     update_daily_report,
 )
@@ -63,6 +65,18 @@ def get_daily_reports(
     raise HTTPException(status_code=403, detail="Insufficient permissions")
 
 
+@router.get("/history", response_model=list[DailyReportPublic])
+def get_report_history(
+    limit: int = Query(default=100, ge=1, le=500),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+):
+    # Each role sees the reports it personally took part in (see list_report_history).
+    if current_user.role not in HISTORY_ROLES:
+        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+    return list_report_history(db, current_user, limit=limit)
+
+
 @router.patch("/{report_id}", response_model=DailyReportPublic)
 def patch_daily_report(report_id: str, payload: DailyReportUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     allowed_roles = {"leadman", "production_incharge", "hr", "admin", "gm"}
@@ -81,7 +95,7 @@ def patch_daily_report(report_id: str, payload: DailyReportUpdate, db: Session =
         raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Only production in-charge can advance a report to this stage")
 
     try:
-        return update_daily_report(db, report_id, payload)
+        return update_daily_report(db, report_id, payload, actor_id=current_user.id)
     except ValueError as exc:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 

@@ -32,6 +32,15 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_mime VARCHAR"))
     connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_updated_at TIMESTAMPTZ"))
     connection.execute(text("ALTER TABLE announcements ADD COLUMN IF NOT EXISTS author_id INTEGER"))
+    connection.execute(text("ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS verified_by INTEGER"))
+    connection.execute(text("ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ"))
+    connection.execute(text("CREATE INDEX IF NOT EXISTS ix_daily_reports_verified_by ON daily_reports (verified_by)"))
+    connection.execute(text("ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS compiled_by INTEGER"))
+    connection.execute(text("ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS compiled_at TIMESTAMPTZ"))
+    connection.execute(text("ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS approved_by INTEGER"))
+    connection.execute(text("ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ"))
+    connection.execute(text("CREATE INDEX IF NOT EXISTS ix_daily_reports_compiled_by ON daily_reports (compiled_by)"))
+    connection.execute(text("CREATE INDEX IF NOT EXISTS ix_daily_reports_approved_by ON daily_reports (approved_by)"))
 
 app = FastAPI(title="TriOPS Backend")
 

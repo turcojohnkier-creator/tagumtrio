@@ -4,7 +4,12 @@ export function groupReportsIntoBundles(reports = []) {
   ;(Array.isArray(reports) ? reports : []).forEach((report) => {
     const department = report.department || 'Unknown Department'
     const reportDate = report.reportDate || report.report_date || ''
-    const key = `${department}::${reportDate}`
+    // Status is part of the key so one bundle never mixes stages. Otherwise,
+    // when the GM approves part of a day and more reports for that same
+    // department/day arrive later, the bundle's status becomes "mixed", fits
+    // neither the Pending nor Approved tab, and the pending reports vanish.
+    const status = String(report.status || '').trim().toLowerCase()
+    const key = `${department}::${reportDate}::${status}`
     if (!groups.has(key)) {
       groups.set(key, { key, department, reportDate, reports: [] })
     }

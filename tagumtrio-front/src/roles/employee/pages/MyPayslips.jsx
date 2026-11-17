@@ -1,22 +1,24 @@
 import { useMemo, useState } from 'react'
-import { Download, Eye, FileText, ArrowLeft, Receipt, Clock, ListChecks, X } from 'lucide-react'
+import { Eye, FileText, ArrowLeft, Clock, ListChecks, Printer, X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
 import { toManilaDateKey } from '../../../lib/datetime'
+import { formatPayAmount } from '../../../lib/payslip'
 import Button from '../../../shared/ui/Button'
 import EmptyState from '../../../shared/ui/EmptyState'
+import usePayslipWeeks from '../hooks/usePayslipWeeks'
 
 export default function MyPayslips() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { getPayslipPeriods, getEmployeeTotals, formatDateTime } = useAppData()
+  const { getEmployeeTotals, formatDateTime } = useAppData()
+  const { weeks, loading, error } = usePayslipWeeks(user?.id)
 
   const [openModal, setOpenModal] = useState(false)
   const [modalMode, setModalMode] = useState('accumulated')
 
-  const periods = useMemo(() => getPayslipPeriods(user?.id), [getPayslipPeriods, user?.id])
   const totals = useMemo(() => getEmployeeTotals(user?.id), [getEmployeeTotals, user?.id])
   const todayKey = toManilaDateKey()
   const allRecords = totals?.records || []
@@ -27,7 +29,7 @@ export default function MyPayslips() {
     return todaysRecords.reduce((sum, record) => sum + Number(record.amount || 0), 0)
   }, [todaysRecords])
   const modalRecords = modalMode === 'today' ? todaysRecords : allRecords
-  const modalTitle = modalMode === 'today' ? "Today's salary history" : modalMode === 'accumulated' ? 'Salary history' : 'Generate payslip receipt'
+  const modalTitle = modalMode === 'today' ? "Today's salary history" : 'Salary history'
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -38,7 +40,7 @@ export default function MyPayslips() {
           </button>
         </div>
         <h2 className="font-heading text-2xl font-bold text-zinc-900">Payslips</h2>
-        <p className="text-zinc-500 text-sm mt-1">Detailed pay sheets with department, report date, rate, and amount.</p>
+        <p className="text-zinc-500 text-sm mt-1">One payslip per pay week (Thursday to Wednesday), from your GM-approved work. Open one to view or print it.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -76,25 +78,13 @@ export default function MyPayslips() {
         </button>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <p className="text-sm text-zinc-500">Use the cards above to review your salary report details.</p>
-        </div>
-        <Button
-          type="button"
-          onClick={() => { setModalMode('receipt'); setOpenModal(true) }}
-        >
-          <Receipt className="w-4 h-4" /> Generate payslip
-        </Button>
-      </div>
-
       {openModal && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
           <div className="flex min-h-full items-center justify-center py-8">
           <div className="w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-lg border border-zinc-200 bg-white">
             <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-zinc-200 bg-white px-5 py-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{modalMode === 'receipt' ? 'Receipt preview' : 'Report history'}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Report history</p>
                 <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{modalTitle}</h3>
                 <p className="mt-1 text-sm text-zinc-500">Review the work report details for this employee.</p>
               </div>
@@ -114,60 +104,41 @@ export default function MyPayslips() {
               </div>
               <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Entries</p>
-                <p className="mt-2 text-2xl font-semibold tabular-nums text-zinc-900">{modalMode === 'today' ? todaysRecords.length : allRecords.length}</p>
+                <p className="mt-2 text-2xl font-semibold tabular-nums text-zinc-900">{modalRecords.length}</p>
               </div>
             </div>
 
             <div className="px-5 pb-4">
-              {modalMode === 'receipt' ? (
-                <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-6">
-                  <div className="flex items-center gap-3 text-emerald-700 mb-4">
-                    <Receipt className="w-5 h-5" />
-                    <h4 className="font-heading text-lg font-bold">Receipt details</h4>
-                  </div>
-                  <p className="text-zinc-700 mb-4">This is a preview of the employee receipt using their current salary totals.</p>
-                  <div className="space-y-3 text-sm text-zinc-500">
-                    <p><span className="font-medium text-zinc-800">Employee:</span> {user?.name || 'Employee'}</p>
-                    <p><span className="font-medium text-zinc-800">Total salary:</span> ₱{(totals.totalAmount || 0).toLocaleString()}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="max-h-[52vh] overflow-auto rounded-lg border border-zinc-200">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-emerald-50/70 text-emerald-800">
+              <div className="max-h-[52vh] overflow-auto rounded-lg border border-zinc-200">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-emerald-50/70 text-emerald-800">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Date</th>
+                      <th className="px-4 py-3 font-medium">Department</th>
+                      <th className="px-4 py-3 text-right font-medium">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 bg-white">
+                    {modalRecords.length === 0 ? (
                       <tr>
-                        <th className="px-4 py-3 font-medium">Date</th>
-                        <th className="px-4 py-3 font-medium">Department</th>
-                        <th className="px-4 py-3 text-right font-medium">Amount</th>
+                        <td colSpan={3} className="px-4 py-8 text-center text-zinc-500">No report entries available for this date range.</td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-100 bg-white">
-                      {modalRecords.length === 0 ? (
-                        <tr>
-                          <td colSpan={3} className="px-4 py-8 text-center text-zinc-500">No report entries available for this date range.</td>
+                    ) : (
+                      modalRecords.map((record, index) => (
+                        <tr key={`${record.id || index}-${index}`} className="hover:bg-emerald-50/40">
+                          <td className="px-4 py-3 text-zinc-800">{formatDateTime(record.scannedAt || record.reportDate || record.createdAt)}</td>
+                          <td className="px-4 py-3 text-zinc-700">{record.department || record.section || 'N/A'}</td>
+                          <td className="px-4 py-3 text-right font-semibold tabular-nums text-emerald-700">₱{Number(record.amount || 0).toLocaleString()}</td>
                         </tr>
-                      ) : (
-                        modalRecords.map((record, index) => (
-                          <tr key={`${record.id || index}-${index}`} className="hover:bg-emerald-50/40">
-                            <td className="px-4 py-3 text-zinc-800">{formatDateTime(record.scannedAt || record.reportDate || record.createdAt)}</td>
-                            <td className="px-4 py-3 text-zinc-700">{record.department || record.section || 'N/A'}</td>
-                            <td className="px-4 py-3 text-right font-semibold tabular-nums text-emerald-700">₱{Number(record.amount || 0).toLocaleString()}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <div className="flex flex-col gap-3 border-t border-zinc-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-zinc-500">Use this history view to inspect the salary entries behind each amount.</p>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setOpenModal(false)}
-              >
+            <div className="flex justify-end border-t border-zinc-200 px-5 py-4">
+              <Button type="button" variant="secondary" onClick={() => setOpenModal(false)}>
                 Close
               </Button>
             </div>
@@ -176,44 +147,45 @@ export default function MyPayslips() {
         </div>
       )}
 
-      {periods.length === 0 ? (
-        <EmptyState title="No verified payslip history yet" />
+      {loading ? (
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">Loading payslips…</div>
+      ) : error ? (
+        <EmptyState title="Unable to load payslips" description={error} />
+      ) : weeks.length === 0 ? (
+        <EmptyState title="No payslips yet" description="A payslip appears here once the GM approves work you took part in." />
       ) : (
         <motion.div
           className="grid gap-4 md:grid-cols-2"
           initial="hidden" animate="show"
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
         >
-          {periods.map((period) => (
-            <motion.div key={period.key} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }} className="flex flex-col justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+          {weeks.map((week) => (
+            <motion.div key={week.key} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }} className="flex flex-col justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex items-start gap-4">
                 <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-emerald-600">
                   <FileText className="w-6 h-6" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-medium text-zinc-900">{period.label}</h3>
-                  <p className="mt-0.5 text-sm text-zinc-500">{period.recordCount} verified work logs</p>
-                  <p className="mt-2 font-semibold tabular-nums text-emerald-700">₱{period.totalAmount.toLocaleString()}</p>
-                  <p className="mt-1 text-xs text-zinc-400">Last updated {formatDateTime(period.latestDate)}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Pay week</p>
+                  <h3 className="font-medium text-zinc-900">{week.label}</h3>
+                  <p className="mt-0.5 text-sm text-zinc-500">{week.daysWorked} day{week.daysWorked === 1 ? '' : 's'} with work · {week.entries.length} entr{week.entries.length === 1 ? 'y' : 'ies'}</p>
+                  <p className="mt-2 text-xs text-zinc-400">Net pay</p>
+                  <p className="font-mono text-lg font-bold tabular-nums text-emerald-700">₱{formatPayAmount(week.pakyawan)}</p>
                 </div>
               </div>
 
               <div className="flex justify-end gap-2 border-t border-zinc-100 pt-4">
-                <button onClick={() => navigate(`/app/portal/payslips/${period.key}`)} className="flex items-center justify-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 transition-colors hover:border-zinc-300 hover:text-zinc-900">
-                  <Eye className="w-4 h-4" /> View Details
+                <button onClick={() => navigate(`/app/portal/payslips/${week.key}`)} className="flex items-center justify-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 transition-colors hover:border-zinc-300 hover:text-zinc-900">
+                  <Eye className="w-4 h-4" /> View
                 </button>
-                <button className="flex items-center justify-center gap-2 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 transition-colors hover:bg-emerald-100">
-                  <Download className="w-4 h-4" /> PDF
+                <button onClick={() => navigate(`/app/portal/payslips/${week.key}?print=1`)} className="flex items-center justify-center gap-2 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 transition-colors hover:bg-emerald-100">
+                  <Printer className="w-4 h-4" /> Print
                 </button>
               </div>
             </motion.div>
           ))}
         </motion.div>
       )}
-
-      <div className="mt-8 rounded-lg border border-zinc-200 bg-zinc-50 p-6 text-center">
-        <p className="text-sm text-zinc-500">Payslips are broken down by department and report date for transparency.</p>
-      </div>
     </div>
   )
 }

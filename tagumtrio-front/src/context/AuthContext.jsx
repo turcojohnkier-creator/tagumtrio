@@ -173,6 +173,7 @@ export function AuthProvider({ children }) {
       'nav.rate_management': 'Rate Management',
       'nav.requests': 'Requests',
       'nav.settings': 'Settings',
+      'nav.history': 'History',
 
       'settings.title': 'Settings',
       'settings.description': 'Manage your account, password and session.',
@@ -375,6 +376,7 @@ export function AuthProvider({ children }) {
       'gm.consolidated.tab_all': 'All Reports',
       'gm.consolidated.tab_pending': 'Pending Approval',
       'gm.consolidated.tab_approved': 'Approved',
+      'gm.consolidated.view_history': 'View approved in History',
       'gm.consolidated.empty_pending': 'No reports awaiting approval',
       'gm.consolidated.empty_approved': 'No approved reports yet',
       'gm.consolidated.empty_all': 'No submitted reports yet',
@@ -471,6 +473,7 @@ export function AuthProvider({ children }) {
       'nav.rate_management': '价格管理',
       'nav.requests': '请求',
       'nav.settings': '设置',
+      'nav.history': '历史记录',
 
       'settings.title': '设置',
       'settings.description': '管理您的账户、密码和登录状态。',
@@ -675,6 +678,7 @@ export function AuthProvider({ children }) {
       'gm.consolidated.tab_all': '所有报表',
       'gm.consolidated.tab_pending': '待审批',
       'gm.consolidated.tab_approved': '已批准',
+      'gm.consolidated.view_history': '在历史记录中查看已批准',
       'gm.consolidated.empty_pending': '暂无待审批的报表',
       'gm.consolidated.empty_approved': '暂无已批准的报表',
       'gm.consolidated.empty_all': '暂无已提交的报表',

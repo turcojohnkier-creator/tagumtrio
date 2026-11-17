@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ChevronRight, Search, X } from 'lucide-react'
+import { ChevronRight, History, Search, X } from 'lucide-react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/auth-context'
 import { useDialog } from '../../../context/dialog-context'
 import { useAppData } from '../../../context/app-data-context'
 import { fetchDailyReportsApi } from '../../../lib/api'
-import { getEntryIdentifier, getEntryLabel, hasMeaningfulEntry } from '../../../shared/reports/report-entry-utils'
+import { getEntryIdentifier, getEntryLabel, groupBatches, hasMeaningfulEntry, summarizeBatches } from '../../../shared/reports/report-entry-utils'
 import { formatProductWithUnit } from '../../../lib/units'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Card from '../../../shared/ui/Card'
@@ -42,13 +42,10 @@ function resolveEntryDepartment(entry, fallbackDepartment) {
     || '-'
 }
 
+// Every worker row in a batch carries a copy of the batch's photos, so count
+// photos per batch — not per row (7 workers × 5 photos showed as "35 photos").
 function getReportPhotos(report) {
-  const entries = Array.isArray(report?.entries) ? report.entries : []
-  return entries.flatMap((entry) => {
-    if (Array.isArray(entry?.photos)) return entry.photos
-    if (entry?.photos && typeof entry.photos === 'object') return Object.values(entry.photos)
-    return entry?.photoUrls || entry?.imageUrls || []
-  }).filter(Boolean)
+  return summarizeBatches(groupBatches(report?.entries, report?.department)).photos
 }
 
 function isVerifiedReportStatus(status) {
@@ -219,7 +216,6 @@ export default function ProductionDashboard() {
   const [selectedPhotos, setSelectedPhotos] = useState([])
   const [showPhotosModal, setShowPhotosModal] = useState(false)
   const [compilingReportId, setCompilingReportId] = useState('')
-  const [activeTab, setActiveTab] = useState('pending')
 
   if (user?.role === 'gm') {
     return <Navigate to="/app/production/consolidated" replace />
@@ -315,15 +311,12 @@ export default function ProductionDashboard() {
     })
   }, [reportCards, searchText, selectedDate, selectedDepartment])
 
-  const pendingReports = useMemo(
-    () => filteredReports.filter((report) => String(report.status || '').trim().toLowerCase() === 'submitted'),
-    [filteredReports]
-  )
-  const verifiedReports = useMemo(
+  // This page is the in-charge's work queue: only leadman-verified reports
+  // that are ready to compile. Reports already compiled live on the History page.
+  const visibleReports = useMemo(
     () => filteredReports.filter((report) => isVerifiedReportStatus(report.status)),
     [filteredReports]
   )
-  const visibleReports = activeTab === 'verified' ? verifiedReports : pendingReports
 
   const selectedReport = useMemo(() => filteredReports.find((report) => report.id === selectedReportId) || null, [filteredReports, selectedReportId])
 
@@ -340,11 +333,17 @@ export default function ProductionDashboard() {
       <PageHeader
         tone="brand"
         title="Daily Production Reports"
-        description="Read and review submitted reports from leadman and the employee workflow."
+        description={`${visibleReports.length} verified report${visibleReports.length === 1 ? '' : 's'} ready to compile.`}
         actions={user?.role === 'production_incharge' ? (
-          <LinkButton to="/app/production/compiled" variant="secondary">
-            View compiled reports
-          </LinkButton>
+          <>
+            <LinkButton to="/app/production/compiled" variant="secondary">
+              View compiled reports
+            </LinkButton>
+            <LinkButton to="/app/history" variant="secondary">
+              <History className="h-4 w-4" />
+              History
+            </LinkButton>
+          </>
         ) : null}
       />
 
@@ -380,27 +379,10 @@ export default function ProductionDashboard() {
           </div>
         </div>
 
-        <div className="flex gap-2 border-b border-zinc-200">
-          <button
-            type="button"
-            onClick={() => setActiveTab('pending')}
-            className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'pending' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
-          >
-            Pending ({pendingReports.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('verified')}
-            className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'verified' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
-          >
-            Verified ({verifiedReports.length})
-          </button>
-        </div>
-
         {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
         {loading ? <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">Loading submitted reports...</div> : null}
         {!loading && visibleReports.length === 0 ? (
-          <EmptyState title={activeTab === 'verified' ? 'No verified reports yet' : 'No pending reports'} />
+          <EmptyState title="Nothing to compile" description="Reports appear here once the receiving leadman verifies them." />
         ) : null}
 
         {!loading && visibleReports.length > 0 ? (
@@ -421,7 +403,7 @@ export default function ProductionDashboard() {
               >
                 <div className="pr-12 md:flex md:items-center md:gap-5">
                   <div className="min-w-0 md:flex-1">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Submitted report</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Ready to compile</p>
                     <h4 className="mt-1 truncate font-heading text-lg font-bold text-zinc-900">{report.department || 'Unknown Department'}</h4>
                     <p className="mt-1 text-sm text-zinc-500">{formatReportDate(report.scannedAt)}</p>
                   </div>
@@ -486,9 +468,10 @@ export default function ProductionDashboard() {
               </div>
               <div className="grid gap-3 p-5 sm:grid-cols-2">
                 {selectedPhotos.map((photo, index) => (
-                  <div key={`${photo}-${index}`} className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
-                    <img src={photo} alt={`Report image ${index + 1}`} className="h-64 w-full object-cover" />
-                  </div>
+                  <figure key={`${photo.label}-${index}`} className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
+                    <img src={photo.src} alt={photo.label} className="h-64 w-full object-cover" />
+                    <figcaption className="px-3 py-2 text-xs font-medium text-zinc-600">{photo.label}</figcaption>
+                  </figure>
                 ))}
               </div>
             </div>

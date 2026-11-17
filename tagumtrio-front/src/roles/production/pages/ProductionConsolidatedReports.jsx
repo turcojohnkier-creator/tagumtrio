@@ -12,6 +12,8 @@ import ReportDetailModal from '../../../shared/reports/ReportDetailModal'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Card from '../../../shared/ui/Card'
 import EmptyState from '../../../shared/ui/EmptyState'
+import { LinkButton } from '../../../shared/ui/Button'
+import { History } from 'lucide-react'
 
 function toDateKey(value) {
   if (!value) return ''
@@ -29,7 +31,6 @@ export default function ProductionConsolidatedReports() {
   useEffect(() => {
     markNotificationsSeen('daily_report_gm_pending')
   }, [])
-  const [activeTab, setActiveTab] = useState('pending')
   const [selectedBundleKey, setSelectedBundleKey] = useState('')
   const [selectedReport, setSelectedReport] = useState(null)
   const [approvingKey, setApprovingKey] = useState('')
@@ -46,15 +47,15 @@ export default function ProductionConsolidatedReports() {
     loadReports()
   }, [])
 
-  // GM only ever sees reports that have reached gm_submitted (pending their
-  // approval) or approved (payroll already released) — earlier pipeline
-  // stages (submitted/leadman_verified/compiled/rejected) are not GM's concern.
-  const gmRelevantReports = useMemo(
-    () => reports.filter((report) => ['gm_submitted', 'approved'].includes(normalizeStatus(report.status))),
+  // This page is the GM's approval queue: only reports the production
+  // in-charge has sent up (gm_submitted). Reports the GM already approved
+  // live on the History page (/app/history) instead.
+  const pendingReports = useMemo(
+    () => reports.filter((report) => normalizeStatus(report.status) === 'gm_submitted'),
     [reports]
   )
 
-  const allBundles = useMemo(() => groupReportsIntoBundles(gmRelevantReports), [gmRelevantReports])
+  const allBundles = useMemo(() => groupReportsIntoBundles(pendingReports), [pendingReports])
 
   const departments = useMemo(() => {
     return ['All Departments', ...Array.from(new Set(allBundles.map((bundle) => bundle.department).filter(Boolean))).sort()]
@@ -68,10 +69,7 @@ export default function ProductionConsolidatedReports() {
     })
   }, [allBundles, selectedDepartment, selectedDate])
 
-  const pendingApprovalBundles = useMemo(() => filteredBundles.filter((bundle) => normalizeStatus(bundle.status) === 'gm_submitted'), [filteredBundles])
-  const approvedBundles = useMemo(() => filteredBundles.filter((bundle) => normalizeStatus(bundle.status) === 'approved'), [filteredBundles])
-  const visibleBundles = activeTab === 'approved' ? approvedBundles : pendingApprovalBundles
-  const selectedBundle = useMemo(() => visibleBundles.find((bundle) => bundle.key === selectedBundleKey) || null, [visibleBundles, selectedBundleKey])
+  const selectedBundle = useMemo(() => filteredBundles.find((bundle) => bundle.key === selectedBundleKey) || null, [filteredBundles, selectedBundleKey])
 
   const isGm = user?.role === 'gm'
 
@@ -111,6 +109,13 @@ export default function ProductionConsolidatedReports() {
         tone="brand"
         eyebrow={t('gm.consolidated.eyebrow')}
         title={t('gm.consolidated.title')}
+        description={`${filteredBundles.length} bundle${filteredBundles.length === 1 ? '' : 's'} waiting for your approval.`}
+        actions={isGm ? (
+          <LinkButton to="/app/history" variant="secondary">
+            <History className="h-4 w-4" />
+            {t('gm.consolidated.view_history', 'View approved in History')}
+          </LinkButton>
+        ) : null}
       />
 
       <div className="grid gap-3 sm:grid-cols-2 sm:max-w-md">
@@ -131,33 +136,16 @@ export default function ProductionConsolidatedReports() {
         />
       </div>
 
-      <div className="flex gap-2 border-b border-zinc-200">
-        <button
-          type="button"
-          onClick={() => setActiveTab('pending')}
-          className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'pending' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
-        >
-          {t('gm.consolidated.tab_pending')} ({pendingApprovalBundles.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('approved')}
-          className={`px-4 py-3 font-medium border-b-2 transition-colors ${activeTab === 'approved' ? 'border-emerald-500 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
-        >
-          {t('gm.consolidated.tab_approved')} ({approvedBundles.length})
-        </button>
-      </div>
-
       <Card className="space-y-4">
-        {visibleBundles.length === 0 ? (
-          <EmptyState title={activeTab === 'approved' ? t('gm.consolidated.empty_approved') : t('gm.consolidated.empty_pending')} />
+        {filteredBundles.length === 0 ? (
+          <EmptyState title={t('gm.consolidated.empty_pending')} />
         ) : (
           <motion.div
             className="space-y-3"
             initial="hidden" animate="show"
             variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
           >
-            {visibleBundles.map((bundle) => (
+            {filteredBundles.map((bundle) => (
               <motion.div
                 key={bundle.key}
                 variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }}
@@ -177,7 +165,7 @@ export default function ProductionConsolidatedReports() {
         bundle={selectedBundle}
         onClose={() => setSelectedBundleKey('')}
         onOpenReport={setSelectedReport}
-        bundleAction={selectedBundle && isGm && normalizeStatus(selectedBundle.status) === 'gm_submitted' ? {
+        bundleAction={selectedBundle && isGm ? {
           label: t('gm.consolidated.approve_btn').replace('{count}', selectedBundle.reportCount),
           loadingLabel: t('gm.consolidated.approving'),
           loading: approvingKey === selectedBundle.key,

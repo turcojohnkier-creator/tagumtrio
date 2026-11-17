@@ -14,9 +14,7 @@ const LeadmanDashboard = lazy(() => import('./roles/leadman/pages/LeadmanDashboa
 const LeadmanIncomingReports = lazy(() => import('./roles/leadman/pages/LeadmanIncomingReports'))
 const LeadmanWorkers = lazy(() => import('./roles/leadman/pages/LeadmanWorkers'))
 const LeadmanDailyReport = lazy(() => import('./roles/leadman/pages/LeadmanDailyReport'))
-const LeadmanHistory = lazy(() => import('./roles/leadman/pages/LeadmanHistory'))
 const ProductionDashboard = lazy(() => import('./roles/production/pages/ProductionDashboard'))
-const ProductionReports = lazy(() => import('./roles/production/pages/ProductionReports'))
 const ProductionCompiledReports = lazy(() => import('./roles/production/pages/ProductionCompiledReports'))
 const ProductionConsolidatedReports = lazy(() => import('./roles/production/pages/ProductionConsolidatedReports'))
 // GMOversight removed — GMOverview will be the main GM entry
@@ -33,6 +31,7 @@ const MyPayslips = lazy(() => import('./roles/employee/pages/MyPayslips'))
 const ViewPayslip = lazy(() => import('./roles/employee/pages/ViewPayslip'))
 const Requests = lazy(() => import('./shared/pages/Requests'))
 const Settings = lazy(() => import('./shared/pages/Settings'))
+const ReportHistory = lazy(() => import('./shared/pages/ReportHistory'))
 
 function RouteLoadingFallback() {
   return <div className="p-6 text-sm text-slate-500">Loading...</div>
@@ -55,6 +54,7 @@ export default function App() {
                   <Route path="leaves" element={<MyLeaves />} />
                   <Route path="payslips" element={<MyPayslips />} />
                   <Route path="payslips/:id" element={<ViewPayslip />} />
+                  <Route path="history" element={<ReportHistory />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="*" element={<Navigate to="/app/portal" replace />} />
                 </Route>
@@ -64,7 +64,6 @@ export default function App() {
                   <Route path="dashboard" element={<RoleDashboard />} />
 
                   <Route path="production" element={<ProductionDashboard />} />
-                  <Route path="production/reports" element={<ProductionReports />} />
                   <Route path="production/compiled" element={<ProductionCompiledReports />} />
                   <Route path="production/consolidated" element={<ProductionConsolidatedReports />} />
 
@@ -77,6 +76,7 @@ export default function App() {
                   <Route path="gm" element={<GMOverview />} />
                   <Route path="gm/overview" element={<GMOverview />} />
                   <Route path="requests" element={<Requests />} />
+                  <Route path="history" element={<ReportHistory />} />
                   <Route path="announcements" element={<Announcements />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="*" element={<Navigate to="" replace />} />
@@ -87,7 +87,7 @@ export default function App() {
                   <Route path="reports" element={<LeadmanIncomingReports />} />
                   <Route path="workers" element={<LeadmanWorkers />} />
                   <Route path="report" element={<LeadmanDailyReport />} />
-                  <Route path="history" element={<LeadmanHistory />} />
+                  <Route path="history" element={<ReportHistory />} />
                   <Route path="announcements" element={<Announcements />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="*" element={<Navigate to="/app/leadman" replace />} />

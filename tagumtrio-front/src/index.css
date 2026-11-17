@@ -69,5 +69,15 @@ select option:checked {
     position: absolute;
     inset: 0;
     padding: 24px;
+    /* Keep background fills (e.g. the payslip's black bar and shaded rows) —
+       browsers drop backgrounds when printing unless told otherwise. */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* Payslip: print the narrow slip at its real size, top-left of the page,
+     like the paper version, instead of the padded full-page report layout. */
+  .print-area.payslip-print {
+    inset: 0 auto auto 0;
+    padding: 0;
   }
 }

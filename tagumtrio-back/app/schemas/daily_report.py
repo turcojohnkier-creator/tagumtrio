@@ -61,5 +61,11 @@ class DailyReportPublic(BaseModel):
     summary: str | None = None
     entries: list[dict]
     created_at: datetime = Field(alias="createdAt")
+    verified_by: int | None = Field(default=None, alias="verifiedBy")
+    verified_at: datetime | None = Field(default=None, alias="verifiedAt")
+    compiled_by: int | None = Field(default=None, alias="compiledBy")
+    compiled_at: datetime | None = Field(default=None, alias="compiledAt")
+    approved_by: int | None = Field(default=None, alias="approvedBy")
+    approved_at: datetime | None = Field(default=None, alias="approvedAt")
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)

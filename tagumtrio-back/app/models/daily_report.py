@@ -20,3 +20,11 @@ class DailyReport(Base):
     summary: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     entries: Mapped[dict] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    # Who moved the report forward, so each role can see its own history.
+    # verified_by = the receiving leadman who verified OR rejected it.
+    verified_by: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    compiled_by: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    compiled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    approved_by: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

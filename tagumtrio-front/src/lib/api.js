@@ -252,6 +252,13 @@ export async function resubmitDailyReportApi(reportId, payload) {
   })
 }
 
+// Reports the signed-in user personally took part in (scoped by role on the backend).
+export async function fetchReportHistoryApi(params = {}) {
+  const query = new URLSearchParams()
+  if (params.limit) query.set('limit', String(params.limit))
+  return apiRequest(`/v1/daily-reports/history${query.toString() ? `?${query.toString()}` : ''}`)
+}
+
 export async function approveDailyReportApi(reportId) {
   return apiRequest(`/v1/daily-reports/${encodeURIComponent(reportId)}/approve`, {
     method: 'PATCH',

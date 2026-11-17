@@ -114,28 +114,6 @@ function loadState() {
   }
 }
 
-function periodKey(dateValue) {
-  const date = new Date(dateValue)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-}
-
-function periodLabel(dateValue) {
-  const date = new Date(dateValue)
-  return date.toLocaleString('en-US', { month: 'long', year: 'numeric' })
-}
-
-function payrollCycleKey(dateValue) {
-  const date = new Date(dateValue)
-  const cycle = date.getDate() <= 15 ? '1' : '2'
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${cycle}`
-}
-
-function payrollCycleLabel(dateValue) {
-  const date = new Date(dateValue)
-  const day = date.getDate() <= 15 ? '1-15' : '16-end'
-  return `${date.toLocaleString('en-US', { month: 'long', year: 'numeric' })} • ${day}`
-}
-
 function formatDateTime(dateValue) {
   return new Date(dateValue).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
@@ -466,7 +444,7 @@ export function AppDataProvider({ children }) {
     try {
       setDailyReportDrafts((cur) => {
         const key = `${department}:${new Date(capturedAt).toISOString().slice(0, 10)}`
-        const draft = cur[key] || { department, reportDate: new Date(capturedAt).toISOString().slice(0, 10), entries: [], summary: '', totalAmount: 0 }
+        const existing = cur[key] || { department, reportDate: new Date(capturedAt).toISOString().slice(0, 10), entries: [], summary: '', totalAmount: 0 }
         const entry = {
           id,
           batchId,
@@ -485,8 +463,17 @@ export function AppDataProvider({ children }) {
           raw,
           notes,
         }
-        draft.entries = [entry, ...draft.entries]
-        draft.totalAmount = (draft.totalAmount || 0) + Number(entry.amount || 0)
+        // Build a NEW draft instead of mutating `existing` (which is the
+        // current state object). React may run this updater twice (StrictMode
+        // does in dev); mutating made the second run append the worker again,
+        // duplicating entries — and their pay — in the submitted report.
+        const existingEntries = Array.isArray(existing.entries) ? existing.entries : []
+        if (existingEntries.some((item) => item.id === id)) return cur
+        const draft = {
+          ...existing,
+          entries: [entry, ...existingEntries],
+          totalAmount: (existing.totalAmount || 0) + Number(entry.amount || 0),
+        }
         return { ...cur, [key]: draft }
       })
     } catch (e) { /* ignore in non-browser env */ }
@@ -819,30 +806,6 @@ export function AppDataProvider({ children }) {
     })
   }
 
-  function getPayslipPeriods(employeeId) {
-    const records = getFinanceRecords().filter((record) => String(record.employeeId) === String(employeeId))
-    const grouped = records.reduce((accumulator, record) => {
-      const key = payrollCycleKey(record.scannedAt || record.reportDate || new Date().toISOString())
-      if (!accumulator[key]) {
-        accumulator[key] = { key, label: payrollCycleLabel(record.scannedAt || record.reportDate || new Date().toISOString()), records: [] }
-      }
-      accumulator[key].records.push(record)
-      return accumulator
-    }, {})
-
-    return Object.values(grouped)
-      .map((period) => {
-        const totalAmount = period.records.reduce((sum, record) => sum + Number(record.amount || 0), 0)
-        return {
-          ...period,
-          totalAmount,
-          recordCount: period.records.length,
-          latestDate: period.records[0]?.scannedAt,
-        }
-      })
-      .sort((a, b) => new Date(b.latestDate || 0) - new Date(a.latestDate || 0))
-  }
-
   async function submitDailyReport(department, reportDate, submittedBy, submittedByName, summary = '', entries = null) {
     const key = `${department}:${new Date(reportDate).toISOString().slice(0, 10)}`
     const draft = dailyReportDrafts[key]
@@ -900,14 +863,6 @@ export function AppDataProvider({ children }) {
     return result
   }
 
-  function getPayslipPeriod(employeeId, period) {
-    const records = getFinanceRecords().filter((record) => String(record.employeeId) === String(employeeId) && payrollCycleKey(record.scannedAt || record.reportDate || new Date().toISOString()) === period)
-    return {
-      records,
-      totalAmount: records.reduce((sum, record) => sum + Number(record.amount || 0), 0),
-    }
-  }
-
   function getEmployeeTotals(employeeId) {
     const records = getFinanceRecords().filter((record) => String(record.employeeId) === String(employeeId))
     const totalAmount = records.reduce((sum, record) => sum + Number(record.amount || 0), 0)
@@ -943,15 +898,9 @@ export function AppDataProvider({ children }) {
         removeDailyReportBatch,
         resubmitDailyReport,
         approveDailyReport,
-        getPayslipPeriods,
-        getPayslipPeriod,
         getEmployeeTotals,
         payments,
         formatDateTime,
-        periodLabel,
-        periodKey,
-        payrollCycleKey,
-        payrollCycleLabel,
         employeesLoading,
         DEPARTMENTS,
         buildDepartmentReportSummary,

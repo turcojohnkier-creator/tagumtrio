@@ -48,9 +48,9 @@ export function groupPayslipWeeks(reports = [], employeeId = null) {
 }
 
 /**
- * Everything the printed payslip shows for one pay week. Only PAKYAWAN is
- * tracked by the system; basic pay, OT, holidays and deductions are not yet
- * (per adviser), so they're null and print as "-". Gross = net = pakyawan.
+ * Everything the printed payslip shows for one pay week: each of the 7 days
+ * with what the employee earned that day (from GM-approved piece-rate work),
+ * and the week's total. The slip only prints lines the system computes.
  */
 export function buildPayslip(week) {
   const start = week?.key
@@ -66,19 +66,10 @@ export function buildPayslip(week) {
     })
     : []
 
-  const pakyawan = days.reduce((sum, day) => sum + day.amount, 0)
-  const totalDeductions = 0
-
   return {
     period: start ? formatPayPeriod(start) : '',
     days,
-    dailyRate: null,
-    numberOfDays: null,
-    basicPay: null,
-    pakyawan,
-    gross: pakyawan,
-    totalDeductions,
-    net: pakyawan - totalDeductions,
+    total: days.reduce((sum, day) => sum + day.amount, 0),
   }
 }
 

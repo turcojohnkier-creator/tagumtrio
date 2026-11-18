@@ -169,7 +169,7 @@ export default function MyPayslips() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Pay week</p>
                   <h3 className="font-medium text-zinc-900">{week.label}</h3>
                   <p className="mt-0.5 text-sm text-zinc-500">{week.daysWorked} day{week.daysWorked === 1 ? '' : 's'} with work · {week.entries.length} entr{week.entries.length === 1 ? 'y' : 'ies'}</p>
-                  <p className="mt-2 text-xs text-zinc-400">Net pay</p>
+                  <p className="mt-2 text-xs text-zinc-400">Total</p>
                   <p className="font-mono text-lg font-bold tabular-nums text-emerald-700">₱{formatPayAmount(week.pakyawan)}</p>
                 </div>
               </div>

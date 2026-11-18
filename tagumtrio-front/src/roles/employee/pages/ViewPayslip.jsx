@@ -58,7 +58,7 @@ export default function ViewPayslip() {
         <div>
           <button onClick={goBack} className="mb-3 inline-flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900"><ArrowLeft className="h-4 w-4" /> Back to payslips</button>
           <h2 className="font-heading text-2xl font-bold text-zinc-900">Payslip</h2>
-          <p className="mt-1 text-sm text-zinc-500">{week.label} · Net pay <span className="font-semibold text-emerald-700">₱{formatPayAmount(week.pakyawan)}</span></p>
+          <p className="mt-1 text-sm text-zinc-500">{week.label} · Total <span className="font-semibold text-emerald-700">₱{formatPayAmount(week.pakyawan)}</span></p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="secondary" disabled={!olderWeek} onClick={() => navigate(`/app/portal/payslips/${olderWeek.key}`)} aria-label="Previous week">
@@ -110,7 +110,7 @@ export default function ViewPayslip() {
             </tbody>
             <tfoot className="border-t-2 border-zinc-200 bg-zinc-50">
               <tr>
-                <td className="px-4 py-3 font-semibold text-zinc-900" colSpan={4}>Pakyawan total</td>
+                <td className="px-4 py-3 font-semibold text-zinc-900" colSpan={4}>Total</td>
                 <td className="px-4 py-3 text-right font-bold tabular-nums text-emerald-700">₱{formatPayAmount(week.pakyawan)}</td>
               </tr>
             </tfoot>

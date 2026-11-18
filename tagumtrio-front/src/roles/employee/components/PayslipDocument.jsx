@@ -1,4 +1,4 @@
-import { COMPANY, DEDUCTION_ROWS, EARNING_ROWS, PAYSLIP_SIGNATORY } from '../../../constants/payslip'
+import { COMPANY, PAYSLIP_SIGNATORY } from '../../../constants/payslip'
 import { formatSlipDay } from '../../../lib/datetime'
 import { formatEmployeeId } from '../../../lib/employeeId'
 import { buildPayslip, formatPayAmount, formatPayslipName } from '../../../lib/payslip'
@@ -7,19 +7,17 @@ import { buildPayslip, formatPayAmount, formatPayslipName } from '../../../lib/p
 const RED = '#d0021b'
 const PEACH = '#fde9e1'
 
-// null/undefined = not tracked yet -> "-"; 0 in a day row -> "-".
-function display(value, { dashZero = false } = {}) {
-  if (value === null || value === undefined) return '-'
-  if (dashZero && Number(value) === 0) return '-'
-  return formatPayAmount(value)
+// A day with no pay prints "-", like the paper slip.
+function display(value) {
+  return Number(value || 0) === 0 ? '-' : formatPayAmount(value)
 }
 
-function Row({ label, value, shaded = false, bold = false, red = false, indent = false, small = false, labelColor, total = false }) {
+function Row({ label, value, shaded = false, bold = false, red = false, labelColor, total = false }) {
   return (
     <div
       className="grid items-end px-1.5"
       style={{
-        gridTemplateColumns: indent ? '42% 6% 52%' : '52% 6% 42%',
+        gridTemplateColumns: '52% 6% 42%',
         background: shaded ? PEACH : undefined,
         fontWeight: bold ? 700 : 400,
         color: red ? RED : undefined,
@@ -28,7 +26,7 @@ function Row({ label, value, shaded = false, bold = false, red = false, indent =
     >
       <span
         className="truncate"
-        style={{ textAlign: indent ? 'right' : 'left', fontSize: small ? '8px' : undefined, color: labelColor }}
+        style={{ color: labelColor }}
       >
         {label}
       </span>
@@ -93,42 +91,19 @@ export default function PayslipDocument({ employee, week }) {
         FOR THE PERIOD OF {slip.period}
       </div>
 
-      {/* Basic pay + per-day pakyawan */}
-      <div className="pt-1">
-        <Row label="DAILY RATE" value={display(slip.dailyRate)} />
-        <Row label="NO. OF DAYS" value={display(slip.numberOfDays)} />
-        <Row label="BASIC PAY" value={display(slip.basicPay)} shaded bold />
+      {/* Each day of the pay week and what was earned, then the week's total.
+          Only lines the system actually computes are printed. */}
+      <div className="pt-1 pb-1">
         {slip.days.map((day) => (
           <Row
             key={day.key}
-            indent
             label={formatSlipDay(day.key)}
             labelColor={day.isSunday ? RED : undefined}
-            value={display(day.amount, { dashZero: true })}
+            value={display(day.amount)}
           />
         ))}
-        <Row label="PAKYAWAN" value={formatPayAmount(slip.pakyawan)} shaded bold />
-      </div>
-
-      {/* Other earnings (not tracked yet) */}
-      <div>
-        {EARNING_ROWS.map((row) => (
-          <Row key={row.label} label={row.label} small={row.small} value="-" />
-        ))}
-        <div className="pb-1">
-          <Row label="GROSS PAY" value={formatPayAmount(slip.gross)} bold red total />
-        </div>
-      </div>
-
-      {/* Deductions (not tracked yet, per adviser) */}
-      <div className="pt-2">
-        <p className="px-1.5 pb-1 text-center" style={{ color: RED, fontWeight: 700 }}>DEDUCTIONS</p>
-        {DEDUCTION_ROWS.map((row) => (
-          <Row key={row.label} label={row.label} value="-" />
-        ))}
-        <Row label="TOTAL DEDUCTIONS" value={formatPayAmount(slip.totalDeductions)} bold red />
-        <div className="pb-1">
-          <Row label="NET PAY" value={formatPayAmount(slip.net)} shaded bold red total />
+        <div className="pt-1">
+          <Row label="TOTAL" value={formatPayAmount(slip.total)} shaded bold red total />
         </div>
       </div>
 

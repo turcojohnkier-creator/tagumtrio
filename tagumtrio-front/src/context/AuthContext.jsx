@@ -123,7 +123,7 @@ export function AuthProvider({ children }) {
       'gm.overview.least': 'Least staffed',
       'gm.card.department': 'Department',
       'gm.card.view_roster': 'View roster',
-      'gm.employee.title': 'Employee Management',
+      
      
       'gm.employee.search': 'Search employees...',
       'gm.employee.all_depts': 'All Departments',

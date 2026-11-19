@@ -5,6 +5,7 @@ import Portal from '../ui/Portal'
 import Button from '../ui/Button'
 import Badge from '../ui/Badge'
 import UserAvatar from '../ui/UserAvatar'
+import ProfileLink from '../profile/ProfileLink'
 import { useAuth } from '../../context/auth-context'
 import DailyReportTable from './DailyReportTable'
 import ReturnTrail from './ReturnTrail'
@@ -57,8 +58,11 @@ export default function ReportDetailModal({ report, onClose, actions = [] }) {
               </div>
               <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-zinc-500">
                 <span>{t('report.detail.submitted_by')}</span>
-                <UserAvatar userId={report.submittedBy} name={report.submittedByName} size="xs" />
-                <span>{report.submittedByName || report.submittedBy || t('report.detail.unknown')} • {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</span>
+                <ProfileLink userId={report.submittedBy} name={report.submittedByName} className="inline-flex items-center gap-1.5">
+                  <UserAvatar userId={report.submittedBy} name={report.submittedByName} size="xs" />
+                  <span>{report.submittedByName || report.submittedBy || t('report.detail.unknown')}</span>
+                </ProfileLink>
+                <span>• {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</span>
               </p>
             </div>
             <button type="button" onClick={onClose} aria-label="Close" className="btn-dismiss rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">

@@ -11,6 +11,8 @@ import EmptyState from '../../../shared/ui/EmptyState'
 import Portal from '../../../shared/ui/Portal'
 import Avatar from '../../../shared/ui/Avatar'
 import Badge from '../../../shared/ui/Badge'
+import ProfileLink from '../../../shared/profile/ProfileLink'
+import { useProfileViewer } from '../../../shared/profile/profile-viewer-context'
 
 const EMPTY_SET = new Set()
 const ROW_GRID = 'grid grid-cols-[minmax(220px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_minmax(110px,0.8fr)_180px] gap-0'
@@ -18,6 +20,7 @@ const ROW_GRID = 'grid grid-cols-[minmax(220px,1fr)_minmax(120px,1fr)_minmax(140
 export default function EmployeeListModal({ department, onClose, employees = [], onReassigned, presentIds = EMPTY_SET, attendanceOpen = false }) {
   const dialog = useDialog()
   const { t } = useAuth()
+  const { openProfile } = useProfileViewer()
   const [localEmployees, setLocalEmployees] = useState([])
   const [targetDept, setTargetDept] = useState('')
   const [reassigningId, setReassigningId] = useState(null)
@@ -151,13 +154,13 @@ export default function EmployeeListModal({ department, onClose, employees = [],
                   const employeeKey = emp.employeeId ?? emp.id
                   return (
                     <div key={employeeKey} className={`${ROW_GRID} items-center border-b border-zinc-200 px-5 py-4 text-sm text-zinc-800 hover:bg-zinc-50/70`}>
-                      <div className="flex min-w-0 items-center gap-3">
+                      <ProfileLink userId={employeeKey} name={emp.employeeName || emp.name || emp.fullName} className="flex min-w-0 items-center gap-3">
                         <Avatar name={emp.employeeName || emp.name || emp.fullName} src={emp.avatar_url} size="md" />
                         <div className="min-w-0">
                           <div className="font-semibold text-zinc-900">{emp.employeeName || emp.name || emp.fullName || t('gm.modal.unknown')}</div>
                           <div className="text-xs text-zinc-400">{emp.department || t('gm.modal.unassigned')}</div>
                         </div>
-                      </div>
+                      </ProfileLink>
                       <div className="text-zinc-500">{formatEmployeeId(employeeKey)}</div>
                       <div className="text-zinc-500">{emp.role || t('gm.modal.role_default')}</div>
                       <div>
@@ -168,7 +171,7 @@ export default function EmployeeListModal({ department, onClose, employees = [],
                         ) : <span className="text-zinc-300">—</span>}
                       </div>
                       <div className="flex justify-end gap-2">
-                        <Button type="button" variant="outline" size="sm" className="rounded-full">
+                        <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => openProfile(emp)}>
                           {t('gm.modal.view')}
                         </Button>
                         <Button

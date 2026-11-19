@@ -4,6 +4,7 @@ import Portal from '../ui/Portal'
 import Button from '../ui/Button'
 import Badge from '../ui/Badge'
 import UserAvatar from '../ui/UserAvatar'
+import ProfileLink from '../profile/ProfileLink'
 import { useAuth } from '../../context/auth-context'
 import { getLatestReturn, getStatusLabel, getStatusVariant, normalizeStatus, returnLabel } from './report-status'
 
@@ -64,8 +65,10 @@ export default function ReportBundleModal({ bundle, onClose, onOpenReport, bundl
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <UserAvatar userId={report.submittedBy} name={report.submittedByName} size="sm" />
-                      <p className="font-medium text-zinc-900">{report.submittedByName || report.submittedBy || t('report.detail.unknown')}</p>
+                      <ProfileLink nested userId={report.submittedBy} name={report.submittedByName} className="flex items-center gap-2">
+                        <UserAvatar userId={report.submittedBy} name={report.submittedByName} size="sm" />
+                        <span className="font-medium text-zinc-900">{report.submittedByName || report.submittedBy || t('report.detail.unknown')}</span>
+                      </ProfileLink>
                       <Badge variant={getStatusVariant(report.status)}>{t(`status.${normalizeStatus(report.status)}`, getStatusLabel(report.status))}</Badge>
                     </div>
                     <p className="mt-1 text-xs text-zinc-400">{formatDateTime(report.createdAt || report.created_at || report.reportDate)} • {employeeCount} employee{employeeCount === 1 ? '' : 's'} • ₱{amount.toLocaleString()}</p>

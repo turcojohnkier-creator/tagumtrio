@@ -11,6 +11,7 @@ import Card, { SectionTitle } from '../../../shared/ui/Card'
 import Badge from '../../../shared/ui/Badge'
 import EmptyState from '../../../shared/ui/EmptyState'
 import Avatar from '../../../shared/ui/Avatar'
+import ProfileLink from '../../../shared/profile/ProfileLink'
 
 function describeLockedState(status) {
   const opensAt = formatSessionTime(status?.nextSession?.start)
@@ -197,10 +198,10 @@ export default function LeadmanWorkers() {
                     <tr key={employee.userId} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
                       <td className="px-4 py-3 font-medium text-zinc-900">{formatEmployeeId(employee.employeeId)}</td>
                       <td className="px-4 py-3 text-zinc-900">
-                        <div className="flex items-center gap-2.5">
+                        <ProfileLink userId={employee.userId ?? employee.employeeId} name={employee.employeeName} className="flex items-center gap-2.5">
                           <Avatar name={employee.employeeName} src={employee.avatar_url} size="sm" />
                           <span>{employee.employeeName}</span>
-                        </div>
+                        </ProfileLink>
                       </td>
                       <td className="px-4 py-3">{employee.department || selectedDepartment}</td>
                       <td className="px-4 py-3">

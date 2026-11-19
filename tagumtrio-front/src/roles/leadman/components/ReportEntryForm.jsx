@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import Portal from '../../../shared/ui/Portal'
 import Button from '../../../shared/ui/Button'
 import UserAvatar from '../../../shared/ui/UserAvatar'
+import ProfileLink from '../../../shared/profile/ProfileLink'
 import DailyReportTable from '../../../shared/reports/DailyReportTable'
 import { useAppData } from '../../../context/app-data-context'
 import { formatEmployeeId } from '../../../lib/employeeId'
@@ -129,10 +130,10 @@ function EmployeePickerModal({ open, department, employeeOptions, selectedEmploy
                       </td>
                       <td className="px-4 py-3 align-middle font-medium text-zinc-900">{formatEmployeeId(employeeId)}</td>
                       <td className="px-4 py-3 align-middle">
-                        <div className="flex items-center gap-2.5">
+                        <ProfileLink userId={employee.employeeId ?? employee.id} name={employee.employeeName || employee.name || employee.fullName} className="flex items-center gap-2.5">
                           <UserAvatar userId={employee.employeeId ?? employee.id} name={employee.employeeName || employee.name || employee.fullName} size="sm" />
                           <span>{employee.employeeName || employee.name || employee.fullName}</span>
-                        </div>
+                        </ProfileLink>
                       </td>
                       <td className="px-4 py-3 align-middle text-zinc-700">{employee.department || department || employee.dept}</td>
                     </tr>

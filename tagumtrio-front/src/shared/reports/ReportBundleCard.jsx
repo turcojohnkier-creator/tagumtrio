@@ -2,6 +2,7 @@ import { ChevronRight } from 'lucide-react'
 import Badge from '../ui/Badge'
 import { useAuth } from '../../context/auth-context'
 import UserAvatar from '../ui/UserAvatar'
+import ProfileLink from '../profile/ProfileLink'
 import { getLatestReturn, getStatusLabel, getStatusVariant, getSubmitterNames, normalizeStatus, returnLabel } from './report-status'
 
 function formatBundleDate(value) {
@@ -36,8 +37,17 @@ export default function ReportBundleCard({ bundle, selected, onClick }) {
           {submitters.length > 0 ? (
             <p className="mt-1.5 flex min-w-0 items-center gap-1.5 text-sm text-zinc-600">
               <span className="shrink-0 text-xs uppercase tracking-wide text-zinc-400">{t('report.bundle.sent_by', 'Sent by')}</span>
-              <UserAvatar userId={firstSubmitter?.submittedBy} name={submitters[0]} size="xs" />
-              <span className="truncate font-medium text-zinc-800">{submitters.join(', ')}</span>
+              {submitters.length === 1 ? (
+                <ProfileLink nested userId={firstSubmitter?.submittedBy} name={submitters[0]} className="flex min-w-0 items-center gap-1.5">
+                  <UserAvatar userId={firstSubmitter?.submittedBy} name={submitters[0]} size="xs" />
+                  <span className="truncate font-medium text-zinc-800">{submitters[0]}</span>
+                </ProfileLink>
+              ) : (
+                <>
+                  <UserAvatar userId={firstSubmitter?.submittedBy} name={submitters[0]} size="xs" />
+                  <span className="truncate font-medium text-zinc-800">{submitters.join(', ')}</span>
+                </>
+              )}
             </p>
           ) : null}
         </div>

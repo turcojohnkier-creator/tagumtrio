@@ -11,6 +11,7 @@ import Button from '../ui/Button'
 import Badge from '../ui/Badge'
 import EmptyState from '../ui/EmptyState'
 import Avatar from '../ui/Avatar'
+import ProfileLink from '../profile/ProfileLink'
 
 const STATUS_TABS = ['pending', 'approved', 'rejected']
 
@@ -150,10 +151,14 @@ export default function Requests() {
               <motion.div key={req.id} variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' } } }}>
               <Card className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                 <div className="flex gap-4">
-                  <Avatar name={requestName(req)} src={getAvatarFor?.(req.employeeId ?? req.employee_id, requestName(req))} size="lg" />
+                  <ProfileLink userId={req.employeeId ?? req.employee_id} name={requestName(req)} className="self-start rounded-full">
+                    <Avatar name={requestName(req)} src={getAvatarFor?.(req.employeeId ?? req.employee_id, requestName(req))} size="lg" />
+                  </ProfileLink>
                   <div>
                     <div className="flex items-center gap-3">
-                      <h3 className="font-heading text-lg font-bold text-zinc-900">{requestName(req)}</h3>
+                      <h3 className="font-heading text-lg font-bold text-zinc-900">
+                        <ProfileLink userId={req.employeeId ?? req.employee_id} name={requestName(req)}>{requestName(req)}</ProfileLink>
+                      </h3>
                       <Badge variant={isPending ? 'warning' : req.status === 'approved' ? 'success' : 'danger'}>{t(`requests.status_${status}`, String(req.status || '').toUpperCase())}</Badge>
                     </div>
                     <div className="text-sm text-zinc-500 mt-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">

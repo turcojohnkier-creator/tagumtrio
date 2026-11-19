@@ -17,6 +17,7 @@ import Button from '../../../shared/ui/Button'
 import Badge from '../../../shared/ui/Badge'
 import EmptyState from '../../../shared/ui/EmptyState'
 import UserAvatar from '../../../shared/ui/UserAvatar'
+import ProfileLink from '../../../shared/profile/ProfileLink'
 import Portal from '../../../shared/ui/Portal'
 import { toManilaDateKey } from '../../../lib/datetime'
 
@@ -176,8 +177,10 @@ function VerificationTable({ view, onOpenPhotos }) {
                 <ul className="space-y-1">
                   {batch.workers.map((worker, workerIndex) => (
                     <li key={`${worker.id ?? worker.name}-${workerIndex}`} className="flex items-center gap-2 whitespace-nowrap">
-                      <UserAvatar userId={worker.id} name={worker.name} size="xs" />
-                      <span className="font-medium text-zinc-800">{worker.name || 'Unknown'}</span>
+                      <ProfileLink userId={worker.id} name={worker.name} className="flex items-center gap-2">
+                        <UserAvatar userId={worker.id} name={worker.name} size="xs" />
+                        <span className="font-medium text-zinc-800">{worker.name || 'Unknown'}</span>
+                      </ProfileLink>
                       {worker.identifier ? <span className="text-xs text-zinc-400">{worker.identifier}</span> : null}
                     </li>
                   ))}
@@ -214,10 +217,10 @@ function ReportHeading({ report, toDepartment, formatDT }) {
       <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-500">
         <span className="font-medium text-zinc-700">Work date {formatWorkDate(report.reportDate)}</span>
         <span className="text-zinc-300">•</span>
-        <span className="inline-flex items-center gap-1.5">
+        <ProfileLink userId={report.submittedBy} name={report.submittedByName} className="inline-flex items-center gap-1.5">
           <UserAvatar userId={report.submittedBy} name={report.submittedByName} size="xs" />
           {report.submittedByName || 'Unknown leadman'}
-        </span>
+        </ProfileLink>
         <span className="text-zinc-300">•</span>
         <span>Sent {formatDT(report.createdAt || report.reportDate)}</span>
       </p>

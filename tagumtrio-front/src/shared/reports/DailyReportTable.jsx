@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Image as ImageIcon, Users, X } from 'lucide-react'
 import Portal from '../ui/Portal'
 import UserAvatar from '../ui/UserAvatar'
+import ProfileLink from '../profile/ProfileLink'
 import { useAuth } from '../../context/auth-context'
 import { getEntryDate, getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from './report-entry-utils'
 import { formatProductWithUnit } from '../../lib/units'
@@ -64,12 +65,14 @@ function EmployeeListPopup({ open, entries, onClose }) {
             </div>
             <ul className="divide-y divide-zinc-100">
               {entries.map((entry, index) => (
-                <li key={entry.id || `${getEntryIdentifier(entry)}-${index}`} className="flex items-center gap-3 px-5 py-3">
-                  <UserAvatar userId={entry.employeeId ?? entry.raw?.employeeId} name={getEntryLabel(entry)} size="md" />
-                  <div className="min-w-0">
-                    <p className="font-medium text-zinc-900">{getEntryLabel(entry) || t('table.unknown_employee')}</p>
-                    <p className="text-xs text-zinc-400">{getEntryIdentifier(entry) || '-'}</p>
-                  </div>
+                <li key={entry.id || `${getEntryIdentifier(entry)}-${index}`} className="px-5 py-3">
+                  <ProfileLink userId={entry.employeeId ?? entry.raw?.employeeId} name={getEntryLabel(entry)} className="flex items-center gap-3">
+                    <UserAvatar userId={entry.employeeId ?? entry.raw?.employeeId} name={getEntryLabel(entry)} size="md" />
+                    <span className="min-w-0">
+                      <span className="block font-medium text-zinc-900">{getEntryLabel(entry) || t('table.unknown_employee')}</span>
+                      <span className="block text-xs text-zinc-400">{getEntryIdentifier(entry) || '-'}</span>
+                    </span>
+                  </ProfileLink>
                 </li>
               ))}
             </ul>

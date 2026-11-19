@@ -22,6 +22,7 @@ import StatCard from '../ui/StatCard'
 import Badge from '../ui/Badge'
 import EmptyState from '../ui/EmptyState'
 import UserAvatar from '../ui/UserAvatar'
+import ProfileLink from '../profile/ProfileLink'
 import Portal from '../ui/Portal'
 
 function peso(value) {
@@ -171,10 +172,10 @@ function HistoryDetailModal({ report, config, isEmployee, formatDateTime, onClos
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <DetailRow label="Submitted by">
-                  <span className="flex items-center gap-2">
+                  <ProfileLink userId={report.submittedBy} name={report.submittedByName} className="flex items-center gap-2">
                     <UserAvatar userId={report.submittedBy} name={report.submittedByName} size="xs" />
                     {report.submittedByName || 'Unknown'}
-                  </span>
+                  </ProfileLink>
                 </DetailRow>
                 <DetailRow label={config.activityLabel(report)}>{formatDateTime(config.activityDate(report))}</DetailRow>
               </div>

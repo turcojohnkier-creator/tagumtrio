@@ -6,6 +6,7 @@ import AppDataProvider from './context/app-data-provider'
 import LeadmanLayout from './roles/leadman/layout/LeadmanLayout'
 import MainLayout from './shared/layout/MainLayout'
 import EmployeeLayout from './roles/employee/layout/EmployeeLayout'
+import ProfileViewerProvider from './shared/profile/ProfileViewerProvider'
 
 const Login = lazy(() => import('./pages/Login'))
 const Landing = lazy(() => import('./pages/Landing'))
@@ -43,6 +44,7 @@ export default function App() {
     <AuthProvider>
       <DialogProvider>
         <AppDataProvider>
+          <ProfileViewerProvider>
           <BrowserRouter>
             <Suspense fallback={<RouteLoadingFallback />}>
               <Routes>
@@ -107,6 +109,7 @@ export default function App() {
               </Routes>
             </Suspense>
           </BrowserRouter>
+          </ProfileViewerProvider>
         </AppDataProvider>
       </DialogProvider>
     </AuthProvider>

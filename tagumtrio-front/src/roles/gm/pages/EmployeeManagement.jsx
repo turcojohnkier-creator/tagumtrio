@@ -11,6 +11,7 @@ import Card from '../../../shared/ui/Card'
 import Badge from '../../../shared/ui/Badge'
 import EmptyState from '../../../shared/ui/EmptyState'
 import Avatar from '../../../shared/ui/Avatar'
+import ProfileLink from '../../../shared/profile/ProfileLink'
 
 export default function EmployeeManagement() {
   const { t } = useAuth()
@@ -100,10 +101,10 @@ export default function EmployeeManagement() {
                   <motion.tr key={id} variants={{ hidden: { opacity: 0, y: 4 }, show: { opacity: 1, y: 0, transition: { duration: 0.18, ease: 'easeOut' } } }} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
                     <td className="px-4 py-3 font-medium text-zinc-900">{formatEmployeeId(id)}</td>
                     <td className="px-4 py-3 text-zinc-900">
-                      <div className="flex items-center gap-2.5">
+                      <ProfileLink userId={id} name={name} className="flex items-center gap-2.5">
                         <Avatar name={name} src={emp.avatar_url} size="sm" />
                         <span>{name}</span>
-                      </div>
+                      </ProfileLink>
                     </td>
                     <td className="px-4 py-3">{department}</td>
                     <td className="px-4 py-3">

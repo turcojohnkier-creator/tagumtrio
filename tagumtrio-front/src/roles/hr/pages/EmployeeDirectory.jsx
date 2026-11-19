@@ -5,26 +5,15 @@ import { useAppData } from '../../../context/app-data-context'
 import { updateEmployeeApi } from '../../../lib/api'
 import { formatRole } from '../../../lib/roles'
 import { formatEmployeeId } from '../../../lib/employeeId'
-import EmployeeDetailModal from '../../../roles/hr/components/EmployeeDetailModal'
+import EmployeeProfileModal from '../../../shared/profile/EmployeeProfileModal'
+import ProfileLink from '../../../shared/profile/ProfileLink'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Card from '../../../shared/ui/Card'
 import Button from '../../../shared/ui/Button'
 import Badge from '../../../shared/ui/Badge'
 import EmptyState from '../../../shared/ui/EmptyState'
 import Avatar from '../../../shared/ui/Avatar'
-
-// Kept in sync with ARCHIVE_RETENTION_DAYS in tagumtrio-back's
-// app/api/v1/endpoints/users.py — the backend is the source of truth for the
-// actual purge, this is only used to show a "days left" countdown here.
-const ARCHIVE_RETENTION_DAYS = 90
-
-function daysUntilPurge(archivedAt) {
-  if (!archivedAt) return null
-  const archivedDate = new Date(archivedAt)
-  if (Number.isNaN(archivedDate.getTime())) return null
-  const elapsedDays = Math.floor((Date.now() - archivedDate.getTime()) / (1000 * 60 * 60 * 24))
-  return Math.max(0, ARCHIVE_RETENTION_DAYS - elapsedDays)
-}
+import { ARCHIVE_RETENTION_DAYS, daysUntilPurge } from '../../../lib/archive'
 
 export default function EmployeeDirectory() {
   const { employees = [], employeesLoading, refreshEmployees, updateEmployeeRecord } = useAppData()
@@ -143,10 +132,15 @@ export default function EmployeeDirectory() {
                     <motion.tr key={id} variants={{ hidden: { opacity: 0, y: 4 }, show: { opacity: 1, y: 0, transition: { duration: 0.18, ease: 'easeOut' } } }} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
                       <td className="px-4 py-3 font-medium text-zinc-900">{formatEmployeeId(id)}</td>
                       <td className="px-4 py-3 text-zinc-900">
-                        <div className="flex items-center gap-2.5">
+                        <ProfileLink
+                          userId={emp.employeeId ?? emp.id}
+                          name={name}
+                          onOpen={() => setSelectedEmployee(emp)}
+                          className="flex items-center gap-2.5"
+                        >
                           <Avatar name={name} src={emp.avatar_url} size="sm" />
                           <span>{name}</span>
-                        </div>
+                        </ProfileLink>
                       </td>
                       <td className="px-4 py-3">{formatRole(emp.role)}</td>
                       <td className="px-4 py-3">{department}</td>
@@ -282,7 +276,7 @@ export default function EmployeeDirectory() {
       )}
 
       {selectedEmployee && (
-        <EmployeeDetailModal
+        <EmployeeProfileModal
           employee={selectedEmployee}
           onClose={() => setSelectedEmployee(null)}
           onToggleActive={handleToggleActive}

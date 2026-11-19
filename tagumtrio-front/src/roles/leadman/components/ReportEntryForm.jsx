@@ -11,6 +11,7 @@ import { formatProductWithUnit } from '../../../lib/units'
 import { buildDepartmentReportSummary, getDepartmentReportFieldSpec } from '../../../constants/department-report-fields'
 import { getNextDepartmentOptions } from '../../../constants/department-flow'
 import { compressImageFile } from '../../../lib/image'
+import { toManilaDateKey } from '../../../lib/datetime'
 
 function normalizeEmployeeId(employee) {
   return String(employee.employeeId || employee.id || employee.identifier || '').trim()
@@ -24,7 +25,7 @@ function buildInitialValues(spec, department, overrides = {}) {
     }
 
     if (field.type === 'date') {
-      accumulator[field.key] = new Date().toISOString().slice(0, 10)
+      accumulator[field.key] = toManilaDateKey()
       return accumulator
     }
 

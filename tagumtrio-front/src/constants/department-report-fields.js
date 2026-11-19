@@ -1,4 +1,5 @@
 import { DEPARTMENTS } from './departments'
+import { toManilaDateKey } from '../lib/datetime'
 
 const ALIASES = {
   'Hot Press': 'Hotpress',
@@ -24,10 +25,9 @@ const ALIASES = {
   logo: 'Logo',
 }
 
+// Today's date in Philippine time (UTC+8), not the browser's or UTC's.
 function toLocalDateValue(value = new Date()) {
-  const date = value instanceof Date ? value : new Date(value)
-  const pad = (input) => String(input).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+  return toManilaDateKey(value)
 }
 
 export function normalizeDepartmentName(department) {

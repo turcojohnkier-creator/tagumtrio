@@ -178,7 +178,7 @@ function HistoryDetailModal({ report, config, isEmployee, formatDateTime, onClos
                 </DetailRow>
                 <DetailRow label={config.activityLabel(report)}>{formatDateTime(config.activityDate(report))}</DetailRow>
               </div>
-              <DailyReportTable entries={report.entries} fallbackDepartment={report.department} />
+              <DailyReportTable entries={report.entries} fallbackDepartment={report.department} fallbackDate={report.reportDate} />
             </div>
           </div>
         </div>

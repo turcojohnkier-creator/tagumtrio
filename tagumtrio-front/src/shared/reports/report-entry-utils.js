@@ -38,6 +38,25 @@ export function getEntryPieces(entry) {
   return value === 0 ? 0 : value
 }
 
+// The work date of an entry. The form's Date field lives in different places
+// depending on how the entry was built (qrFields on the form payload,
+// raw.reportFields on dashboard drafts, a plain `date` on newer entries), and
+// many saved reports dropped it entirely — so fall back to the report's own
+// work date, which is the same day.
+export function getEntryDate(entry, fallbackDate = '') {
+  const value = entry?.date
+    || entry?.qrFields?.date
+    || entry?.raw?.qrFields?.date
+    || entry?.raw?.reportFields?.date
+    || entry?.reportFields?.date
+    || entry?.dateIn
+    || entry?.qrFields?.dateIn
+    || entry?.raw?.qrFields?.dateIn
+    || fallbackDate
+    || ''
+  return String(value).slice(0, 10)
+}
+
 // Image URLs for a report's entries, counted once per batch — every worker row
 // in a batch carries a copy of the same photos, so a flat per-row count
 // multiplied them (7 workers × 5 photos showed as 35).
@@ -90,7 +109,7 @@ function dedupePhotos(photos) {
 // A report holds one entry per worker, and every worker in the same scanned
 // batch carries the SAME quantity/product/photos. Group them back into
 // batches so quantity is counted once per batch (not once per worker).
-export function groupBatches(entries = [], fallbackDepartment = '') {
+export function groupBatches(entries = [], fallbackDepartment = '', fallbackDate = '') {
   const batches = new Map()
   ;(Array.isArray(entries) ? entries : []).filter(hasMeaningfulEntry).forEach((entry, index) => {
     const key = String(entry.batchId || entry.raw?.batchId || entry.id || `row-${index}`)
@@ -101,7 +120,7 @@ export function groupBatches(entries = [], fallbackDepartment = '') {
         department: entry.department || entry.raw?.department || fallbackDepartment || '',
         product: entry.product || entry.raw?.product || '',
         quantity: Number.isFinite(pieces) ? pieces : 0,
-        date: entry.date || entry.qrFields?.date || entry.raw?.qrFields?.date || '',
+        date: getEntryDate(entry, fallbackDate),
         amount: 0,
         workers: [],
         photos: [],

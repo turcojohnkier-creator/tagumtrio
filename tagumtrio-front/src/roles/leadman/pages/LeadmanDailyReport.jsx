@@ -11,6 +11,7 @@ import Card, { SectionTitle } from '../../../shared/ui/Card'
 import Button from '../../../shared/ui/Button'
 import EmptyState from '../../../shared/ui/EmptyState'
 import logo from '../../../assets/tagumtrio-logo.jpg'
+import { toManilaDateKey } from '../../../lib/datetime'
 
 function formatReportDate(value) {
   if (!value) return '-'
@@ -238,7 +239,7 @@ export default function LeadmanDailyReport() {
   }, [user?.department, user?.departments])
 
   const selectedDepartment = selectedLeadmanDepartment || assignedDepartments[0] || ''
-  const reportDate = new Date().toISOString().slice(0, 10)
+  const reportDate = toManilaDateKey()
   const dailyReportDraft = getDailyReportDraft(selectedDepartment, reportDate)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedBatchId, setSelectedBatchId] = useState('')

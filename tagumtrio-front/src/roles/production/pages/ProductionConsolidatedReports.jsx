@@ -16,12 +16,13 @@ import Card from '../../../shared/ui/Card'
 import EmptyState from '../../../shared/ui/EmptyState'
 import { LinkButton } from '../../../shared/ui/Button'
 import { History } from 'lucide-react'
+import { toManilaDateKey } from '../../../lib/datetime'
 
 function toDateKey(value) {
   if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
-  return date.toISOString().slice(0, 10)
+  return toManilaDateKey(date)
 }
 
 export default function ProductionConsolidatedReports() {

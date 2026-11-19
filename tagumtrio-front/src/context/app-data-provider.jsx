@@ -516,8 +516,8 @@ export function AppDataProvider({ children }) {
 
     try {
       setDailyReportDrafts((cur) => {
-        const key = `${department}:${new Date(capturedAt).toISOString().slice(0, 10)}`
-        const existing = cur[key] || { department, reportDate: new Date(capturedAt).toISOString().slice(0, 10), entries: [], summary: '', totalAmount: 0 }
+        const key = `${department}:${toManilaDateKey(capturedAt)}`
+        const existing = cur[key] || { department, reportDate: toManilaDateKey(capturedAt), entries: [], summary: '', totalAmount: 0 }
         const entry = {
           id,
           batchId,
@@ -528,6 +528,7 @@ export function AppDataProvider({ children }) {
           department,
           targetDepartment,
           scannedAt: capturedAt,
+          date: reportFields.date || undefined,
           product,
           quantity,
           pricePerUnit,
@@ -834,13 +835,13 @@ export function AppDataProvider({ children }) {
 
 
   function getDailyReportDraft(department, reportDate) {
-    const key = `${department}:${new Date(reportDate).toISOString().slice(0, 10)}`
+    const key = `${department}:${toManilaDateKey(reportDate)}`
     const draft = dailyReportDrafts[key]
 
     if (!draft) {
       return {
         department,
-        reportDate: new Date(reportDate).toISOString().slice(0, 10),
+        reportDate: toManilaDateKey(reportDate),
         entries: [],
         summary: '',
         totalAmount: 0,
@@ -849,7 +850,7 @@ export function AppDataProvider({ children }) {
 
     return {
       department: draft.department || department,
-      reportDate: draft.reportDate || new Date(reportDate).toISOString().slice(0, 10),
+      reportDate: draft.reportDate || toManilaDateKey(reportDate),
       entries: Array.isArray(draft.entries) ? draft.entries : [],
       summary: draft.summary || '',
       totalAmount: Number(draft.totalAmount || 0),
@@ -857,7 +858,7 @@ export function AppDataProvider({ children }) {
   }
 
   function removeDailyReportBatch(department, reportDate, batchId) {
-    const key = `${department}:${new Date(reportDate).toISOString().slice(0, 10)}`
+    const key = `${department}:${toManilaDateKey(reportDate)}`
     setDailyReportDrafts((current) => {
       const draft = current[key]
       if (!draft) return current
@@ -880,7 +881,7 @@ export function AppDataProvider({ children }) {
   }
 
   async function submitDailyReport(department, reportDate, submittedBy, submittedByName, summary = '', entries = null) {
-    const key = `${department}:${new Date(reportDate).toISOString().slice(0, 10)}`
+    const key = `${department}:${toManilaDateKey(reportDate)}`
     const draft = dailyReportDrafts[key]
     const resolvedEntries = Array.isArray(entries) ? entries : (draft?.entries || [])
     if (!draft && resolvedEntries.length === 0) throw new Error('No draft for selected department/date')
@@ -888,7 +889,7 @@ export function AppDataProvider({ children }) {
     const payload = {
       department: draft?.department || department,
       targetDepartment,
-      reportDate: draft?.reportDate || new Date(reportDate).toISOString().slice(0, 10),
+      reportDate: draft?.reportDate || toManilaDateKey(reportDate),
       submittedBy,
       submittedByName,
       summary,

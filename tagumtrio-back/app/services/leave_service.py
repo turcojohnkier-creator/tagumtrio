@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 import uuid
 
 from sqlalchemy.orm import Session
@@ -63,6 +63,17 @@ def leave_days(start_date: str | None, end_date: str | None) -> int:
     return (end - start).days + 1
 
 
+# The company runs on Philippine time (UTC+8, no DST).
+MANILA = timezone(timedelta(hours=8))
+
+
+def _start_of_manila_month(now: datetime) -> datetime:
+    """Midnight on the 1st of the current month in Philippine time, so the
+    monthly allowance resets at 12:00 AM PHT rather than 8:00 AM (UTC midnight)."""
+    local = now.astimezone(MANILA)
+    return local.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+
 def create_leave_request(db: Session, payload: LeaveRequestCreate) -> LeaveRequestPublic:
     now = datetime.now(timezone.utc)
 
@@ -83,7 +94,7 @@ def create_leave_request(db: Session, payload: LeaveRequestCreate) -> LeaveReque
         db.query(LeaveRequest)
         .filter(
             LeaveRequest.employee_id == int(payload.employee_id),
-            LeaveRequest.requested_at >= now.replace(day=1, hour=0, minute=0, second=0, microsecond=0),
+            LeaveRequest.requested_at >= _start_of_manila_month(now),
             LeaveRequest.status != "rejected",
         )
         .all()

@@ -18,6 +18,7 @@ import Badge from '../../../shared/ui/Badge'
 import EmptyState from '../../../shared/ui/EmptyState'
 import UserAvatar from '../../../shared/ui/UserAvatar'
 import Portal from '../../../shared/ui/Portal'
+import { toManilaDateKey } from '../../../lib/datetime'
 
 function fallbackFormatDateTime(value) {
   if (!value) return '—'
@@ -75,9 +76,9 @@ function getStatusVariant(status) {
 // Batches + totals + the human-written note, derived once per report.
 function useReportView(report) {
   return useMemo(() => {
-    const batches = groupBatches(report.entries, report.department)
+    const batches = groupBatches(report.entries, report.department, report.reportDate)
     return { batches, ...summarizeBatches(batches), note: extractNote(report.summary) }
-  }, [report.entries, report.department, report.summary])
+  }, [report.entries, report.department, report.reportDate, report.summary])
 }
 
 function buildEntriesFromPayloads(payloads, batchCapturedAt) {
@@ -92,6 +93,7 @@ function buildEntriesFromPayloads(payloads, batchCapturedAt) {
     amount: payload.amount,
     photos: payload.photos,
     notes: payload.notes,
+    date: payload.qrFields?.date || payload.date || undefined,
     scannedAt: batchCapturedAt,
     batchId: payload.batchId,
   }))
@@ -588,7 +590,7 @@ export default function LeadmanIncomingReports() {
         department: report.department,
         product: firstEntry.product || '',
         quantity: firstEntry.quantity || '',
-        date: report.reportDate || new Date().toISOString().slice(0, 10),
+        date: report.reportDate || toManilaDateKey(),
       },
       initialSelectedEmployeeIds: entries.map((entry) => String(entry.employeeId || '')).filter(Boolean),
       initialTargetDepartment: report.targetDepartment || '',

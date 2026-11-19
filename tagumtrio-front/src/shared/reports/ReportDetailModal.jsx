@@ -114,7 +114,7 @@ export default function ReportDetailModal({ report, onClose, actions = [] }) {
               </div>
             </div>
 
-            <DailyReportTable entries={entries} fallbackDepartment={report.department} />
+            <DailyReportTable entries={entries} fallbackDepartment={report.department} fallbackDate={report.reportDate || report.report_date} />
           </div>
 
           <div className="flex flex-col-reverse gap-2 border-t border-zinc-200 px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">

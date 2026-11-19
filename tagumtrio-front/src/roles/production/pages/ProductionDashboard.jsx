@@ -15,6 +15,7 @@ import Button, { LinkButton } from '../../../shared/ui/Button'
 import Badge from '../../../shared/ui/Badge'
 import EmptyState from '../../../shared/ui/EmptyState'
 import UserAvatar from '../../../shared/ui/UserAvatar'
+import { toManilaDateKey } from '../../../lib/datetime'
 
 function formatReportDate(value) {
   if (!value) return '-'
@@ -33,7 +34,7 @@ function toDateKey(value) {
   if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return String(value).slice(0, 10)
-  return date.toISOString().slice(0, 10)
+  return toManilaDateKey(date)
 }
 
 function resolveEntryDepartment(entry, fallbackDepartment) {

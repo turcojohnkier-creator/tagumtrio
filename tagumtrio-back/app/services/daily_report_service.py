@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import uuid
 from urllib.parse import quote
 
@@ -362,7 +362,7 @@ def approve_daily_report(db: Session, report_id: str, approved_by: int | None) -
     try:
         report_date = datetime.fromisoformat(record.report_date)
     except ValueError:
-        report_date = datetime.now(timezone.utc)
+        report_date = datetime.now(timezone(timedelta(hours=8)))  # Philippine time
     period = _payroll_cycle_key(report_date)
 
     per_employee: dict[int, float] = defaultdict(float)

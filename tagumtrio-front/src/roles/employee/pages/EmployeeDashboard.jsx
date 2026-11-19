@@ -161,12 +161,13 @@ export default function EmployeeDashboard() {
 
   const leaveRequests = getEmployeeLeaveRequests(user?.id)
   const now = new Date()
+  // "This month" in Philippine time ("YYYY-MM"), the same as the backend.
+  const thisMonthKey = (toManilaDateKey() || '').slice(0, 7)
   // Rejected requests give their days back, so they don't count (same rule as the backend).
   const requestsThisMonth = leaveRequests.filter((request) => {
     if (String(request.status || '').toLowerCase() === 'rejected') return false
-    const requested = new Date(request.requestedAt || request.requested_at)
-    if (Number.isNaN(requested.getTime())) return false
-    return requested.getFullYear() === now.getFullYear() && requested.getMonth() === now.getMonth()
+    const requestedKey = toManilaDateKey(request.requestedAt || request.requested_at)
+    return Boolean(requestedKey) && requestedKey.slice(0, 7) === thisMonthKey
   })
   // Every leave day uses one of the month's attempts (a 2-day request uses both).
   const daysOf = (request) => leaveDays(request.startDate || request.start_date, request.endDate || request.end_date)
@@ -196,7 +197,7 @@ export default function EmployeeDashboard() {
   let timeLeftLabel = 'Days left on leave'
   let timeLeftHint = 'Not currently on leave'
   if (activeLeave) {
-    const endOfLeave = new Date(`${activeLeave.endDate}T23:59:59`)
+    const endOfLeave = new Date(`${activeLeave.endDate}T23:59:59+08:00`) // end of that day, Philippine time
     const hoursLeft = (endOfLeave.getTime() - now.getTime()) / (1000 * 60 * 60)
     if (hoursLeft <= 24) {
       const hours = Math.max(0, Math.ceil(hoursLeft))

@@ -3,7 +3,7 @@ import { Image as ImageIcon, Users, X } from 'lucide-react'
 import Portal from '../ui/Portal'
 import UserAvatar from '../ui/UserAvatar'
 import { useAuth } from '../../context/auth-context'
-import { getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from './report-entry-utils'
+import { getEntryDate, getEntryIdentifier, getEntryLabel, getEntryPieces, hasMeaningfulEntry } from './report-entry-utils'
 import { formatProductWithUnit } from '../../lib/units'
 
 function resolveEntryDepartment(entry, fallbackDepartment) {
@@ -24,7 +24,7 @@ function getBatchPhotos(entry) {
   return Object.values(photos).filter(Boolean)
 }
 
-function groupIntoBatches(entries, fallbackDepartment) {
+function groupIntoBatches(entries, fallbackDepartment, fallbackDate) {
   const batches = new Map()
 
   entries.forEach((entry, index) => {
@@ -35,7 +35,7 @@ function groupIntoBatches(entries, fallbackDepartment) {
         department: resolveEntryDepartment(entry, fallbackDepartment),
         product: entry.product || entry.raw?.product || '-',
         quantity: entry.quantity || getEntryPieces(entry) || '-',
-        date: entry.date || entry.dateIn || entry.raw?.qrFields?.date || entry.qrFields?.date || entry.raw?.qrFields?.dateIn || entry.qrFields?.dateIn || '-',
+        date: getEntryDate(entry, fallbackDate) || '-',
         amount: Number(entry.amount || 0),
         photos: getBatchPhotos(entry),
         entries: [],
@@ -109,15 +109,15 @@ function PhotoGridPopup({ open, photos, onClose }) {
   )
 }
 
-export default function DailyReportTable({ entries = [], fallbackDepartment = '' }) {
+export default function DailyReportTable({ entries = [], fallbackDepartment = '', fallbackDate = '' }) {
   const { t } = useAuth()
   const [employeePopupBatch, setEmployeePopupBatch] = useState(null)
   const [photoPopupBatch, setPhotoPopupBatch] = useState(null)
 
   const batches = useMemo(() => {
     const safeEntries = Array.isArray(entries) ? entries.filter(hasMeaningfulEntry) : []
-    return groupIntoBatches(safeEntries, fallbackDepartment)
-  }, [entries, fallbackDepartment])
+    return groupIntoBatches(safeEntries, fallbackDepartment, fallbackDate)
+  }, [entries, fallbackDepartment, fallbackDate])
 
   if (batches.length === 0) {
     return <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 text-sm text-zinc-500">{t('table.no_entries')}</div>

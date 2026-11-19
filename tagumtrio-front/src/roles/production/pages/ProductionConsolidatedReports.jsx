@@ -3,7 +3,9 @@ import { motion } from 'framer-motion'
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
 import { useDialog } from '../../../context/dialog-context'
-import { fetchDailyReportsApi } from '../../../lib/api'
+import { fetchDailyReportsApi, returnDailyReportApi } from '../../../lib/api'
+import ReturnReasonModal from '../../../shared/reports/ReturnReasonModal'
+import useLiveRefresh from '../../../shared/hooks/useLiveRefresh'
 import { groupReportsIntoBundles } from '../../../shared/reports/report-bundle-utils'
 import { normalizeStatus } from '../../../shared/reports/report-status'
 import ReportBundleCard from '../../../shared/reports/ReportBundleCard'
@@ -36,16 +38,23 @@ export default function ProductionConsolidatedReports() {
   const [approvingKey, setApprovingKey] = useState('')
   const [selectedDepartment, setSelectedDepartment] = useState('All Departments')
   const [selectedDate, setSelectedDate] = useState('')
+  // What the GM is about to return: a whole bundle or one report inside it.
+  const [returnTarget, setReturnTarget] = useState(null) // { kind: 'bundle' | 'report', reports: [] }
+  const [returning, setReturning] = useState(false)
 
   function loadReports() {
     return fetchDailyReportsApi()
       .then((result) => setReports(Array.isArray(result) ? result : []))
-      .catch(() => setReports([]))
+      // Keep what is shown if a (background) refresh fails.
+      .catch(() => {})
   }
 
   useEffect(() => {
     loadReports()
   }, [])
+
+  // New bundles from production in-charge appear without a reload.
+  useLiveRefresh(loadReports, { types: ['daily_report_gm_pending'], clearTypes: ['daily_report_gm_pending'], intervalMs: 30000 })
 
   // This page is the GM's approval queue: only reports the production
   // in-charge has sent up (gm_submitted). Reports the GM already approved
@@ -103,11 +112,38 @@ export default function ProductionConsolidatedReports() {
     }
   }
 
+  async function handleReturn(reason) {
+    if (!returnTarget?.reports?.length) return
+    setReturning(true)
+    try {
+      await Promise.all(returnTarget.reports.map((report) => returnDailyReportApi(report.id, reason)))
+      await loadReports()
+      setReturnTarget(null)
+      setSelectedReport(null)
+      // A returned bundle is gone from the queue; a single return leaves the rest open.
+      if (returnTarget.kind === 'bundle') setSelectedBundleKey('')
+      dialog.success({
+        title: t('gm.consolidated.returned_title'),
+        message: t('gm.consolidated.returned_message'),
+      })
+    } catch (error) {
+      await loadReports()
+      dialog.error({
+        title: t('gm.consolidated.return_failed_title'),
+        message: error?.message || t('gm.consolidated.return_failed_message'),
+      })
+    } finally {
+      setReturning(false)
+    }
+  }
+
+  const busy = Boolean(approvingKey) || returning
+  const canReturnSelectedReport = isGm && selectedReport && normalizeStatus(selectedReport.status) === 'gm_submitted'
+
   return (
     <div className="space-y-6">
       <PageHeader
         tone="brand"
-        eyebrow={t('gm.consolidated.eyebrow')}
         title={t('gm.consolidated.title')}
         description={`${filteredBundles.length} bundle${filteredBundles.length === 1 ? '' : 's'} waiting for your approval.`}
         actions={isGm ? (
@@ -165,16 +201,44 @@ export default function ProductionConsolidatedReports() {
         bundle={selectedBundle}
         onClose={() => setSelectedBundleKey('')}
         onOpenReport={setSelectedReport}
+        bundleActions={selectedBundle && isGm ? [{
+          key: 'return',
+          variant: 'dangerOutline',
+          label: t('gm.consolidated.return_bundle_btn').replace('{count}', selectedBundle.reportCount),
+          disabled: busy,
+          onClick: () => setReturnTarget({ kind: 'bundle', reports: selectedBundle.reports }),
+        }] : []}
         bundleAction={selectedBundle && isGm ? {
           label: t('gm.consolidated.approve_btn').replace('{count}', selectedBundle.reportCount),
           loadingLabel: t('gm.consolidated.approving'),
           loading: approvingKey === selectedBundle.key,
-          disabled: approvingKey === selectedBundle.key,
+          disabled: busy,
           onClick: () => handleApproveBundle(selectedBundle),
         } : null}
       />
 
-      <ReportDetailModal report={selectedReport} onClose={() => setSelectedReport(null)} />
+      <ReportDetailModal
+        report={selectedReport}
+        onClose={() => setSelectedReport(null)}
+        actions={canReturnSelectedReport ? [{
+          key: 'return',
+          variant: 'dangerOutline',
+          label: t('gm.consolidated.return_report_btn'),
+          disabled: busy,
+          onClick: () => setReturnTarget({ kind: 'report', reports: [selectedReport] }),
+        }] : []}
+      />
+
+      {returnTarget ? (
+        <ReturnReasonModal
+          title={t(returnTarget.kind === 'bundle' ? 'gm.consolidated.return_title_bundle' : 'gm.consolidated.return_title_report')}
+          description={t('gm.consolidated.return_desc')}
+          confirmLabel={t('gm.consolidated.return_confirm')}
+          loading={returning}
+          onConfirm={handleReturn}
+          onCancel={() => setReturnTarget(null)}
+        />
+      ) : null}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   ArrowRight, Check, CheckCircle2, ChevronLeft, ChevronRight, CircleAlert, Inbox, Pencil, Undo2, X,
 } from 'lucide-react'
@@ -11,6 +11,7 @@ import { fetchDailyReportsApi, updateDailyReportApi } from '../../../lib/api'
 import { formatProductWithUnit } from '../../../lib/units'
 import { extractNote, groupBatches, summarizeBatches } from '../../../shared/reports/report-entry-utils'
 import ReportEntryForm from '../components/ReportEntryForm'
+import ReturnTrail from '../../../shared/reports/ReturnTrail'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Button from '../../../shared/ui/Button'
 import Badge from '../../../shared/ui/Badge'
@@ -50,6 +51,8 @@ function getStatusLabel(status) {
       return 'Forwarded to GM'
     case 'rejected':
       return 'Rejected'
+    case 'returned':
+      return 'Returned by Production In-Charge'
     default:
       return status || 'Unknown'
   }
@@ -62,6 +65,7 @@ function getStatusVariant(status) {
     case 'gm_submitted':
       return 'info'
     case 'rejected':
+    case 'returned':
       return 'danger'
     default:
       return 'warning'
@@ -237,9 +241,9 @@ function IncomingReport({ report, currentDepartment, busy, onVerify, onReject, o
         {isPending ? (
           !rejecting ? (
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              <Button type="button" variant="secondary" disabled={busy} onClick={() => setRejecting(true)}>
+              <Button type="button" variant="secondary" className="btn-dismiss" disabled={busy} onClick={() => setRejecting(true)}>
                 <CircleAlert className="h-4 w-4" />
-                Reject…
+                Reject
               </Button>
               <Button type="button" disabled={busy} onClick={() => onVerify(report, '')}>
                 <Check className="h-4 w-4" />
@@ -274,7 +278,7 @@ function IncomingReport({ report, currentDepartment, busy, onVerify, onReject, o
             className="min-h-[88px] w-full rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-rose-400"
           />
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="secondary" onClick={() => { setRejecting(false); setNote('') }}>Cancel</Button>
+            <Button type="button" variant="secondary" className="btn-dismiss" onClick={() => { setRejecting(false); setNote('') }}>Cancel</Button>
             <Button type="button" variant="danger" disabled={busy || !note.trim()} onClick={() => onReject(report, note.trim())}>
               <CircleAlert className="h-4 w-4" />
               {busy ? 'Updating…' : 'Send back to leadman'}
@@ -290,6 +294,7 @@ function IncomingReport({ report, currentDepartment, busy, onVerify, onReject, o
 
 function ReturnedReport({ report, formatDT, onEdit, onOpenPhotos }) {
   const view = useReportView(report)
+  const returnedByProduction = normalizeText(report.status) === 'returned'
   return (
     <div className="space-y-4 rounded-xl border border-rose-200 bg-white p-4 shadow-sm sm:p-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -300,10 +305,15 @@ function ReturnedReport({ report, formatDT, onEdit, onOpenPhotos }) {
         </Button>
       </div>
 
-      <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-rose-600">Reason from {report.targetDepartment || 'the next department'}</p>
-        <p className="mt-1 text-sm font-medium text-rose-900">{view.note || 'No reason was given.'}</p>
-      </div>
+      {returnedByProduction ? (
+        // Production in-charge's reason first, then the GM's that started it.
+        <ReturnTrail report={report} />
+      ) : (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-rose-600">Reason from {report.targetDepartment || 'the next department'}</p>
+          <p className="mt-1 text-sm font-medium text-rose-900">{view.note || 'No reason was given.'}</p>
+        </div>
+      )}
 
       <VerificationTable view={view} onOpenPhotos={onOpenPhotos} />
     </div>
@@ -339,7 +349,7 @@ function PhotoViewer({ photos, index, onChange, onClose }) {
       <div className="fixed inset-0 z-[60] flex flex-col bg-black/85 p-4" onClick={onClose}>
         <div className="flex items-center justify-between text-white" onClick={(event) => event.stopPropagation()}>
           <p className="text-sm font-semibold">{photo.label} <span className="font-normal text-white/60">· {index + 1} of {photos.length}</span></p>
-          <button type="button" onClick={onClose} aria-label="Close photos" className="rounded-full bg-white/10 p-2 hover:bg-white/20">
+          <button type="button" onClick={onClose} aria-label="Close photos" className="btn-dismiss btn-dismiss-dark rounded-full bg-white/10 p-2 hover:bg-white/20">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -422,25 +432,63 @@ export default function LeadmanIncomingReports() {
 
   const [activeTab, setActiveTab] = useState('incoming')
   const [reports, setReports] = useState([])
+  // Reports waiting in the leadman's *other* departments: { department: count }.
+  const [otherWaiting, setOtherWaiting] = useState({})
   const [myRejectedReports, setMyRejectedReports] = useState([])
   const [loading, setLoading] = useState(true)
   const [photoViewer, setPhotoViewer] = useState(null)
   const [actionLoadingId, setActionLoadingId] = useState('')
   const [resubmitting, setResubmitting] = useState(null)
+  const [searchParams, setSearchParams] = useSearchParams()
 
+  // Notifications link here with ?department=…&tab=… so a leadman handling
+  // several departments lands on the one the report is actually for.
+  useEffect(() => {
+    const wantedDepartment = searchParams.get('department')
+    const wantedTab = searchParams.get('tab')
+    if (!wantedDepartment && !wantedTab) return
+    const match = assignedDepartments.find((name) => normalizeText(name) === normalizeText(wantedDepartment))
+    if (match) setSelectedLeadmanDepartment(match)
+    if (wantedTab === 'incoming' || wantedTab === 'rejected') {
+      // One-time sync from the notification link; the params are cleared below.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveTab(wantedTab)
+      if (wantedTab === 'rejected') markNotificationsSeen('daily_report_rejected')
+    }
+    // Drop the params so the department dropdown works normally afterwards.
+    setSearchParams({}, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, assignedDepartments])
+
+  // Every department this leadman receives for, so nothing waits unseen in a
+  // department that isn't selected right now.
   const loadReports = useCallback(async () => {
-    if (!currentDepartment) {
+    if (assignedDepartments.length === 0) {
       setReports([])
+      setOtherWaiting({})
       setLoading(false)
       return
     }
     try {
-      const remote = await fetchDailyReportsApi({ targetDepartment: currentDepartment })
-      setReports(Array.isArray(remote) ? remote : [])
+      const results = await Promise.all(assignedDepartments.map((department) => (
+        fetchDailyReportsApi({ targetDepartment: department })
+          .then((remote) => [department, Array.isArray(remote) ? remote : []])
+          .catch(() => [department, null])
+      )))
+      const waiting = {}
+      results.forEach(([department, list]) => {
+        if (department === currentDepartment) {
+          if (list) setReports(list)
+        } else if (list) {
+          const count = list.filter((report) => normalizeText(report.status) === 'submitted').length
+          if (count > 0) waiting[department] = count
+        }
+      })
+      setOtherWaiting(waiting)
     } finally {
       setLoading(false)
     }
-  }, [currentDepartment])
+  }, [assignedDepartments, currentDepartment])
 
   const loadMyRejected = useCallback(async () => {
     if (!currentDepartment || !user?.id) {
@@ -448,9 +496,12 @@ export default function LeadmanIncomingReports() {
       return
     }
     try {
-      const remote = await fetchDailyReportsApi({ department: currentDepartment })
+      // No department filter: the backend returns all of this leadman's
+      // departments, so returns show up whichever department is selected.
+      const remote = await fetchDailyReportsApi()
       const mine = (Array.isArray(remote) ? remote : []).filter((report) => (
-        normalizeText(report.status) === 'rejected' && String(report.submittedBy || '') === String(user.id)
+        // rejected = by the next department's leadman; returned = by production in-charge (after a GM return)
+        ['rejected', 'returned'].includes(normalizeText(report.status)) && String(report.submittedBy || '') === String(user.id)
       ))
       setMyRejectedReports(mine)
     } catch {
@@ -477,15 +528,18 @@ export default function LeadmanIncomingReports() {
     [reports]
   )
 
+  // Employees for the report being resubmitted — its own department, which may
+  // differ from the selected one now that returns from every department show.
+  const resubmitDepartment = resubmitting?.report?.department || currentDepartment
   const departmentEmployees = useMemo(() => {
     return employees
-      .filter((employee) => String(employee.department || '').toLowerCase() === String(currentDepartment || '').toLowerCase())
+      .filter((employee) => String(employee.department || '').toLowerCase() === String(resubmitDepartment || '').toLowerCase())
       .map((employee) => ({
         employeeId: employee.employeeId,
         employeeName: employee.employeeName,
-        department: employee.department || currentDepartment,
+        department: employee.department || resubmitDepartment,
       }))
-  }, [employees, currentDepartment])
+  }, [employees, resubmitDepartment])
 
   async function patchReport(report, status, notes = '') {
     if (!report?.id) return
@@ -628,7 +682,9 @@ export default function LeadmanIncomingReports() {
             <span className="text-xs text-emerald-50/90">Receiving department</span>
             <select value={currentDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-1 min-w-[200px] rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none">
               {assignedDepartments.map((department) => (
-                <option key={department} value={department}>{department}</option>
+                <option key={department} value={department}>
+                  {department}{otherWaiting[department] ? ` (${otherWaiting[department]} waiting)` : ''}
+                </option>
               ))}
             </select>
           </label>
@@ -652,6 +708,28 @@ export default function LeadmanIncomingReports() {
           </Link>
         </div>
       </PageHeader>
+
+      {Object.keys(otherWaiting).length > 0 ? (
+        // Reports are waiting in a department that isn't selected right now.
+        <div className="space-y-2">
+          {Object.entries(otherWaiting).map(([department, count]) => (
+            <div key={department} className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between">
+              <span className="flex items-center gap-2">
+                <Inbox className="h-4 w-4 shrink-0 text-amber-600" />
+                <span><span className="font-semibold">{department}</span> has {count} report{count === 1 ? '' : 's'} waiting for verification.</span>
+              </span>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => { setSelectedLeadmanDepartment(department); selectTab('incoming') }}
+              >
+                Switch to {department}
+              </Button>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <div className="flex gap-1 overflow-x-auto border-b border-zinc-200">
         {tabs.map((tab) => (
@@ -691,7 +769,7 @@ export default function LeadmanIncomingReports() {
                     <p className="text-xs uppercase tracking-wide text-zinc-400">Edit & resubmit</p>
                     <h3 className="mt-0.5 font-heading text-lg font-bold text-zinc-900">{resubmitting.report.department} • {formatWorkDate(resubmitting.report.reportDate)}</h3>
                   </div>
-                  <button type="button" onClick={() => setResubmitting(null)} aria-label="Close" className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 hover:bg-zinc-100">
+                  <button type="button" onClick={() => setResubmitting(null)} aria-label="Close" className="btn-dismiss rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 hover:bg-zinc-100">
                     <X className="h-4 w-4" />
                   </button>
                 </div>

@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../../context/auth-context'
 import { useAppData } from '../../context/app-data-context'
 import { fetchReportHistoryApi } from '../../lib/api'
+import useLiveRefresh from '../hooks/useLiveRefresh'
 import {
   addDays, formatDateKey, formatRangeLabel, getRange, shiftAnchor, toManilaDateKey,
 } from '../../lib/datetime'
@@ -97,7 +98,7 @@ const ROLE_CONFIG = {
       const reviewed = reports.filter((r) => r.involvement === 'verified')
       return [
         { label: 'Submitted', value: submitted.length, icon: Send },
-        { label: 'Returned to me', value: submitted.filter((r) => r.status === 'rejected').length, icon: XCircle },
+        { label: 'Returned to me', value: submitted.filter((r) => r.status === 'rejected' || r.status === 'returned').length, icon: XCircle },
         { label: 'Verified by me', value: reviewed.filter((r) => r.status !== 'rejected').length, icon: CheckCircle2, highlight: true },
         { label: 'Rejected by me', value: reviewed.filter((r) => r.status === 'rejected').length, icon: XCircle },
       ]
@@ -157,7 +158,7 @@ function HistoryDetailModal({ report, config, isEmployee, formatDateTime, onClos
                 <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{report.department} • {report.reportDate}</h3>
                 <div className="mt-2"><Badge variant={getStatusVariant(report.status)}>{getStatusLabel(report.status)}</Badge></div>
               </div>
-              <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 hover:bg-zinc-100" aria-label="Close">
+              <button type="button" onClick={onClose} className="btn-dismiss rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 hover:bg-zinc-100" aria-label="Close">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -244,9 +245,21 @@ function HistoryReportCard({ report, config, isEmployee, showDate, formatDateTim
   )
 }
 
+// Notification types that mean "your history changed" for each role.
+const HISTORY_REFRESH_TYPES = {
+  leadman: ['daily_report_verified', 'daily_report_approved', 'daily_report_rejected', 'daily_report_incoming'],
+  employee: ['payslip_released'],
+  production_incharge: ['daily_report_gm_returned', 'daily_report_ready_to_compile'],
+  gm: ['daily_report_gm_pending'],
+}
+// Types whose red dot lives on the History nav item (cleared on visit).
+const HISTORY_SEEN_TYPES = {
+  leadman: ['daily_report_verified', 'daily_report_approved'],
+}
+
 export default function ReportHistory() {
   const { user } = useAuth()
-  const { formatDateTime } = useAppData()
+  const { formatDateTime, markNotificationsSeen } = useAppData()
   const role = user?.role
   const config = ROLE_CONFIG[role]
   const isEmployee = role === 'employee'
@@ -265,23 +278,36 @@ export default function ReportHistory() {
   const [pickedKey, setPickedKey] = useState(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
 
+  const toHistoryRows = (data) => {
+    const myId = String(user?.id ?? '')
+    return (Array.isArray(data) ? data : []).map((report) => ({
+      ...summarizeReport(report),
+      // Only meaningful for leadmen: did I review this report, or send it?
+      involvement: myId && String(report.verifiedBy ?? '') === myId ? 'verified' : 'submitted',
+    }))
+  }
+
   useEffect(() => {
     if (!config) return undefined
     let cancelled = false
-    const myId = String(user?.id ?? '')
     fetchReportHistoryApi({ limit: 500 })
-      .then((data) => {
-        if (cancelled) return
-        setReports((Array.isArray(data) ? data : []).map((report) => ({
-          ...summarizeReport(report),
-          // Only meaningful for leadmen: did I review this report, or send it?
-          involvement: myId && String(report.verifiedBy ?? '') === myId ? 'verified' : 'submitted',
-        })))
-      })
+      .then((data) => { if (!cancelled) setReports(toHistoryRows(data)) })
       .catch((err) => { if (!cancelled) { setReports([]); setError(err?.message || 'Unable to load your history.') } })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config, user?.id])
+
+  // Clear this page's red dot (leadman History), then keep the list fresh in the
+  // background — a failed background refresh keeps what is already shown.
+  useEffect(() => {
+    HISTORY_SEEN_TYPES[role]?.forEach((type) => markNotificationsSeen(type))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role])
+  useLiveRefresh(
+    () => fetchReportHistoryApi({ limit: 500 }).then((data) => setReports(toHistoryRows(data))).catch(() => {}),
+    { types: HISTORY_REFRESH_TYPES[role] || [], clearTypes: HISTORY_SEEN_TYPES[role] || [], intervalMs: 60000, enabled: Boolean(config) }
+  )
 
   function setMode(next) {
     setModeState(next)

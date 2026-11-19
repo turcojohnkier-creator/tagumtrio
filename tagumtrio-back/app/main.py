@@ -8,6 +8,8 @@ import app.models
 import app.models.announcement
 import app.models.rate
 import app.models.notification
+import app.models.attendance
+import app.models.app_setting
 from app.api.auth import router as auth_router
 from app.api.v1.endpoints.leave_requests import router as leave_requests_router
 from app.api.v1.endpoints.announcements import router as announcements_router
@@ -18,6 +20,7 @@ from app.api.v1.endpoints.rates import router as rates_router
 from app.api.v1.endpoints.notifications import router as notifications_router
 from app.api.v1.endpoints.translate import router as translate_router
 from app.api.v1.endpoints.avatars import router as avatars_router
+from app.api.v1.endpoints.attendance import router as attendance_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -41,6 +44,7 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ"))
     connection.execute(text("CREATE INDEX IF NOT EXISTS ix_daily_reports_compiled_by ON daily_reports (compiled_by)"))
     connection.execute(text("CREATE INDEX IF NOT EXISTS ix_daily_reports_approved_by ON daily_reports (approved_by)"))
+    connection.execute(text("ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS return_history JSON"))
 
 app = FastAPI(title="TriOPS Backend")
 
@@ -62,6 +66,7 @@ app.include_router(rates_router, prefix="/api/v1")
 app.include_router(notifications_router, prefix="/api/v1")
 app.include_router(translate_router, prefix="/api/v1")
 app.include_router(avatars_router, prefix="/api/v1")
+app.include_router(attendance_router, prefix="/api/v1")
 
 
 @app.get("/api/health")

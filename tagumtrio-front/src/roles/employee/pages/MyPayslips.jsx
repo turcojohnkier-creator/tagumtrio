@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Eye, FileText, ArrowLeft, Clock, ListChecks, Printer, X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
@@ -9,12 +9,20 @@ import { formatPayAmount } from '../../../lib/payslip'
 import Button from '../../../shared/ui/Button'
 import EmptyState from '../../../shared/ui/EmptyState'
 import usePayslipWeeks from '../hooks/usePayslipWeeks'
+import useLiveRefresh from '../../../shared/hooks/useLiveRefresh'
 
 export default function MyPayslips() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { getEmployeeTotals, formatDateTime } = useAppData()
+  const { getEmployeeTotals, formatDateTime, markNotificationsSeen, refreshDailyReports } = useAppData()
   const { weeks, loading, error } = usePayslipWeeks(user?.id)
+
+  // Clears the Payslips red dot; salary totals refresh when new pay is released.
+  useEffect(() => {
+    markNotificationsSeen('payslip_released')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  useLiveRefresh(() => refreshDailyReports(), { types: ['payslip_released'], clearTypes: ['payslip_released'], intervalMs: 60000 })
 
   const [openModal, setOpenModal] = useState(false)
   const [modalMode, setModalMode] = useState('accumulated')
@@ -88,7 +96,7 @@ export default function MyPayslips() {
                 <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{modalTitle}</h3>
                 <p className="mt-1 text-sm text-zinc-500">Review the work report details for this employee.</p>
               </div>
-              <button type="button" onClick={() => setOpenModal(false)} className="rounded-md border border-zinc-200 bg-zinc-50 p-2 text-zinc-600 transition-colors hover:bg-zinc-100">
+              <button type="button" onClick={() => setOpenModal(false)} aria-label="Close" className="btn-dismiss rounded-md border border-zinc-200 bg-zinc-50 p-2 text-zinc-600 transition-colors hover:bg-zinc-100">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -138,7 +146,7 @@ export default function MyPayslips() {
             </div>
 
             <div className="flex justify-end border-t border-zinc-200 px-5 py-4">
-              <Button type="button" variant="secondary" onClick={() => setOpenModal(false)}>
+              <Button type="button" variant="secondary" className="btn-dismiss" onClick={() => setOpenModal(false)}>
                 Close
               </Button>
             </div>

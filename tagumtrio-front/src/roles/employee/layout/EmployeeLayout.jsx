@@ -9,7 +9,7 @@ const navItemDefs = [
   { name: 'Overview', href: '/app/portal', icon: LayoutDashboard, end: true },
   { name: 'Announcements', href: '/app/portal/announcements', icon: Megaphone, notificationType: 'announcement_new' },
   { name: 'Leave', href: '/app/portal/leaves', icon: CalendarClock, notificationType: 'leave_request_status' },
-  { name: 'Payslips', href: '/app/portal/payslips', icon: FileText },
+  { name: 'Payslips', href: '/app/portal/payslips', icon: FileText, notificationType: 'payslip_released' },
   { name: 'History', href: '/app/portal/history', icon: History },
   { name: 'Settings', href: '/app/portal/settings', icon: Settings },
 ]

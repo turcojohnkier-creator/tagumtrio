@@ -259,6 +259,14 @@ export async function fetchReportHistoryApi(params = {}) {
   return apiRequest(`/v1/daily-reports/history${query.toString() ? `?${query.toString()}` : ''}`)
 }
 
+// GM -> production in-charge, or production in-charge -> leadman. Reason required.
+export async function returnDailyReportApi(reportId, reason) {
+  return apiRequest(`/v1/daily-reports/${encodeURIComponent(reportId)}/return`, {
+    method: 'PATCH',
+    body: JSON.stringify({ reason }),
+  })
+}
+
 export async function approveDailyReportApi(reportId) {
   return apiRequest(`/v1/daily-reports/${encodeURIComponent(reportId)}/approve`, {
     method: 'PATCH',
@@ -312,6 +320,28 @@ export async function updateEmployeeApi(employeeId, payload) {
   return apiRequest(`/v1/employees/${encodeURIComponent(employeeId)}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
+  })
+}
+
+// Attendance: who is present for the current work session. Omit `department`
+// to get every department at once (GM overview).
+export async function fetchCurrentAttendanceApi(department) {
+  const q = department ? `?department=${encodeURIComponent(department)}` : ''
+  return apiRequest(`/v1/attendance/current${q}`)
+}
+
+export async function setAttendanceApi(employeeId, present) {
+  return apiRequest(`/v1/attendance/current/${encodeURIComponent(employeeId)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ present: Boolean(present) }),
+  })
+}
+
+// GM switch: enabled=false turns off the time in / time out windows (demo mode).
+export async function setAttendanceScheduleApi(enabled) {
+  return apiRequest('/v1/attendance/schedule', {
+    method: 'PUT',
+    body: JSON.stringify({ enabled: Boolean(enabled) }),
   })
 }
 
@@ -383,10 +413,17 @@ export async function markNotificationReadApi(id) {
   })
 }
 
+// Omit `type` to mark every unread notification read.
 export async function markNotificationsReadByTypeApi(type) {
-  return apiRequest(`/v1/notifications/read-all?type=${encodeURIComponent(type)}`, {
+  const q = type ? `?type=${encodeURIComponent(type)}` : ''
+  return apiRequest(`/v1/notifications/read-all${q}`, {
     method: 'PATCH',
   })
+}
+
+// One poll for the bell, toasts and nav red dots: { unreadCounts, recent }.
+export async function fetchNotificationSummaryApi(limit = 20) {
+  return apiRequest(`/v1/notifications/summary?limit=${encodeURIComponent(limit)}`, { timeoutMs: 15000 })
 }
 
 // Translate API

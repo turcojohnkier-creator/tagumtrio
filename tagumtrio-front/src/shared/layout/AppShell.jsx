@@ -4,6 +4,8 @@ import { formatRole } from '../../lib/roles'
 import { useAuth } from '../../context/auth-context'
 import logo from '../../assets/tagumtrio-logo.jpg'
 import Avatar from '../ui/Avatar'
+import NotificationToasts from '../ui/NotificationToasts'
+import NotificationBell from './NotificationBell'
 
 function cn(...inputs) {
   return inputs.filter(Boolean).join(' ')
@@ -44,10 +46,11 @@ export default function AppShell({
           <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl ring-1 ring-white/20">
             <img src={logo} alt="Tagum Trio Lumber Corporation" className="h-full w-full object-cover" />
           </div>
-          <div className="min-w-0 leading-tight">
+          <div className="min-w-0 flex-1 leading-tight">
             <h1 className="font-heading text-sm font-bold leading-snug tracking-tight text-white">Tagum Trio Lumber Corporation</h1>
             {portalLabel ? <p className="truncate text-[11px] capitalize text-emerald-200/70">{portalLabel}</p> : null}
           </div>
+          <NotificationBell placement="sidebar" />
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
@@ -127,6 +130,8 @@ export default function AppShell({
           <div className="flex items-center gap-2">
             {languageToggle()}
 
+            <NotificationBell placement="header" />
+
             <Link
               to={settingsHref}
               className="flex items-center rounded-md px-1 py-1 transition-colors hover:bg-white/10"
@@ -165,6 +170,8 @@ export default function AppShell({
       <main className="px-4 py-6 sm:px-6 sm:py-8 md:pl-[17.5rem] md:pr-6 md:py-10">
         <div className="mx-auto max-w-6xl pb-28 md:pb-12">{children}</div>
       </main>
+
+      <NotificationToasts />
     </div>
   )
 }

@@ -5,7 +5,7 @@ import Button from '../ui/Button'
 import Badge from '../ui/Badge'
 import UserAvatar from '../ui/UserAvatar'
 import { useAuth } from '../../context/auth-context'
-import { getStatusLabel, getStatusVariant, normalizeStatus } from './report-status'
+import { getLatestReturn, getStatusLabel, getStatusVariant, normalizeStatus, returnLabel } from './report-status'
 
 function formatDateTime(value) {
   if (!value) return '—'
@@ -14,9 +14,12 @@ function formatDateTime(value) {
   return date.toLocaleString()
 }
 
-export default function ReportBundleModal({ bundle, onClose, onOpenReport, bundleAction }) {
+// `bundleActions`: [{ key, label, loadingLabel, loading, disabled, variant, onClick }],
+// rendered left-to-right before the primary `bundleAction` (kept for older callers).
+export default function ReportBundleModal({ bundle, onClose, onOpenReport, bundleAction, bundleActions = [] }) {
   const { t } = useAuth()
   if (!bundle) return null
+  const actions = [...bundleActions, ...(bundleAction ? [bundleAction] : [])]
 
   return (
     <Portal>
@@ -41,7 +44,7 @@ export default function ReportBundleModal({ bundle, onClose, onOpenReport, bundl
               <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{bundle.department}</h3>
               <p className="mt-1 text-sm text-zinc-500">{bundle.reportCount} report{bundle.reportCount === 1 ? '' : 's'} • {bundle.employeeCount} employee{bundle.employeeCount === 1 ? '' : 's'} • ₱{Number(bundle.totalAmount || 0).toLocaleString()}</p>
             </div>
-            <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
+            <button type="button" onClick={onClose} aria-label="Close" className="btn-dismiss rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -51,6 +54,7 @@ export default function ReportBundleModal({ bundle, onClose, onOpenReport, bundl
               const entries = Array.isArray(report.entries) ? report.entries : []
               const amount = entries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0)
               const employeeCount = new Set(entries.map((entry) => String(entry.employeeId ?? entry.employeeName ?? ''))).size
+              const latestReturn = ['gm_returned', 'returned'].includes(normalizeStatus(report.status)) ? getLatestReturn(report) : null
               return (
                 <button
                   key={report.id}
@@ -65,6 +69,11 @@ export default function ReportBundleModal({ bundle, onClose, onOpenReport, bundl
                       <Badge variant={getStatusVariant(report.status)}>{t(`status.${normalizeStatus(report.status)}`, getStatusLabel(report.status))}</Badge>
                     </div>
                     <p className="mt-1 text-xs text-zinc-400">{formatDateTime(report.createdAt || report.created_at || report.reportDate)} • {employeeCount} employee{employeeCount === 1 ? '' : 's'} • ₱{amount.toLocaleString()}</p>
+                    {latestReturn ? (
+                      <p className="mt-1.5 text-xs text-rose-800">
+                        <span className="font-semibold text-rose-700">{returnLabel(latestReturn, t)}:</span> {latestReturn.reason}
+                      </p>
+                    ) : null}
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-zinc-400" />
                 </button>
@@ -72,15 +81,15 @@ export default function ReportBundleModal({ bundle, onClose, onOpenReport, bundl
             })}
           </div>
 
-          <div className="flex items-center justify-end gap-3 border-t border-zinc-200 px-5 py-4">
-            <Button type="button" variant="secondary" onClick={onClose}>
+          <div className="flex flex-col-reverse gap-2 border-t border-zinc-200 px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
+            <Button type="button" variant="secondary" className="btn-dismiss" onClick={onClose}>
               {t('report.modal.close')}
             </Button>
-            {bundleAction ? (
-              <Button type="button" disabled={bundleAction.disabled} onClick={bundleAction.onClick}>
-                {bundleAction.loading ? bundleAction.loadingLabel || t('report.modal.working') : bundleAction.label}
+            {actions.map((action, index) => (
+              <Button key={action.key || index} type="button" variant={action.variant || 'primary'} disabled={action.disabled} onClick={action.onClick}>
+                {action.loading ? action.loadingLabel || t('report.modal.working') : action.label}
               </Button>
-            ) : null}
+            ))}
           </div>
         </motion.div>
         </div>

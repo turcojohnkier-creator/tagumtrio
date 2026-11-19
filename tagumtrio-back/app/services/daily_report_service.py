@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime, timezone
 import uuid
+from urllib.parse import quote
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
@@ -46,7 +47,36 @@ def _to_public(record: DailyReport) -> DailyReportPublic:
         "compiled_at": record.compiled_at,
         "approved_by": record.approved_by,
         "approved_at": record.approved_at,
+        "return_history": list(record.return_history or []),
     })
+
+
+def _report_label(record: DailyReport) -> str:
+    """e.g. "Rotary report for 2026-11-19" — used in notification messages."""
+    return f"{record.department} report for {record.report_date}"
+
+
+def _leadman_link(tab: str, department: str | None) -> str:
+    """Deep link into Incoming Reports, opened on the right department and tab
+    (a leadman handling several departments sees one department at a time)."""
+    query = f"tab={tab}"
+    if department:
+        query += f"&department={quote(department)}"
+    return f"/app/leadman/reports?{query}"
+
+
+def _notify_ready_to_compile(db: Session, record: DailyReport) -> None:
+    # Production in-charge compiles every verified report. Deduped so a batch of
+    # verifications for the same department/day shows up once.
+    notify_role(
+        db,
+        "production_incharge",
+        "daily_report_ready_to_compile",
+        "Report ready to compile",
+        f"The {_report_label(record)} was verified and is ready to compile.",
+        "/app/production",
+        dedupe=True,
+    )
 
 
 def create_daily_report(db: Session, payload: DailyReportCreate) -> DailyReportPublic:
@@ -71,9 +101,12 @@ def create_daily_report(db: Session, payload: DailyReportCreate) -> DailyReportP
             record.target_department,
             "daily_report_incoming",
             "New report awaiting verification",
-            f"A report from {record.department} is awaiting your verification.",
-            "/app/leadman/reports",
+            f"A report from {record.department} is awaiting {record.target_department}'s verification.",
+            _leadman_link("incoming", record.target_department),
         )
+    else:
+        # End of the department chain: no verification step, straight to compile.
+        _notify_ready_to_compile(db, record)
 
     return _to_public(record)
 
@@ -126,7 +159,8 @@ def list_report_history(db: Session, user, limit: int = 100) -> list[DailyReport
     query = db.query(DailyReport)
 
     if role == 'employee':
-        rows = query.filter(DailyReport.status != 'rejected').order_by(DailyReport.created_at.desc()).all()
+        # Reports sent back to the leadman are being corrected; hide them until resubmitted.
+        rows = query.filter(DailyReport.status.notin_(list(RESUBMITTABLE_STATUSES))).order_by(DailyReport.created_at.desc()).all()
         result: list[DailyReportPublic] = []
         for row in rows:
             own_entries = [entry for entry in (row.entries or []) if _entry_belongs_to(entry, user.id)]
@@ -183,7 +217,18 @@ def update_daily_report(db: Session, report_id: str, payload: DailyReportUpdate,
             "daily_report_rejected",
             "Report rejected",
             payload.notes or f"Your report for {record.department} was rejected. Edit and resubmit it.",
+            _leadman_link("rejected", record.department),
+        )
+    elif payload.status == 'leadman_verified':
+        _notify_ready_to_compile(db, record)
+        create_notification(
+            db,
+            record.submitted_by,
+            "daily_report_verified",
+            "Report verified",
+            f"Your {_report_label(record)} was verified by {record.target_department or 'the next department'}.",
             "/app/leadman/history",
+            dedupe=True,
         )
     elif payload.status == 'gm_submitted':
         notify_role(
@@ -191,8 +236,9 @@ def update_daily_report(db: Session, report_id: str, payload: DailyReportUpdate,
             "gm",
             "daily_report_gm_pending",
             "Report pending approval",
-            f"A compiled report for {record.department} is awaiting your approval.",
+            f"A compiled {_report_label(record)} is awaiting your approval.",
             "/app/production/consolidated",
+            dedupe=True,
         )
 
     return _to_public(record)
@@ -202,8 +248,8 @@ def resubmit_daily_report(db: Session, report_id: str, payload: DailyReportResub
     record = db.query(DailyReport).filter(DailyReport.id == report_id).first()
     if record is None:
         raise ValueError("Daily report not found")
-    if record.status != 'rejected':
-        raise ValueError("Only rejected reports can be resubmitted")
+    if record.status not in RESUBMITTABLE_STATUSES:
+        raise ValueError("Only rejected or returned reports can be resubmitted")
     if record.submitted_by != current_user_id:
         raise ValueError("Only the original submitting leadman can resubmit this report")
 
@@ -212,9 +258,13 @@ def resubmit_daily_report(db: Session, report_id: str, payload: DailyReportResub
     record.summary = payload.summary
     record.entries = [e.model_dump() if hasattr(e, 'model_dump') else e for e in (payload.entries or [])]
     record.status = _initial_status(payload.targetDepartment)
-    # The rejection is undone — the report awaits a fresh review.
+    # The rejection/return is undone — the report goes through the whole flow
+    # again (next-department verification -> compile -> GM). return_history
+    # is kept so later stages can still see why it bounced.
     record.verified_by = None
     record.verified_at = None
+    record.compiled_by = None
+    record.compiled_at = None
 
     db.add(record)
     db.commit()
@@ -226,8 +276,77 @@ def resubmit_daily_report(db: Session, report_id: str, payload: DailyReportResub
             record.target_department,
             "daily_report_incoming",
             "New report awaiting verification",
-            f"A resubmitted report from {record.department} is awaiting your verification.",
-            "/app/leadman/reports",
+            f"A resubmitted report from {record.department} is awaiting {record.target_department}'s verification.",
+            _leadman_link("incoming", record.target_department),
+        )
+    else:
+        _notify_ready_to_compile(db, record)
+
+    return _to_public(record)
+
+
+# rejected = sent back by the next department's leadman
+# returned = sent back by production in-charge (usually after a GM return)
+RESUBMITTABLE_STATUSES = {'rejected', 'returned'}
+
+# Who may return a report, from which status, and where it goes.
+RETURN_RULES = {
+    'gm': {'from': 'gm_submitted', 'to': 'gm_returned'},
+    'production_incharge': {'from': 'gm_returned', 'to': 'returned'},
+}
+
+# Production in-charge may (re)send a report to the GM only from these.
+GM_SUBMITTABLE_FROM = {'compiled', 'gm_returned'}
+
+
+def return_daily_report(db: Session, report_id: str, reason: str, actor) -> DailyReportPublic:
+    """Send a report one step back up the chain, with a required reason.
+
+    GM -> production in-charge (gm_submitted -> gm_returned), then
+    production in-charge -> the leadman who submitted it (gm_returned -> returned).
+    """
+    rule = RETURN_RULES.get(getattr(actor, 'role', None))
+    if rule is None:
+        raise PermissionError("Only the GM or production in-charge can return a report")
+
+    record = db.query(DailyReport).filter(DailyReport.id == report_id).first()
+    if record is None:
+        raise LookupError("Daily report not found")
+    if record.status != rule['from']:
+        if actor.role == 'gm':
+            raise ValueError("Only reports pending GM approval can be returned")
+        raise ValueError("Only reports returned by the GM can be sent back to the leadman")
+
+    # Reassign (not append in place) so SQLAlchemy sees the JSON change.
+    record.return_history = list(record.return_history or []) + [{
+        "byRole": actor.role,
+        "byId": actor.id,
+        "byName": actor.name,
+        "reason": reason,
+        "at": datetime.now(timezone.utc).isoformat(),
+    }]
+    record.status = rule['to']
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+
+    if actor.role == 'gm':
+        notify_role(
+            db,
+            "production_incharge",
+            "daily_report_gm_returned",
+            "Report returned by GM",
+            f"{record.department} ({record.report_date}): {reason}",
+            "/app/production/returned",
+        )
+    elif record.submitted_by is not None:
+        create_notification(
+            db,
+            record.submitted_by,
+            "daily_report_rejected",
+            "Report returned by Production In-Charge",
+            f"{record.department} ({record.report_date}): {reason}",
+            _leadman_link("rejected", record.department),
         )
 
     return _to_public(record)
@@ -269,4 +388,31 @@ def approve_daily_report(db: Session, report_id: str, approved_by: int | None) -
     db.add(record)
     db.commit()
     db.refresh(record)
+
+    # Deduped: approving a bundle approves each of its reports, but the leadman
+    # and each employee should hear about that department/day only once.
+    create_notification(
+        db,
+        record.submitted_by,
+        "daily_report_approved",
+        "Report approved",
+        f"The GM approved your {_report_label(record)}. Payroll has been released.",
+        "/app/leadman/history",
+        dedupe=True,
+    )
+    for employee_id in per_employee:
+        try:
+            recipient_id = int(employee_id)
+        except (TypeError, ValueError):
+            continue
+        create_notification(
+            db,
+            recipient_id,
+            "payslip_released",
+            "Payslip ready",
+            f"Your pay for {record.report_date} has been released. Check your payslip.",
+            "/app/portal/payslips",
+            dedupe=True,
+        )
+
     return _to_public(record)

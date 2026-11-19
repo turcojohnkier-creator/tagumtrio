@@ -40,7 +40,7 @@ function DialogModal({ dialog, onCancel, onConfirm, onClose }) {
                 <h3 className="mt-1 text-xl font-semibold text-slate-900">{dialog.title}</h3>
               </div>
             </div>
-            <button type="button" onClick={isConfirm ? onCancel : onClose} className="text-slate-500 hover:text-slate-900">
+            <button type="button" onClick={isConfirm ? onCancel : onClose} aria-label="Close" className="btn-dismiss rounded-lg p-1 text-slate-500 hover:text-slate-900">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -50,7 +50,7 @@ function DialogModal({ dialog, onCancel, onConfirm, onClose }) {
           <div className="mt-6 flex items-center justify-end gap-3">
             {isConfirm ? (
               <>
-                <button type="button" onClick={onCancel} className="rounded-xl bg-slate-100 px-4 py-2.5 text-slate-800 transition-colors hover:bg-slate-200">
+                <button type="button" onClick={onCancel} className="btn-dismiss rounded-xl border border-transparent bg-slate-100 px-4 py-2.5 text-slate-800 transition-colors hover:bg-slate-200">
                   {dialog.cancelText || 'Cancel'}
                 </button>
                 <button type="button" onClick={onConfirm} className="rounded-xl bg-forest px-4 py-2.5 font-medium text-white transition-colors hover:bg-forest-hover">

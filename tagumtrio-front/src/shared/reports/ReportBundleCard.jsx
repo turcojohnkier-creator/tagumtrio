@@ -1,7 +1,8 @@
 import { ChevronRight } from 'lucide-react'
 import Badge from '../ui/Badge'
 import { useAuth } from '../../context/auth-context'
-import { getStatusLabel, getStatusVariant, normalizeStatus } from './report-status'
+import UserAvatar from '../ui/UserAvatar'
+import { getLatestReturn, getStatusLabel, getStatusVariant, getSubmitterNames, normalizeStatus, returnLabel } from './report-status'
 
 function formatBundleDate(value) {
   if (!value) return '-'
@@ -12,6 +13,15 @@ function formatBundleDate(value) {
 
 export default function ReportBundleCard({ bundle, selected, onClick }) {
   const { t } = useAuth()
+  const reports = Array.isArray(bundle.reports) ? bundle.reports : []
+  // The leadman(s) who sent these reports — shown wherever the bundle travels.
+  const submitters = getSubmitterNames(reports)
+  const firstSubmitter = reports.find((report) => report.submittedByName)
+  // Newest return across the bundle, shown while it is in a returned state.
+  const isReturned = ['gm_returned', 'returned'].includes(normalizeStatus(bundle.status))
+  const latestReturn = isReturned
+    ? reports.map(getLatestReturn).filter(Boolean).sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0))[0]
+    : null
   return (
     <button
       type="button"
@@ -23,6 +33,13 @@ export default function ReportBundleCard({ bundle, selected, onClick }) {
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">{t('report.bundle.daily_reports')}</p>
           <h4 className="mt-1 truncate font-heading text-lg font-bold text-zinc-900">{bundle.department}</h4>
           <p className="mt-1 text-sm text-zinc-500">{formatBundleDate(bundle.reportDate || bundle.latestDate)}</p>
+          {submitters.length > 0 ? (
+            <p className="mt-1.5 flex min-w-0 items-center gap-1.5 text-sm text-zinc-600">
+              <span className="shrink-0 text-xs uppercase tracking-wide text-zinc-400">{t('report.bundle.sent_by', 'Sent by')}</span>
+              <UserAvatar userId={firstSubmitter?.submittedBy} name={submitters[0]} size="xs" />
+              <span className="truncate font-medium text-zinc-800">{submitters.join(', ')}</span>
+            </p>
+          ) : null}
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-4 md:mt-0 md:w-[64%] md:grid-cols-4">
@@ -48,6 +65,11 @@ export default function ReportBundleCard({ bundle, selected, onClick }) {
           <span className="flex items-center gap-1 text-emerald-600 group-hover:text-emerald-700">{t('report.bundle.open')} <ChevronRight className="h-3.5 w-3.5" /></span>
         </div>
       </div>
+      {latestReturn ? (
+        <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">
+          <span className="font-semibold text-rose-700">{returnLabel(latestReturn, t)}:</span> {latestReturn.reason}
+        </div>
+      ) : null}
     </button>
   )
 }

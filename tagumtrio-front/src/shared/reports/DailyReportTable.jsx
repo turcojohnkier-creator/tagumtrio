@@ -58,7 +58,7 @@ function EmployeeListPopup({ open, entries, onClose }) {
           <div className="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
             <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-zinc-200 bg-white px-5 py-4">
               <h4 className="font-heading text-base font-semibold text-zinc-900">{t('table.employees_involved')} ({entries.length})</h4>
-              <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
+              <button type="button" onClick={onClose} aria-label="Close" className="btn-dismiss rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -91,7 +91,7 @@ function PhotoGridPopup({ open, photos, onClose }) {
           <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
             <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-zinc-200 bg-white px-5 py-4">
               <h4 className="font-heading text-base font-semibold text-zinc-900">{t('table.evidence_photos')} ({photos.length})</h4>
-              <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
+              <button type="button" onClick={onClose} aria-label="Close" className="btn-dismiss rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
                 <X className="h-4 w-4" />
               </button>
             </div>

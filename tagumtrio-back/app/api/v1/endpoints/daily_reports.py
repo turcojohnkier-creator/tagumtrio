@@ -6,10 +6,13 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.deps import get_current_user
 from app.models.daily_report import DailyReport
-from app.schemas.daily_report import DailyReportCreate, DailyReportPublic, DailyReportResubmit, DailyReportUpdate
+from app.schemas.daily_report import DailyReportCreate, DailyReportPublic, DailyReportResubmit, DailyReportReturn, DailyReportUpdate
 from app.services.daily_report_service import (
+    GM_SUBMITTABLE_FROM,
     HISTORY_ROLES,
+    RETURN_RULES,
     approve_daily_report,
+    return_daily_report,
     create_daily_report,
     list_daily_reports,
     list_daily_reports_for_employee,
@@ -94,6 +97,14 @@ def patch_daily_report(report_id: str, payload: DailyReportUpdate, db: Session =
     if payload.status in PRODUCTION_INCHARGE_STATUSES and current_user.role != "production_incharge":
         raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Only production in-charge can advance a report to this stage")
 
+    if payload.status == "gm_submitted":
+        record = db.query(DailyReport).filter(DailyReport.id == report_id).first()
+        if record is None:
+            raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Daily report not found")
+        # Sent up for the first time (compiled) or resent after a GM return.
+        if record.status not in GM_SUBMITTABLE_FROM:
+            raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail="Only compiled or GM-returned reports can be sent to the GM")
+
     try:
         return update_daily_report(db, report_id, payload, actor_id=current_user.id)
     except ValueError as exc:
@@ -106,6 +117,21 @@ def patch_resubmit_daily_report(report_id: str, payload: DailyReportResubmit, db
         raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
     try:
         return resubmit_daily_report(db, report_id, payload, current_user.id)
+    except ValueError as exc:
+        raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.patch("/{report_id}/return", response_model=DailyReportPublic)
+def patch_return_daily_report(report_id: str, payload: DailyReportReturn, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    # GM returns to production in-charge; production in-charge returns to the leadman.
+    if current_user.role not in RETURN_RULES:
+        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Only the GM or production in-charge can return a report")
+    try:
+        return return_daily_report(db, report_id, payload.reason, current_user)
+    except LookupError as exc:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 

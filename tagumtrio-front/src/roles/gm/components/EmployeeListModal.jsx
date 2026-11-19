@@ -10,8 +10,12 @@ import Button from '../../../shared/ui/Button'
 import EmptyState from '../../../shared/ui/EmptyState'
 import Portal from '../../../shared/ui/Portal'
 import Avatar from '../../../shared/ui/Avatar'
+import Badge from '../../../shared/ui/Badge'
 
-export default function EmployeeListModal({ department, onClose, employees = [], onReassigned }) {
+const EMPTY_SET = new Set()
+const ROW_GRID = 'grid grid-cols-[minmax(220px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_minmax(110px,0.8fr)_180px] gap-0'
+
+export default function EmployeeListModal({ department, onClose, employees = [], onReassigned, presentIds = EMPTY_SET, attendanceOpen = false }) {
   const dialog = useDialog()
   const { t } = useAuth()
   const [localEmployees, setLocalEmployees] = useState([])
@@ -22,6 +26,10 @@ export default function EmployeeListModal({ department, onClose, employees = [],
     setLocalEmployees((employees || []).filter((e) => (e.department || 'Unassigned') === department.name))
     setTargetDept('')
   }, [department, employees])
+
+  const isPresent = (emp) => attendanceOpen && presentIds.has(Number(emp.id ?? emp.employeeId))
+  const deployed = localEmployees.filter((emp) => (emp.role || 'employee') === 'employee' && emp.is_active !== false)
+  const activeCount = deployed.filter(isPresent).length
 
   const availableDepartments = useMemo(
     () => DEPARTMENTS.filter((name) => name !== department.name),
@@ -92,9 +100,11 @@ export default function EmployeeListModal({ department, onClose, employees = [],
           </div>
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-white px-4 py-2 text-sm text-zinc-700">
-              {t('gm.modal.active')}: <span className="font-semibold text-zinc-900">{localEmployees.length}</span>
+              {t('gm.modal.employees')}: <span className="font-semibold text-zinc-900">{deployed.length}</span>
+              <span className="mx-2 text-zinc-300">·</span>
+              {t('gm.modal.active')}: <span className="font-semibold text-emerald-700">{attendanceOpen ? activeCount : '—'}</span>
             </div>
-            <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={onClose}>
+            <Button type="button" variant="outline" size="sm" className="btn-dismiss rounded-full" onClick={onClose}>
               <X className="h-4 w-4" /> {t('gm.modal.close')}
             </Button>
           </div>
@@ -124,10 +134,11 @@ export default function EmployeeListModal({ department, onClose, employees = [],
           </div>
 
           <div className="mt-6 overflow-x-auto rounded-[1.5rem] border border-zinc-200 bg-white shadow-sm">
-            <div className="grid grid-cols-[minmax(220px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_180px] gap-0 border-b border-zinc-200 bg-zinc-50 px-5 py-3 text-xs uppercase tracking-wide text-zinc-400">
+            <div className={`${ROW_GRID} border-b border-zinc-200 bg-zinc-50 px-5 py-3 text-xs uppercase tracking-wide text-zinc-400`}>
               <span>{t('gm.modal.col_employee')}</span>
               <span>{t('gm.modal.col_id')}</span>
               <span>{t('gm.modal.col_role')}</span>
+              <span>{t('gm.modal.col_status')}</span>
               <span className="text-right">{t('gm.modal.col_action')}</span>
             </div>
             <div className="max-h-[520px] overflow-y-auto">
@@ -139,7 +150,7 @@ export default function EmployeeListModal({ department, onClose, employees = [],
                 localEmployees.map((emp) => {
                   const employeeKey = emp.employeeId ?? emp.id
                   return (
-                    <div key={employeeKey} className="grid grid-cols-[minmax(220px,1fr)_minmax(120px,1fr)_minmax(140px,1fr)_180px] gap-0 border-b border-zinc-200 px-5 py-4 text-sm text-zinc-800 hover:bg-zinc-50/70">
+                    <div key={employeeKey} className={`${ROW_GRID} items-center border-b border-zinc-200 px-5 py-4 text-sm text-zinc-800 hover:bg-zinc-50/70`}>
                       <div className="flex min-w-0 items-center gap-3">
                         <Avatar name={emp.employeeName || emp.name || emp.fullName} src={emp.avatar_url} size="md" />
                         <div className="min-w-0">
@@ -149,6 +160,13 @@ export default function EmployeeListModal({ department, onClose, employees = [],
                       </div>
                       <div className="text-zinc-500">{formatEmployeeId(employeeKey)}</div>
                       <div className="text-zinc-500">{emp.role || t('gm.modal.role_default')}</div>
+                      <div>
+                        {(emp.role || 'employee') === 'employee' ? (
+                          <Badge variant={isPresent(emp) ? 'success' : 'neutral'}>
+                            {isPresent(emp) ? t('gm.modal.active') : t('gm.modal.inactive')}
+                          </Badge>
+                        ) : <span className="text-zinc-300">—</span>}
+                      </div>
                       <div className="flex justify-end gap-2">
                         <Button type="button" variant="outline" size="sm" className="rounded-full">
                           {t('gm.modal.view')}

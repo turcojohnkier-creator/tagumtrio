@@ -54,8 +54,9 @@ function deriveExtraSlotKeys(photoPreview) {
   return Object.keys(photoPreview).filter((key) => !FIXED_PHOTO_KEYS.includes(key))
 }
 
-function EmployeePickerModal({ open, department, employeeOptions, selectedEmployeeIds, onToggleEmployee, onClose }) {
+function EmployeePickerModal({ open, department, employeeOptions, selectedEmployeeIds, onToggleEmployee, allSelected, onToggleAll, onClose }) {
   if (!open) return null
+  const hasOptions = employeeOptions.length > 0
 
   return (
     <Portal>
@@ -66,22 +67,51 @@ function EmployeePickerModal({ open, department, employeeOptions, selectedEmploy
               <h4 className="text-base font-semibold text-zinc-900">Employees Included</h4>
               <p className="text-sm text-zinc-500">Select the employees that belong in this report.</p>
             </div>
-            <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-800 transition-colors hover:bg-zinc-100">
-              Close
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={onToggleAll}
+                disabled={!hasOptions}
+                className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {allSelected ? 'Clear all' : `Select all (${employeeOptions.length})`}
+              </button>
+              <button type="button" onClick={onClose} className="btn-dismiss rounded-full border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-800 transition-colors hover:bg-zinc-100">
+                Close
+              </button>
+            </div>
           </div>
 
           <div className="max-h-[70vh] overflow-auto">
             <table className="min-w-full divide-y divide-zinc-200 text-sm">
               <thead className="sticky top-0 bg-emerald-50/70 text-emerald-800">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium">Select</th>
+                  <th className="px-4 py-3 text-left font-medium">
+                    <label className="inline-flex cursor-pointer items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        disabled={!hasOptions}
+                        onChange={onToggleAll}
+                        aria-label="Select all employees"
+                        className="h-4 w-4 rounded border-zinc-300 bg-white text-emerald-500 focus:ring-emerald-500"
+                      />
+                      Select
+                    </label>
+                  </th>
                   <th className="px-4 py-3 text-left font-medium">Employee No.</th>
                   <th className="px-4 py-3 text-left font-medium">Employee Name</th>
                   <th className="px-4 py-3 text-left font-medium">Department</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200 text-zinc-800">
+                {employeeOptions.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-8 text-center text-sm text-zinc-500">
+                      No active workers available for this report.
+                    </td>
+                  </tr>
+                ) : null}
                 {employeeOptions.map((employee) => {
                   const employeeId = normalizeEmployeeId(employee)
                   const isSelected = selectedEmployeeIds.includes(employeeId)
@@ -137,7 +167,7 @@ function ReportReviewModal({ open, department, product, quantity, pricePerUnit, 
               <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{department || 'Report'}</h3>
               <p className="mt-1 text-sm text-zinc-500">Check the details below carefully. This is what will be recorded.</p>
             </div>
-            <button type="button" onClick={onBack} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
+            <button type="button" onClick={onBack} aria-label="Close" className="btn-dismiss rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -330,6 +360,12 @@ export default function ReportEntryForm({
     })
   }
 
+  // Everyone in the list (on Create Report, that's the workers marked active).
+  const allEmployeesSelected = validEmployeeOptions.length > 0 && selectedEmployees.length === validEmployeeOptions.length
+  function toggleAllEmployees() {
+    setSelectedEmployeeIds(allEmployeesSelected ? [] : validEmployeeOptions.map((employee) => employee.normalizedEmployeeId))
+  }
+
   function handleChange(key, value) {
     setValues((current) => ({ ...current, [key]: value }))
   }
@@ -431,7 +467,15 @@ export default function ReportEntryForm({
           <button type="button" onClick={() => setShowEmployeeTable(true)} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-500/20">
             View employees in department
           </button>
-          <div className="text-sm text-zinc-700">Employee/s: <span className="font-semibold text-emerald-700">{selectedEmployeeIds.length}</span></div>
+          <button
+            type="button"
+            onClick={toggleAllEmployees}
+            disabled={validEmployeeOptions.length === 0}
+            className="rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {allEmployeesSelected ? 'Clear all' : `Select all (${validEmployeeOptions.length})`}
+          </button>
+          <div className="text-sm text-zinc-700">Employee/s: <span className="font-semibold text-emerald-700">{selectedEmployees.length}</span></div>
         </div>
       </div>
 
@@ -548,7 +592,7 @@ export default function ReportEntryForm({
                       <button
                         type="button"
                         onClick={() => removePhotoSlot(photoKey)}
-                        className="absolute top-1 right-1 rounded-full bg-zinc-200 p-1 text-zinc-600 hover:bg-zinc-300"
+                        className="btn-dismiss absolute top-1 right-1 rounded-full bg-zinc-200 p-1 text-zinc-600 hover:bg-zinc-300"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -594,6 +638,8 @@ export default function ReportEntryForm({
         employeeOptions={validEmployeeOptions}
         selectedEmployeeIds={selectedEmployeeIds}
         onToggleEmployee={toggleEmployee}
+        allSelected={allEmployeesSelected}
+        onToggleAll={toggleAllEmployees}
         onClose={() => setShowEmployeeTable(false)}
       />
 

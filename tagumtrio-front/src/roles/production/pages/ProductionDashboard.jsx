@@ -6,6 +6,7 @@ import { useAuth } from '../../../context/auth-context'
 import { useDialog } from '../../../context/dialog-context'
 import { useAppData } from '../../../context/app-data-context'
 import { fetchDailyReportsApi } from '../../../lib/api'
+import useLiveRefresh from '../../../shared/hooks/useLiveRefresh'
 import { getEntryIdentifier, getEntryLabel, groupBatches, hasMeaningfulEntry, summarizeBatches } from '../../../shared/reports/report-entry-utils'
 import { formatProductWithUnit } from '../../../lib/units'
 import PageHeader from '../../../shared/ui/PageHeader'
@@ -99,7 +100,7 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
             <h3 className="mt-1 font-heading text-lg font-bold text-zinc-900">{report.department}</h3>
             <p className="mt-1 text-sm text-zinc-500">Submitted {formatReportDate(report.scannedAt)}</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
+          <button type="button" onClick={onClose} aria-label="Close" className="btn-dismiss rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -185,7 +186,7 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
         </div>
 
         <div className="flex flex-col gap-3 border-t border-zinc-200 px-5 py-4 sm:flex-row sm:justify-end sm:items-center">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" className="btn-dismiss" onClick={onClose}>
             Cancel
           </Button>
           <Button
@@ -205,7 +206,7 @@ export default function ProductionDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const dialog = useDialog()
-  const { updateDailyReportStatus } = useAppData()
+  const { updateDailyReportStatus, markNotificationsSeen } = useAppData()
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -217,9 +218,7 @@ export default function ProductionDashboard() {
   const [showPhotosModal, setShowPhotosModal] = useState(false)
   const [compilingReportId, setCompilingReportId] = useState('')
 
-  if (user?.role === 'gm') {
-    return <Navigate to="/app/production/consolidated" replace />
-  }
+  const isGm = user?.role === 'gm'
 
   async function loadReports(mountedRef = { current: true }) {
     setLoading(true)
@@ -240,12 +239,22 @@ export default function ProductionDashboard() {
   }
 
   useEffect(() => {
+    if (isGm) return undefined
     const mountedRef = { current: true }
     loadReports(mountedRef)
+    markNotificationsSeen('daily_report_ready_to_compile')
     return () => {
       mountedRef.current = false
     }
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGm])
+
+  // Newly verified reports appear without a manual reload. Silent: no spinner,
+  // and a failed background refresh keeps the list that is already shown.
+  useLiveRefresh(
+    () => fetchDailyReportsApi().then((remote) => { if (Array.isArray(remote)) setReports(remote) }).catch(() => {}),
+    { types: ['daily_report_ready_to_compile'], clearTypes: ['daily_report_ready_to_compile'], intervalMs: 30000, enabled: !isGm }
+  )
 
   async function handleCompile(report) {
     if (!report?.id) return
@@ -327,6 +336,11 @@ export default function ProductionDashboard() {
       return accumulator
     }, { reports: 0, employees: 0 })
   }, [filteredReports])
+
+  // After all hooks (rules of hooks): the GM's Production link lands here.
+  if (isGm) {
+    return <Navigate to="/app/production/consolidated" replace />
+  }
 
   return (
     <div className="space-y-6">
@@ -461,7 +475,7 @@ export default function ProductionDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowPhotosModal(false)}
-                  className="text-zinc-500 hover:text-zinc-900"
+                  className="btn-dismiss rounded-md px-2 py-1 text-zinc-500 hover:text-zinc-900"
                 >
                   Close
                 </button>

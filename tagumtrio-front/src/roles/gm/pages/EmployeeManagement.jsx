@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Search } from 'lucide-react'
+import { Clock, Search } from 'lucide-react'
 import { useAppData } from '../../../context/app-data-context'
 import { useAuth } from '../../../context/auth-context'
 import { DEPARTMENTS } from '../../../constants/departments'
 import { formatEmployeeId } from '../../../lib/employeeId'
+import useAttendance, { describeAttendance } from '../../../shared/hooks/useAttendance'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Card from '../../../shared/ui/Card'
 import Badge from '../../../shared/ui/Badge'
@@ -14,6 +15,9 @@ import Avatar from '../../../shared/ui/Avatar'
 export default function EmployeeManagement() {
   const { t } = useAuth()
   const { employees = [] } = useAppData()
+  // Status = present for the current work session, as marked by the leadman.
+  // Resets to Inactive at every time-out, same as Departments Overview.
+  const { status: attendance, presentIds, isOpen: attendanceOpen, error: attendanceError } = useAttendance()
   const [searchText, setSearchText] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('All Departments')
 
@@ -33,7 +37,12 @@ export default function EmployeeManagement() {
 
   return (
     <div className="space-y-6">
-      <PageHeader tone="brand" title={t('gm.employee.title')} />
+      <PageHeader tone="brand" title={t('gm.employee.title')}>
+        <p className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium text-white">
+          <Clock className="h-4 w-4" />
+          {describeAttendance(attendance, attendanceError, t)}
+        </p>
+      </PageHeader>
 
       <Card className="flex flex-col gap-4 xl:flex-row xl:items-center">
         <div className="relative w-full xl:flex-1">
@@ -80,7 +89,13 @@ export default function EmployeeManagement() {
                 const id = emp.employeeId || emp.id || emp.employee_id || '—'
                 const name = emp.employeeName || emp.name || emp.employee_name || t('gm.modal.unknown')
                 const department = emp.department || emp.dept || emp.departmentName || t('gm.modal.unassigned')
-                const isActive = emp.is_active !== false
+                const archived = emp.is_active === false
+                const present = !archived && attendanceOpen && presentIds.has(Number(emp.id ?? emp.employeeId))
+                const badge = archived
+                  ? { variant: 'danger', label: t('gm.employee.archived') }
+                  : present
+                    ? { variant: 'success', label: t('gm.employee.active') }
+                    : { variant: 'neutral', label: t('gm.employee.inactive') }
                 return (
                   <motion.tr key={id} variants={{ hidden: { opacity: 0, y: 4 }, show: { opacity: 1, y: 0, transition: { duration: 0.18, ease: 'easeOut' } } }} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
                     <td className="px-4 py-3 font-medium text-zinc-900">{formatEmployeeId(id)}</td>
@@ -92,7 +107,7 @@ export default function EmployeeManagement() {
                     </td>
                     <td className="px-4 py-3">{department}</td>
                     <td className="px-4 py-3">
-                      <Badge variant={isActive ? 'success' : 'neutral'}>{isActive ? t('gm.employee.active') : t('gm.employee.inactive')}</Badge>
+                      <Badge variant={badge.variant} className="w-[5.5rem] justify-center">{badge.label}</Badge>
                     </td>
                   </motion.tr>
                 )

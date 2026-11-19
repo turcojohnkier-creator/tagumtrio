@@ -30,11 +30,21 @@ import {
   createRateApi,
   updateRateApi,
   deleteRateApi,
-  fetchNotificationUnreadCountsApi,
+  fetchNotificationSummaryApi,
   fetchNotificationsApi,
+  markNotificationReadApi,
   markNotificationsReadByTypeApi,
   hasAuthToken,
 } from '../lib/api'
+import { startVisiblePolling } from '../lib/polling'
+import { playNotificationSound } from '../lib/notificationSound'
+
+const NOTIFICATION_POLL_MS = 8000
+const NOTIFICATION_LIST_LIMIT = 20
+// More than this many new notifications in one poll collapse into one summary toast.
+const MAX_TOASTS_AT_ONCE = 3
+// These keep their blocking dialog (they change where the user works) instead of a toast.
+const REASSIGNMENT_TYPES = new Set(['reassignment_leadman', 'reassignment_employee'])
 
 function toEmployeeRecord(employee) {
   if (!employee) return {}
@@ -135,6 +145,9 @@ export function AppDataProvider({ children }) {
   const [announcements, setAnnouncements] = useState(initialState.announcements || [])
   const [rates, setRates] = useState([])
   const [notificationCounts, setNotificationCounts] = useState({})
+  const [notifications, setNotifications] = useState([])
+  const [toasts, setToasts] = useState([])
+  const [updateSignals, setUpdateSignals] = useState({})
   // schedules feature removed; keep empty state to avoid breaking callers
   const [schedules, setSchedules] = useState([])
   const [leaveRequests, setLeaveRequests] = useState(initialState.leaveRequests || [])
@@ -270,25 +283,23 @@ export function AppDataProvider({ children }) {
     }
   }
 
-  // Poll announcements and schedules for updates every 10s
+  // Poll announcements every 10s while the tab is visible.
   useEffect(() => {
     if (!user) return
     if (!hasAuthToken()) return
     let cancelled = false
-    let interval
 
     async function refreshAnnouncements() {
       try {
         const annResp = await fetchAnnouncementsApi()
         if (!cancelled && Array.isArray(annResp)) setAnnouncements(annResp)
-      } catch (e) { /* ignore */ }
+      } catch { /* ignore */ }
     }
 
-    refreshAnnouncements()
-    interval = setInterval(refreshAnnouncements, 10000)
+    const stop = startVisiblePolling(refreshAnnouncements, 10000)
     return () => {
       cancelled = true
-      if (interval) clearInterval(interval)
+      stop()
     }
   }, [user?.id])
 
@@ -320,7 +331,6 @@ export function AppDataProvider({ children }) {
     if (!user) return
     if (!hasAuthToken()) return
     let cancelled = false
-    let interval
 
     async function refreshLeaveRequests() {
       try {
@@ -331,74 +341,137 @@ export function AppDataProvider({ children }) {
       }
     }
 
-    refreshLeaveRequests()
-    interval = setInterval(refreshLeaveRequests, 5000)
+    const stop = startVisiblePolling(refreshLeaveRequests, 5000)
     return () => {
       cancelled = true
-      if (interval) clearInterval(interval)
+      stop()
     }
   }, [user?.id])
 
-  // Poll unread notification counts (drives nav red dots) and pop up a blocking
-  // dialog the moment a reassignment notification arrives, regardless of which
-  // page the user is currently on.
+  // One notification poll drives everything "live":
+  //   - notificationCounts -> nav red dots
+  //   - notifications      -> the bell's list
+  //   - toasts             -> popups for notifications that arrived since the last poll
+  //   - updateSignals      -> per-type counters pages watch to reload themselves
+  // Department reassignment keeps its blocking dialog instead of a toast.
+  // Paused while the tab is hidden (see startVisiblePolling).
   useEffect(() => {
     if (!user) return
     if (!hasAuthToken()) return
     let cancelled = false
-    let interval
-    let hadReassignment = false
-
+    let seeded = false
+    let showingReassignment = false
+    const seenIds = new Set()
     const reassignmentType = user.role === 'leadman' ? 'reassignment_leadman' : 'reassignment_employee'
 
-    async function refreshNotificationCounts() {
+    async function showReassignmentDialog() {
+      showingReassignment = true
       try {
-        const counts = await fetchNotificationUnreadCountsApi()
-        if (cancelled || !counts || typeof counts !== 'object') return
-
-        const hasReassignment = Number(counts[reassignmentType] || 0) > 0
-
-        setNotificationCounts(counts)
-
-        if (!hadReassignment && hasReassignment) {
-          const unread = await fetchNotificationsApi(true).catch(() => [])
-          const items = Array.isArray(unread) ? unread.filter((item) => item.type === reassignmentType) : []
-          if (items.length > 0) {
-            dialog.success({
-              title: items[0].title || 'Department reassigned',
-              message: items.map((item) => item.message).join(' '),
-            })
-            await markNotificationsReadByTypeApi(reassignmentType).catch(() => {})
-            setNotificationCounts((current) => ({ ...current, [reassignmentType]: 0 }))
-            hadReassignment = false
-          } else {
-            hadReassignment = true
-          }
-        } else {
-          hadReassignment = hasReassignment
-        }
-      } catch (error) {
-        // ignore transient failures
+        const unread = await fetchNotificationsApi(true).catch(() => [])
+        const items = Array.isArray(unread) ? unread.filter((item) => item.type === reassignmentType) : []
+        if (cancelled || items.length === 0) return
+        dialog.success({
+          title: items[0].title || 'Department reassigned',
+          message: items.map((item) => item.message).join(' '),
+        })
+        await markNotificationsReadByTypeApi(reassignmentType).catch(() => {})
+        setNotificationCounts((current) => ({ ...current, [reassignmentType]: 0 }))
+      } finally {
+        showingReassignment = false
       }
     }
 
-    refreshNotificationCounts()
-    interval = setInterval(refreshNotificationCounts, 5000)
+    async function pollNotifications() {
+      const summary = await fetchNotificationSummaryApi(NOTIFICATION_LIST_LIMIT).catch(() => null)
+      if (cancelled || !summary || typeof summary !== 'object') return
+      const counts = summary.unreadCounts && typeof summary.unreadCounts === 'object' ? summary.unreadCounts : {}
+      const recent = Array.isArray(summary.recent) ? summary.recent : []
+
+      setNotificationCounts(counts)
+      setNotifications(recent)
+
+      // The first poll only seeds what already existed — no toast storm on login.
+      const arrived = seeded ? recent.filter((item) => !seenIds.has(item.id) && !item.readAt) : []
+      recent.forEach((item) => seenIds.add(item.id))
+      seeded = true
+
+      if (arrived.length > 0) {
+        // One chime per batch of new notifications (muted from the bell panel).
+        playNotificationSound()
+        setUpdateSignals((current) => {
+          const next = { ...current }
+          arrived.forEach((item) => { next[item.type] = (next[item.type] || 0) + 1 })
+          return next
+        })
+        const toastable = arrived.filter((item) => !REASSIGNMENT_TYPES.has(item.type))
+        if (toastable.length > 0) {
+          setToasts((current) => {
+            const fresh = toastable.length > MAX_TOASTS_AT_ONCE
+              ? [{ key: `summary-${Date.now()}`, count: toastable.length }]
+              : toastable.slice().reverse().map((item) => ({ key: item.id, notification: item }))
+            return [...current, ...fresh].slice(-MAX_TOASTS_AT_ONCE)
+          })
+        }
+      }
+
+      if (Number(counts[reassignmentType] || 0) > 0 && !showingReassignment) {
+        showReassignmentDialog()
+      }
+    }
+
+    const stop = startVisiblePolling(pollNotifications, NOTIFICATION_POLL_MS)
     return () => {
       cancelled = true
-      if (interval) clearInterval(interval)
+      stop()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, user?.role])
 
+  // Local state first so dots/badges clear instantly; the next poll reconciles.
+  function markLocalRead(predicate) {
+    const now = new Date().toISOString()
+    setNotifications((current) => current.map((item) => (predicate(item) && !item.readAt ? { ...item, readAt: now } : item)))
+  }
+
   async function markNotificationsSeen(type) {
     setNotificationCounts((current) => ({ ...current, [type]: 0 }))
+    markLocalRead((item) => item.type === type)
     try {
       await markNotificationsReadByTypeApi(type)
     } catch (error) {
       // ignore — local state already cleared, next poll will reconcile
     }
   }
+
+  async function markNotificationRead(notification) {
+    if (!notification?.id || notification.readAt) return
+    setNotificationCounts((current) => ({
+      ...current,
+      [notification.type]: Math.max(0, Number(current[notification.type] || 0) - 1),
+    }))
+    markLocalRead((item) => item.id === notification.id)
+    try {
+      await markNotificationReadApi(notification.id)
+    } catch {
+      // ignore — next poll reconciles
+    }
+  }
+
+  async function markAllNotificationsRead() {
+    setNotificationCounts({})
+    markLocalRead(() => true)
+    try {
+      await markNotificationsReadByTypeApi()
+    } catch {
+      // ignore — next poll reconciles
+    }
+  }
+
+  function dismissToast(key) {
+    setToasts((current) => current.filter((toast) => toast.key !== key))
+  }
+
+  const unreadTotal = Object.values(notificationCounts || {}).reduce((sum, count) => sum + Number(count || 0), 0)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -916,6 +989,13 @@ export function AppDataProvider({ children }) {
         removeRate,
         notificationCounts,
         markNotificationsSeen,
+        notifications,
+        unreadTotal,
+        updateSignals,
+        toasts,
+        dismissToast,
+        markNotificationRead,
+        markAllNotificationsRead,
         schedules,
         createSchedule,
         updateSchedule,

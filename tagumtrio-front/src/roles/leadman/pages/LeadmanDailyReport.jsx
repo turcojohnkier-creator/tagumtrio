@@ -167,7 +167,7 @@ function ReportDetailModal({ batch, onClose, onSubmit, onDelete, isSubmitting })
             <Button type="button" variant="danger" size="sm" onClick={onDelete}>
               <Trash2 className="h-4 w-4" /> Delete
             </Button>
-            <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
+            <button type="button" onClick={onClose} aria-label="Close" className="btn-dismiss rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -211,7 +211,7 @@ function ReportDetailModal({ batch, onClose, onSubmit, onDelete, isSubmitting })
           <Button type="button" variant="secondary" onClick={() => window.print()}>
             <Printer className="h-4 w-4" /> Print / Save as PDF
           </Button>
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" className="btn-dismiss" onClick={onClose}>
             Cancel
           </Button>
           <Button type="button" disabled={isSubmitting} onClick={onSubmit}>

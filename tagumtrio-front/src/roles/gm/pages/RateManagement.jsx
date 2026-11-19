@@ -128,7 +128,7 @@ export default function RateManagement() {
                                 </select>
                                 <input value={editProduct} onChange={(e) => setEditProduct(e.target.value)} className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none" />
                                 <input value={editPrice} onChange={(e) => setEditPrice(e.target.value)} type="number" step="0.01" min="0" className="w-32 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none" />
-                                <Button type="button" variant="secondary" size="sm" onClick={() => setEditingId(null)}>{t('gm.rate.cancel')}</Button>
+                                <Button type="button" variant="secondary" size="sm" className="btn-dismiss" onClick={() => setEditingId(null)}>{t('gm.rate.cancel')}</Button>
                                 <Button type="submit" size="sm" disabled={editSubmitting}>{editSubmitting ? t('gm.rate.saving') : t('gm.rate.save')}</Button>
                               </form>
                             </td>

@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, Extra
+from pydantic import BaseModel, ConfigDict, Field, Extra, field_validator
 from typing import Any
 
 
@@ -50,6 +50,20 @@ class DailyReportUpdate(BaseModel):
         extra = Extra.allow
 
 
+class DailyReportReturn(BaseModel):
+    reason: str
+
+    @field_validator("reason")
+    @classmethod
+    def reason_required(cls, value: str) -> str:
+        value = (value or "").strip()
+        if not value:
+            raise ValueError("A reason is required to return a report.")
+        if len(value) > 1000:
+            raise ValueError("Reason must be 1000 characters or less.")
+        return value
+
+
 class DailyReportPublic(BaseModel):
     id: str
     department: str
@@ -67,5 +81,6 @@ class DailyReportPublic(BaseModel):
     compiled_at: datetime | None = Field(default=None, alias="compiledAt")
     approved_by: int | None = Field(default=None, alias="approvedBy")
     approved_at: datetime | None = Field(default=None, alias="approvedAt")
+    return_history: list[dict] = Field(default_factory=list, alias="returnHistory")
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)

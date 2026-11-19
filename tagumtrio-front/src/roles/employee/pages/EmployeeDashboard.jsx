@@ -4,15 +4,14 @@ import { Briefcase, Calendar as CalendarIcon, Clock, FileText, Hourglass } from 
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
 import { useDialog } from '../../../context/dialog-context'
-import { toManilaDateKey } from '../../../lib/datetime'
+import { formatDateKey, toManilaDateKey } from '../../../lib/datetime'
+import { MONTHLY_LEAVE_DAYS, leaveDays, maxEndDate } from '../../../lib/leave'
 import { formatEmployeeId } from '../../../lib/employeeId'
 import Card, { SectionTitle } from '../../../shared/ui/Card'
 import Button from '../../../shared/ui/Button'
 import Avatar from '../../../shared/ui/Avatar'
 
-const MONTHLY_LEAVE_LIMIT = 3
-
-function FileLeaveForm({ user, onSubmit }) {
+function FileLeaveForm({ user, onSubmit, remainingDays }) {
   const dialog = useDialog()
   const [type, setType] = useState('Sick')
   const [startDate, setStartDate] = useState('')
@@ -20,9 +19,24 @@ function FileLeaveForm({ user, onSubmit }) {
   const [reason, setReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  const todayKey = toManilaDateKey()
+  // Second day is optional and can only be the day right after the first
+  // (or nothing at all when just one leave day is left this month).
+  const latestEnd = maxEndDate(startDate, remainingDays)
+  const canPickSecondDay = Boolean(startDate) && latestEnd > startDate
+  // A second day that no longer fits (e.g. remaining days dropped to 1) is ignored.
+  const effectiveEnd = canPickSecondDay && endDate === latestEnd ? endDate : ''
+  const selectedDays = startDate ? leaveDays(startDate, effectiveEnd || startDate) : 0
+
+  function changeStart(value) {
+    setStartDate(value)
+    // The second day belongs to the old first day; pick it again.
+    setEndDate('')
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!user) return
+    if (!user || !startDate) return
     setSubmitting(true)
     try {
       await Promise.resolve(onSubmit({
@@ -30,7 +44,8 @@ function FileLeaveForm({ user, onSubmit }) {
         employeeName: user.name,
         leaveType: type,
         startDate,
-        endDate,
+        // One-day leave: the end is the same day.
+        endDate: effectiveEnd || startDate,
         reason,
       }))
       setType('Sick')
@@ -63,13 +78,46 @@ function FileLeaveForm({ user, onSubmit }) {
       </div>
 
       <div>
-        <label className="text-sm font-medium text-zinc-700">Start</label>
-        <input type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mt-1.5 w-full rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none" />
+        <label htmlFor="leave-start" className="text-sm font-medium text-zinc-700">First day</label>
+        <input
+          id="leave-start"
+          type="date"
+          required
+          min={todayKey}
+          value={startDate}
+          onChange={(e) => changeStart(e.target.value)}
+          className="mt-1.5 w-full rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none"
+        />
       </div>
       <div>
-        <label className="text-sm font-medium text-zinc-700">End</label>
-        <input type="date" required value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mt-1.5 w-full rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none" />
+        <label htmlFor="leave-end" className="text-sm font-medium text-zinc-700">
+          Second day <span className="font-normal text-zinc-400">(optional)</span>
+        </label>
+        <input
+          id="leave-end"
+          type="date"
+          disabled={!canPickSecondDay}
+          // Only the day right after the first day can be picked.
+          min={canPickSecondDay ? latestEnd : undefined}
+          max={canPickSecondDay ? latestEnd : undefined}
+          value={effectiveEnd}
+          onChange={(e) => setEndDate(e.target.value === latestEnd ? e.target.value : '')}
+          className="mt-1.5 w-full rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-zinc-900 focus:border-emerald-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+        />
+        <p className="mt-1 text-xs text-zinc-500">
+          {!startDate
+            ? 'Pick the first day first.'
+            : canPickSecondDay
+              ? `Only ${formatDateKey(latestEnd, 'short')} can be added as a second day.`
+              : 'You have 1 leave day left this month, so this request can only be 1 day.'}
+        </p>
       </div>
+
+      {startDate ? (
+        <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800 sm:col-span-2">
+          This request uses <span className="font-semibold">{selectedDays} of your {remainingDays}</span> leave day{remainingDays === 1 ? '' : 's'} left this month.
+        </p>
+      ) : null}
 
       <div className="sm:col-span-2">
         <label className="text-sm font-medium text-zinc-700">Reason</label>
@@ -77,7 +125,7 @@ function FileLeaveForm({ user, onSubmit }) {
       </div>
 
       <div className="flex items-center justify-end sm:col-span-2">
-        <Button type="submit" disabled={submitting}>{submitting ? 'Sending…' : 'Submit Request'}</Button>
+        <Button type="submit" disabled={submitting || !startDate}>{submitting ? 'Sending…' : 'Submit Request'}</Button>
       </div>
     </form>
   )
@@ -113,21 +161,25 @@ export default function EmployeeDashboard() {
 
   const leaveRequests = getEmployeeLeaveRequests(user?.id)
   const now = new Date()
+  // Rejected requests give their days back, so they don't count (same rule as the backend).
   const requestsThisMonth = leaveRequests.filter((request) => {
+    if (String(request.status || '').toLowerCase() === 'rejected') return false
     const requested = new Date(request.requestedAt || request.requested_at)
     if (Number.isNaN(requested.getTime())) return false
     return requested.getFullYear() === now.getFullYear() && requested.getMonth() === now.getMonth()
   })
-  const usedThisMonth = requestsThisMonth.length
-  const remainingThisMonth = Math.max(0, MONTHLY_LEAVE_LIMIT - usedThisMonth)
-  const limitReached = usedThisMonth >= MONTHLY_LEAVE_LIMIT
+  // Every leave day uses one of the month's attempts (a 2-day request uses both).
+  const daysOf = (request) => leaveDays(request.startDate || request.start_date, request.endDate || request.end_date)
+  const usedThisMonth = requestsThisMonth.reduce((sum, request) => sum + daysOf(request), 0)
+  const remainingThisMonth = Math.max(0, MONTHLY_LEAVE_DAYS - usedThisMonth)
+  const limitReached = remainingThisMonth <= 0
 
   const typeBreakdown = requestsThisMonth.reduce((accumulator, request) => {
     const key = String(request.leaveType || 'Other').toLowerCase()
-    accumulator[key] = (accumulator[key] || 0) + 1
+    accumulator[key] = (accumulator[key] || 0) + daysOf(request)
     return accumulator
   }, {})
-  const typeSummary = Object.entries(typeBreakdown).map(([key, count]) => `${count} ${key}`).join(' · ')
+  const typeSummary = Object.entries(typeBreakdown).map(([key, days]) => `${days} ${key} day${days === 1 ? '' : 's'}`).join(' · ')
 
   const pendingCount = leaveRequests.filter((request) => String(request.status).toLowerCase() === 'pending').length
 
@@ -188,7 +240,7 @@ export default function EmployeeDashboard() {
         variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
       >
         <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' } } }}>
-          <LeaveWidget icon={CalendarIcon} iconClassName="bg-violet-50 text-violet-600" value={remainingThisMonth} label="Leave Requests Left" hint={usedThisMonth > 0 ? `${typeSummary} this month` : 'No requests yet this month'} />
+          <LeaveWidget icon={CalendarIcon} iconClassName="bg-violet-50 text-violet-600" value={`${remainingThisMonth} / ${MONTHLY_LEAVE_DAYS}`} label="Leave Days Left" hint={usedThisMonth > 0 ? `${typeSummary} used this month` : 'No leave used yet this month'} />
         </motion.div>
         <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' } } }}>
           <LeaveWidget icon={Clock} iconClassName="bg-amber-50 text-amber-600" value={pendingCount} label="Pending Requests" hint="Awaiting approval" />
@@ -199,13 +251,18 @@ export default function EmployeeDashboard() {
       </motion.div>
 
       <Card>
-        <SectionTitle icon={FileText}>File a Leave Request</SectionTitle>
+        <SectionTitle
+          icon={FileText}
+          hint={`You get ${MONTHLY_LEAVE_DAYS} leave days a month. Each request is 1 day, or 2 days in a row (which uses both).`}
+        >
+          File a Leave Request
+        </SectionTitle>
         {limitReached ? (
           <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            You've used all {MONTHLY_LEAVE_LIMIT} leave requests for this month — try again next month.
+            You've used both leave days for this month. You can file again next month.
           </p>
         ) : (
-          <FileLeaveForm user={user} onSubmit={submitLeaveRequest} />
+          <FileLeaveForm user={user} onSubmit={submitLeaveRequest} remainingDays={remainingThisMonth} />
         )}
       </Card>
     </div>

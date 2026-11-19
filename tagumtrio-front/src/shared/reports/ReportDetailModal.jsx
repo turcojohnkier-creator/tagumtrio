@@ -7,6 +7,7 @@ import Badge from '../ui/Badge'
 import UserAvatar from '../ui/UserAvatar'
 import { useAuth } from '../../context/auth-context'
 import DailyReportTable from './DailyReportTable'
+import ReturnTrail from './ReturnTrail'
 import { getReportPhotos } from './report-entry-utils'
 import { formatProductWithUnit } from '../../lib/units'
 import { getStatusLabel, getStatusVariant, normalizeStatus } from './report-status'
@@ -18,7 +19,8 @@ function formatDateTime(value) {
   return date.toLocaleString()
 }
 
-export default function ReportDetailModal({ report, onClose }) {
+// `actions`: optional [{ key, label, loadingLabel, loading, disabled, variant, onClick }] for the footer.
+export default function ReportDetailModal({ report, onClose, actions = [] }) {
   const { t } = useAuth()
   const [previewPhotos, setPreviewPhotos] = useState(null)
   if (!report) return null
@@ -59,7 +61,7 @@ export default function ReportDetailModal({ report, onClose }) {
                 <span>{report.submittedByName || report.submittedBy || t('report.detail.unknown')} • {formatDateTime(report.createdAt || report.created_at || report.reportDate)}</span>
               </p>
             </div>
-            <button type="button" onClick={onClose} className="rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
+            <button type="button" onClick={onClose} aria-label="Close" className="btn-dismiss rounded-full border border-zinc-300 bg-zinc-50 p-2 text-zinc-700 transition-colors hover:bg-zinc-100">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -83,6 +85,8 @@ export default function ReportDetailModal({ report, onClose }) {
                 <p className="mt-2 text-lg font-semibold text-emerald-700">₱{totalAmount.toLocaleString()}</p>
               </div>
             </div>
+
+            <ReturnTrail report={report} />
 
             <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
               <p className="text-xs uppercase tracking-wide text-zinc-400">{t('report.detail.notes')}</p>
@@ -113,10 +117,15 @@ export default function ReportDetailModal({ report, onClose }) {
             <DailyReportTable entries={entries} fallbackDepartment={report.department} />
           </div>
 
-          <div className="flex items-center justify-end gap-3 border-t border-zinc-200 px-5 py-4">
-            <Button type="button" variant="secondary" onClick={onClose}>
+          <div className="flex flex-col-reverse gap-2 border-t border-zinc-200 px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
+            <Button type="button" variant="secondary" className="btn-dismiss" onClick={onClose}>
               {t('report.detail.close')}
             </Button>
+            {actions.map((action, index) => (
+              <Button key={action.key || index} type="button" variant={action.variant || 'primary'} disabled={action.disabled} onClick={action.onClick}>
+                {action.loading ? action.loadingLabel || t('report.modal.working') : action.label}
+              </Button>
+            ))}
           </div>
         </motion.div>
         </div>
@@ -144,7 +153,7 @@ export default function ReportDetailModal({ report, onClose }) {
             >
               <div className="sticky top-0 z-10 mb-4 flex items-center justify-between bg-white px-6 pt-6">
                 <h3 className="font-heading text-lg font-bold text-zinc-900">{t('report.detail.report_images')}</h3>
-                <button type="button" onClick={() => setPreviewPhotos(null)} className="text-zinc-500 hover:text-zinc-900">{t('report.detail.close')}</button>
+                <button type="button" onClick={() => setPreviewPhotos(null)} className="btn-dismiss rounded-md px-2 py-1 text-zinc-500 hover:text-zinc-900">{t('report.detail.close')}</button>
               </div>
               <div className="grid grid-cols-2 gap-4 px-6 pb-6 md:grid-cols-4">
                 {previewPhotos.map((photo, index) => (

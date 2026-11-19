@@ -17,6 +17,7 @@ const LeadmanDailyReport = lazy(() => import('./roles/leadman/pages/LeadmanDaily
 const ProductionDashboard = lazy(() => import('./roles/production/pages/ProductionDashboard'))
 const ProductionCompiledReports = lazy(() => import('./roles/production/pages/ProductionCompiledReports'))
 const ProductionConsolidatedReports = lazy(() => import('./roles/production/pages/ProductionConsolidatedReports'))
+const ProductionReturnedReports = lazy(() => import('./roles/production/pages/ProductionReturnedReports'))
 // GMOversight removed — GMOverview will be the main GM entry
 const HRCreateAccount = lazy(() => import('./roles/hr/pages/HRCreateAccount'))
 const HREmployeeDirectory = lazy(() => import('./roles/hr/pages/EmployeeDirectory'))
@@ -66,6 +67,7 @@ export default function App() {
                   <Route path="production" element={<ProductionDashboard />} />
                   <Route path="production/compiled" element={<ProductionCompiledReports />} />
                   <Route path="production/consolidated" element={<ProductionConsolidatedReports />} />
+                  <Route path="production/returned" element={<ProductionReturnedReports />} />
 
                   <Route path="hr" element={<Navigate to="/app/hr/employees" replace />} />
                   <Route path="hr/create-account" element={<HRCreateAccount />} />

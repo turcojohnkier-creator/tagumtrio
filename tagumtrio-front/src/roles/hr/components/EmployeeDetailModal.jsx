@@ -43,7 +43,7 @@ export default function EmployeeDetailModal({ employee, onClose, onToggleActive,
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={onClose} className="p-2 text-zinc-500 hover:text-zinc-900"><X className="w-5 h-5" /></button>
+              <button onClick={onClose} aria-label="Close" className="btn-dismiss rounded-lg p-2 text-zinc-500 hover:text-zinc-900"><X className="w-5 h-5" /></button>
             </div>
           </div>
 
@@ -126,7 +126,7 @@ export default function EmployeeDetailModal({ employee, onClose, onToggleActive,
                   <Button onClick={() => onToggleActive && onToggleActive(employee)} disabled={actionLoading} className="w-full">
                     {actionLoading ? 'Updating...' : toggleLabel}
                   </Button>
-                  <Button variant="outline" onClick={onClose} className="w-full">Close</Button>
+                  <Button variant="outline" onClick={onClose} className="btn-dismiss w-full">Close</Button>
                 </div>
               </div>
             </div>

@@ -28,3 +28,8 @@ class DailyReport(Base):
     compiled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     approved_by: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Every time the report was sent back up the chain — GM -> production
+    # in-charge ("gm_returned"), production in-charge -> leadman ("returned").
+    # List of {byRole, byId, byName, reason, at}; the latest return is last.
+    # Kept across resubmits so each stage can see why the report bounced.
+    return_history: Mapped[list | None] = mapped_column(JSON, nullable=True)

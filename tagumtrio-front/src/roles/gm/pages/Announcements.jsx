@@ -175,6 +175,7 @@ export default function Announcements() {
                       <Button
                         type="button"
                         variant="secondary"
+                        className="btn-dismiss"
                         onClick={() => setEditingAnnouncementId(null)}
                       >
                         {t('gm.announce.cancel')}

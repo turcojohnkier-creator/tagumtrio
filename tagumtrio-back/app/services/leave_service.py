@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import uuid
 
 from sqlalchemy.orm import Session
@@ -39,29 +39,69 @@ def list_leave_requests(db: Session, employee_id: int | None = None, status: str
     return results
 
 
-MONTHLY_REQUEST_LIMIT = 3
+# Each leave day uses one "attempt": 2 per month, and one request covers at
+# most 2 consecutive days (a 2-day request uses both attempts).
+MONTHLY_LEAVE_DAYS = 2
+MAX_DAYS_PER_REQUEST = 2
+
+
+def _parse_day(value: str | None) -> date | None:
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(str(value)[:10])
+    except ValueError:
+        return None
+
+
+def leave_days(start_date: str | None, end_date: str | None) -> int:
+    """Calendar days a request covers (inclusive). Missing/odd dates count as 1."""
+    start = _parse_day(start_date)
+    end = _parse_day(end_date) or start
+    if start is None or end is None or end < start:
+        return 1
+    return (end - start).days + 1
 
 
 def create_leave_request(db: Session, payload: LeaveRequestCreate) -> LeaveRequestPublic:
     now = datetime.now(timezone.utc)
+
+    start = _parse_day(payload.start_date)
+    if start is None:
+        raise ValueError("Please choose the first day of your leave.")
+    # A one-day leave may leave the end date empty.
+    end = _parse_day(payload.end_date) or start
+    if end < start:
+        raise ValueError("The last day of leave can't be before the first day.")
+    requested_days = (end - start).days + 1
+    if requested_days > MAX_DAYS_PER_REQUEST:
+        raise ValueError(f"A leave request can cover at most {MAX_DAYS_PER_REQUEST} consecutive days.")
+
+    # Requests filed since the 1st of this month. Rejected ones give their
+    # days back, so only pending and approved requests use up attempts.
     existing_this_month = (
         db.query(LeaveRequest)
         .filter(
             LeaveRequest.employee_id == int(payload.employee_id),
             LeaveRequest.requested_at >= now.replace(day=1, hour=0, minute=0, second=0, microsecond=0),
+            LeaveRequest.status != "rejected",
         )
-        .count()
+        .all()
     )
-    if existing_this_month >= MONTHLY_REQUEST_LIMIT:
-        raise ValueError(f"You've reached the limit of {MONTHLY_REQUEST_LIMIT} leave requests this month.")
+    used_days = sum(leave_days(row.start_date, row.end_date) for row in existing_this_month)
+    remaining = MONTHLY_LEAVE_DAYS - used_days
+    if remaining <= 0:
+        raise ValueError(f"You've used all {MONTHLY_LEAVE_DAYS} leave days for this month.")
+    if requested_days > remaining:
+        raise ValueError(f"You only have {remaining} leave day left this month. Choose a single day.")
 
     record = LeaveRequest(
         id=_make_record_id("LEAVE"),
         employee_id=int(payload.employee_id),
         employee_name=payload.employee_name,
         leave_type=payload.leave_type,
-        start_date=payload.start_date,
-        end_date=payload.end_date,
+        start_date=start.isoformat(),
+        end_date=end.isoformat(),
         reason=payload.reason,
         status="pending",
         requested_at=now,

@@ -81,3 +81,22 @@ select option:checked {
     padding: 0;
   }
 }
+
+/* Red hover for every button that closes, cancels, dismisses or rejects
+   something (Close, Cancel, ✕, Reject…). Declared after the Tailwind utilities
+   so it wins over each button's own hover:bg-… classes. */
+.btn-dismiss {
+  transition-property: color, background-color, border-color;
+  transition-duration: 150ms;
+}
+.btn-dismiss:hover:not(:disabled) {
+  background-color: #fff1f2; /* rose-50 */
+  border-color: #fecdd3;     /* rose-200 */
+  color: #be123c;            /* rose-700 */
+}
+/* Icon-only ✕ over a dark photo viewer: keep it readable. */
+.btn-dismiss.btn-dismiss-dark:hover:not(:disabled) {
+  background-color: rgba(244, 63, 94, 0.85); /* rose-500 */
+  border-color: transparent;
+  color: #fff;
+}

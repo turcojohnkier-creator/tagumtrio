@@ -6,7 +6,6 @@ function normalizeBaseUrl(value) {
 const BASE_API_URL = normalizeBaseUrl(import.meta.env.VITE_API_URL || '/api')
 const AUTH_TOKEN_KEY = 'triops-auth-token'
 const AUTH_SESSION_KEY = 'triops-auth-session'
-const SUBMITTED_REPORTS_KEY = 'triops-submitted-daily-reports'
 
 function normalizeIdentifier(value) {
   return String(value || '').trim().toLowerCase()
@@ -145,17 +144,6 @@ function persistSession(user, token, remember = true) {
   setAuthToken(token, remember)
 }
 
-function loadSession() {
-  const storage = findStorageWithKey(AUTH_SESSION_KEY)
-  if (!storage) return null
-  try {
-    const parsed = JSON.parse(storage.getItem(AUTH_SESSION_KEY))
-    return parsed?.user || null
-  } catch {
-    return null
-  }
-}
-
 export async function loginApi({ identifier, password, remember = true }) {
   const result = await apiRequest('/auth/login', {
     method: 'POST',
@@ -226,7 +214,7 @@ export async function fetchEmployeesByDepartmentApi(department) {
   const q = department ? `?department=${encodeURIComponent(department)}` : ''
   try {
     return await apiRequest(`/v1/employees${q}`)
-  } catch (e) {
+  } catch {
     return []
   }
 }

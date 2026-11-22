@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertCircle, Camera, Eye, EyeOff, KeyRound, Lock, LogOut, Trash2, UserCircle2 } from 'lucide-react'
+import { AlertCircle, Camera, Database, Download, Eye, EyeOff, KeyRound, Lock, LogOut, Trash2, Upload, UserCircle2 } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useDialog } from '../../context/dialog-context'
-import { changePasswordApi, deleteAvatarApi, uploadAvatarApi } from '../../lib/api'
+import { changePasswordApi, deleteAvatarApi, downloadDatabaseBackupApi, restoreDatabaseApi, uploadAvatarApi } from '../../lib/api'
 import { makeAvatarDataUrl } from '../../lib/image'
 import { formatRole } from '../../lib/roles'
 import PageHeader from '../ui/PageHeader'
@@ -37,6 +37,103 @@ function PasswordField({ label, value, onChange, autoComplete }) {
         </button>
       </div>
     </div>
+  )
+}
+
+// Philippine time, matching the rest of the app: triops-backup-20261123-1405.json.gz
+function backupFileName() {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    }).formatToParts(new Date()).map((part) => [part.type, part.value])
+  )
+  return `triops-backup-${parts.year}${parts.month}${parts.day}-${parts.hour}${parts.minute}.json.gz`
+}
+
+// GM only: download the whole database as one file, or replace it with one.
+// Lets data move between the deployed and a local database in either direction.
+function DatabaseBackupCard({ t, dialog }) {
+  const [busy, setBusy] = useState('')
+  const restoreInputRef = useRef(null)
+
+  async function handleDownload() {
+    setBusy('download')
+    try {
+      const blob = await downloadDatabaseBackupApi()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = backupFileName()
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (error) {
+      dialog.error({ title: t('settings.backup_download_failed', 'Backup failed'), message: error.message })
+    } finally {
+      setBusy('')
+    }
+  }
+
+  async function handleRestoreSelected(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    const confirmed = await dialog.confirm({
+      kicker: t('settings.backup_restore_kicker', 'Replace all data'),
+      title: t('settings.backup_restore_confirm_title', 'Restore the database from this file?'),
+      message: t(
+        'settings.backup_restore_confirm_message',
+        `Everything currently on this server (accounts, reports, payroll, attendance, announcements) will be deleted and replaced with the contents of "${file.name}". This cannot be undone. Download a backup first if you might need the current data.`
+      ),
+      confirmText: t('settings.backup_restore_confirm', 'Replace everything'),
+    })
+    if (!confirmed) return
+    setBusy('restore')
+    try {
+      const result = await restoreDatabaseApi(file)
+      const counts = result?.restored || {}
+      const total = Object.values(counts).reduce((sum, n) => sum + Number(n || 0), 0)
+      dialog.success({
+        title: t('settings.backup_restore_done', 'Database restored'),
+        message: `${total} ${t('settings.backup_restore_records', 'records restored')} (${counts.users ?? 0} ${t('settings.backup_restore_accounts', 'accounts')}, ${counts.daily_reports ?? 0} ${t('settings.backup_restore_reports', 'reports')}). ${t('settings.backup_restore_reload', 'Reloading the page…')}`,
+      })
+      // Everything on screen is now stale; reload once the message has been seen.
+      setTimeout(() => window.location.reload(), 3000)
+      return
+    } catch (error) {
+      dialog.error({ title: t('settings.backup_restore_failed', 'Restore failed'), message: error.message })
+    } finally {
+      setBusy('')
+    }
+  }
+
+  return (
+    <Card>
+      <SectionTitle
+        icon={Database}
+        hint={t('settings.backup_hint', 'Download all data as one file, or replace all data on this server with a backup file. The file includes every account, so keep it private.')}
+      >
+        {t('settings.backup_title', 'Database backup')}
+      </SectionTitle>
+      <input
+        ref={restoreInputRef}
+        type="file"
+        accept=".gz,.json,application/gzip,application/json"
+        className="hidden"
+        onChange={handleRestoreSelected}
+      />
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button type="button" disabled={Boolean(busy)} onClick={handleDownload} className="w-full sm:w-auto">
+          <Download className="h-4 w-4" />
+          {busy === 'download' ? t('settings.backup_downloading', 'Preparing backup…') : t('settings.backup_download', 'Download backup')}
+        </Button>
+        <Button type="button" variant="dangerOutline" disabled={Boolean(busy)} onClick={() => restoreInputRef.current?.click()} className="w-full sm:w-auto">
+          <Upload className="h-4 w-4" />
+          {busy === 'restore' ? t('settings.backup_restoring', 'Restoring…') : t('settings.backup_restore', 'Restore from file')}
+        </Button>
+      </div>
+    </Card>
   )
 }
 
@@ -228,6 +325,8 @@ export default function Settings() {
           </Button>
         </form>
       </Card>
+
+      {user?.role === 'gm' ? <DatabaseBackupCard t={t} dialog={dialog} /> : null}
 
       <Card>
         <SectionTitle icon={LogOut} hint={t('settings.session_hint')}>{t('settings.session')}</SectionTitle>

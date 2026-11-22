@@ -443,6 +443,41 @@ export async function fetchNotificationSummaryApi(limit = 20) {
   return apiRequest(`/v1/notifications/summary?limit=${encodeURIComponent(limit)}`, { timeoutMs: 15000 })
 }
 
+// Database backup / restore (GM only). Not via apiRequest: the download is a
+// file, not JSON, and a restore must never be retried automatically.
+async function backupFetch(path, options = {}) {
+  const res = await fetch(`${BASE_API_URL}${path}`, {
+    ...options,
+    headers: { ...getAuthHeaders(), ...(options.headers || {}) },
+  })
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null)
+    if (res.status === 401 && typeof window !== 'undefined') {
+      clearAuthToken()
+      window.dispatchEvent(new Event('triops-auth-unauthorized'))
+    }
+    const error = new Error(payload?.detail || res.statusText || 'Request failed.')
+    error.status = res.status
+    throw error
+  }
+  return res
+}
+
+export async function downloadDatabaseBackupApi() {
+  const res = await backupFetch('/v1/backup')
+  return res.blob()
+}
+
+// Replaces the whole database with the uploaded backup file.
+export async function restoreDatabaseApi(file) {
+  const res = await backupFetch('/v1/backup/restore', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/gzip' },
+    body: file,
+  })
+  return res.json()
+}
+
 // Translate API
 export async function translateTextApi(text, target = 'en') {
   return apiRequest('/v1/translate', {

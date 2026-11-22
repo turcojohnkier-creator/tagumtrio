@@ -26,6 +26,7 @@ from app.api.v1.endpoints.notifications import router as notifications_router
 from app.api.v1.endpoints.translate import router as translate_router
 from app.api.v1.endpoints.avatars import router as avatars_router
 from app.api.v1.endpoints.attendance import router as attendance_router
+from app.api.v1.endpoints.backup import router as backup_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -80,6 +81,7 @@ app.include_router(notifications_router, prefix="/api/v1")
 app.include_router(translate_router, prefix="/api/v1")
 app.include_router(avatars_router, prefix="/api/v1")
 app.include_router(attendance_router, prefix="/api/v1")
+app.include_router(backup_router, prefix="/api/v1")
 
 
 @app.get("/api/health")

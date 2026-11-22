@@ -118,8 +118,25 @@ async function apiRequest(path, options = {}) {
       return null
     }
 
-    return res.json()
+    return resolveReportPhotoUrls(await res.json())
   }
+}
+
+// Report photos come back as "/api/v1/daily-reports/<id>/photos/<hash>".
+// Like resolveAvatarUrl: point them at the API host, since the frontend and
+// backend are on different domains in production.
+const REPORT_PHOTO_PATH = /^\/api\/v1\/daily-reports\/[^/]+\/photos\/[0-9a-f]+$/
+function resolveReportPhotoUrls(value) {
+  if (typeof value === 'string') {
+    return REPORT_PHOTO_PATH.test(value) ? `${BASE_API_URL}${value.slice(4)}` : value
+  }
+  if (Array.isArray(value)) return value.map(resolveReportPhotoUrls)
+  if (value && typeof value === 'object') {
+    const out = {}
+    for (const key of Object.keys(value)) out[key] = resolveReportPhotoUrls(value[key])
+    return out
+  }
+  return value
 }
 
 function persistSession(user, token, remember = true) {

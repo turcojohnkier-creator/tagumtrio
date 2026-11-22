@@ -7,5 +7,6 @@ from app.models.rate import PieceRate
 from app.models.notification import Notification
 from app.models.attendance import AttendanceMark
 from app.models.app_setting import AppSetting
+from app.models.report_photo import ReportPhoto
 
-__all__ = ["User", "LeaveRequest", "Announcement", "DailyReport", "PayrollPayment", "PieceRate", "Notification", "AttendanceMark", "AppSetting"]
+__all__ = ["User", "LeaveRequest", "Announcement", "DailyReport", "PayrollPayment", "PieceRate", "Notification", "AttendanceMark", "AppSetting", "ReportPhoto"]

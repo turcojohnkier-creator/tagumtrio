@@ -12,6 +12,7 @@ from app.models.daily_report import DailyReport
 from app.models.payroll_payment import PayrollPayment
 from app.schemas.daily_report import DailyReportCreate, DailyReportPublic, DailyReportResubmit, DailyReportUpdate
 from app.services.notification_service import create_notification, notify_leadmen_for_department, notify_role
+from app.services.report_photos import restore_photos, store_photos
 
 
 def _make_id(prefix: str) -> str:
@@ -80,8 +81,10 @@ def _notify_ready_to_compile(db: Session, record: DailyReport) -> None:
 
 
 def create_daily_report(db: Session, payload: DailyReportCreate) -> DailyReportPublic:
+    report_id = _make_id('DR')
+    entries = [e.model_dump() if hasattr(e, 'model_dump') else e for e in (payload.entries or [])]
     record = DailyReport(
-        id=_make_id('DR'),
+        id=report_id,
         department=payload.department,
         target_department=payload.targetDepartment,
         report_date=payload.reportDate,
@@ -89,7 +92,7 @@ def create_daily_report(db: Session, payload: DailyReportCreate) -> DailyReportP
         submitted_by_name=payload.submittedByName,
         status=_initial_status(payload.targetDepartment),
         summary=payload.summary,
-        entries=[e.model_dump() if hasattr(e, 'model_dump') else e for e in (payload.entries or [])],
+        entries=store_photos(db, report_id, entries),
     )
     db.add(record)
     db.commit()
@@ -256,7 +259,10 @@ def resubmit_daily_report(db: Session, report_id: str, payload: DailyReportResub
     record.department = payload.department
     record.target_department = payload.targetDepartment
     record.summary = payload.summary
-    record.entries = [e.model_dump() if hasattr(e, 'model_dump') else e for e in (payload.entries or [])]
+    # The form sends back the photo URLs it was shown; keep pointing them at
+    # the stored photos, and store any newly attached ones.
+    new_entries = [e.model_dump() if hasattr(e, 'model_dump') else e for e in (payload.entries or [])]
+    record.entries = store_photos(db, record.id, restore_photos(new_entries, record.entries))
     record.status = _initial_status(payload.targetDepartment)
     # The rejection/return is undone — the report goes through the whole flow
     # again (next-department verification -> compile -> GM). return_history

@@ -20,6 +20,7 @@ import UserAvatar from '../../../shared/ui/UserAvatar'
 import ProfileLink from '../../../shared/profile/ProfileLink'
 import Portal from '../../../shared/ui/Portal'
 import { toManilaDateKey } from '../../../lib/datetime'
+import useLiveRefresh from '../../../shared/hooks/useLiveRefresh'
 
 function fallbackFormatDateTime(value) {
   if (!value) return '—'
@@ -514,19 +515,18 @@ export default function LeadmanIncomingReports() {
     }
   }, [currentDepartment, user?.id])
 
-  // Poll for newly-arrived reports and newly-rejected submissions — without
-  // this, a report submitted (or rejected) while this page is already open
-  // never appears until a full remount, even though nav badges update live.
   useEffect(() => {
     setLoading(true)
     loadReports()
     loadMyRejected()
-    const interval = setInterval(() => {
-      loadReports()
-      loadMyRejected()
-    }, 5000)
-    return () => clearInterval(interval)
   }, [loadReports, loadMyRejected])
+
+  // Reload when a report arrives (or one of ours is rejected) while this page
+  // is open, with a 30s fallback that only runs while the tab is visible.
+  useLiveRefresh(() => {
+    loadReports()
+    loadMyRejected()
+  }, { types: ['daily_report_incoming', 'daily_report_rejected'], intervalMs: 30000 })
 
   const incomingReports = useMemo(
     () => reports.filter((report) => normalizeText(report.status) === 'submitted'),

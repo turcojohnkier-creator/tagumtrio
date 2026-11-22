@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, Extra, field_validator
+from pydantic import BaseModel, ConfigDict, Field, Extra, field_serializer, field_validator
 from typing import Any
 
 
@@ -84,3 +84,11 @@ class DailyReportPublic(BaseModel):
     return_history: list[dict] = Field(default_factory=list, alias="returnHistory")
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    # Inline base64 photos (reports not yet moved to report_photos) go out as
+    # short URLs. Done here so every endpoint returning reports is covered,
+    # including /history, where the employee branch overwrites public.entries.
+    @field_serializer("entries")
+    def _serialize_entries(self, entries: list[dict]) -> list[dict]:
+        from app.services.report_photos import strip_photos
+        return strip_photos(entries, self.id)

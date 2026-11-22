@@ -1,10 +1,15 @@
+import threading
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from sqlalchemy import text
 
 from app.core.config import settings
-from app.db import Base, engine
+from app.db import Base, SessionLocal, engine
 import app.models
+import app.models.report_photo
+from app.services.report_photos import convert_inline_photos
 import app.models.announcement
 import app.models.rate
 import app.models.notification
@@ -47,6 +52,14 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS return_history JSON"))
 
 app = FastAPI(title="TriOPS Backend")
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+
+@app.on_event("startup")
+def start_photo_conversion() -> None:
+    # Moves photos of older reports into report_photos. In a background thread
+    # so the server starts listening right away; a no-op once all are moved.
+    threading.Thread(target=convert_inline_photos, args=(SessionLocal,), daemon=True).start()
 
 app.add_middleware(
     CORSMiddleware,

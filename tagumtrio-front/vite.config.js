@@ -30,6 +30,9 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
+    // Lets phones reach a local demo through a Cloudflare quick tunnel
+    // (`cloudflared tunnel --url ...`). `vite preview` uses this too.
+    allowedHosts: ['.trycloudflare.com'],
     proxy: {
       // Any request starting with /api will be routed to FastAPI
       '/api': {

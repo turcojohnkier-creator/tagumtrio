@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status as http_status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status as http_status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.deps import get_current_user
 from app.models.daily_report import DailyReport
+from app.models.report_photo import ReportPhoto
+from app.services.report_photos import decode_data_url, find_photo
 from app.schemas.daily_report import DailyReportCreate, DailyReportPublic, DailyReportResubmit, DailyReportReturn, DailyReportUpdate
 from app.services.daily_report_service import (
     GM_SUBMITTABLE_FROM,
@@ -144,3 +146,24 @@ def patch_approve_daily_report(report_id: str, db: Session = Depends(get_db), cu
         return approve_daily_report(db, report_id, current_user.id)
     except ValueError as exc:
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+# Public on purpose, like the avatar endpoint: <img> can't send the bearer
+# token. The URL can't be guessed: it needs the report id plus a 128-bit
+# content hash, and only ever appears inside an authenticated report response.
+@router.get("/{report_id}/photos/{photo_hash}")
+def get_report_photo(report_id: str, photo_hash: str, db: Session = Depends(get_db)):
+    wanted = photo_hash.lower()
+    photo = db.get(ReportPhoto, wanted)
+    if photo is not None:
+        mime, data = photo.mime, photo.data
+    else:
+        # Report saved before photos had their own table and not converted yet.
+        record = db.query(DailyReport).filter(DailyReport.id == report_id).first()
+        data_url = find_photo(record.entries if record else None, wanted)
+        decoded = decode_data_url(data_url) if data_url else None
+        if decoded is None:
+            raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Photo not found.")
+        mime, data = decoded
+    return Response(content=data, media_type=mime,
+                    headers={"Cache-Control": "public, max-age=31536000, immutable"})

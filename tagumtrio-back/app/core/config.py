@@ -11,6 +11,19 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 43200
     BACKEND_CORS_ORIGINS: str = "http://localhost:5173,http://localhost:5174"
 
+    # Default GM and HR accounts, created at startup when no active account of
+    # that role exists (see app.services.bootstrap_service). Set your own
+    # passwords in the host's environment: these fallbacks are public.
+    DEFAULT_GM_IDENTIFIER: str = "gen"
+    DEFAULT_GM_PASSWORD: str = "123456"
+    DEFAULT_GM_NAME: str = "General Manager"
+    DEFAULT_HR_IDENTIFIER: str = "hum"
+    DEFAULT_HR_PASSWORD: str = "123456"
+    DEFAULT_HR_NAME: str = "Human Resource"
+    # One-time lockout fix: set to true, restart, then remove it. Resets the
+    # two default accounts above to their configured passwords.
+    RESET_ADMIN_PASSWORDS: bool = False
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
     @property

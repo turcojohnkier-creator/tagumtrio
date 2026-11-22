@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.db import Base, SessionLocal, engine
 import app.models
 import app.models.report_photo
+from app.services.bootstrap_service import ensure_default_accounts
 from app.services.report_photos import convert_inline_photos
 import app.models.announcement
 import app.models.rate
@@ -54,6 +55,13 @@ with engine.begin() as connection:
 
 app = FastAPI(title="TriOPS Backend")
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+
+@app.on_event("startup")
+def create_default_accounts() -> None:
+    # A GM and an HR account always exist, so a fresh or restored database can
+    # be logged into (credentials from the DEFAULT_GM_* / DEFAULT_HR_* settings).
+    ensure_default_accounts(SessionLocal)
 
 
 @app.on_event("startup")

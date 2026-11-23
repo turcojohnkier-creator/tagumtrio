@@ -10,6 +10,7 @@ from app.db import Base, SessionLocal, engine
 import app.models
 import app.models.report_photo
 from app.services.bootstrap_service import ensure_default_accounts
+from app.services.default_rates import ensure_default_rates
 from app.services.report_photos import convert_inline_photos
 import app.models.announcement
 import app.models.rate
@@ -62,6 +63,12 @@ def create_default_accounts() -> None:
     # A GM and an HR account always exist, so a fresh or restored database can
     # be logged into (credentials from the DEFAULT_GM_* / DEFAULT_HR_* settings).
     ensure_default_accounts(SessionLocal)
+
+
+@app.on_event("startup")
+def load_default_rates() -> None:
+    # Loads the built-in piece rates only when the rate table is empty.
+    ensure_default_rates(SessionLocal)
 
 
 @app.on_event("startup")

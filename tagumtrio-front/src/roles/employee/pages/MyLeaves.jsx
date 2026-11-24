@@ -120,7 +120,6 @@ export default function MyLeaves() {
                     </div>
                     <div className="mt-4 space-y-2 border-t border-zinc-100 pt-3 text-sm text-zinc-700">
                       <p><span className="text-zinc-400">Date range:</span> {request.startDate || request.start_date || '—'} to {request.endDate || request.end_date || '—'}</p>
-                      <p><span className="text-zinc-400">Reason:</span> {request.reason || 'No reason provided'}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -167,6 +166,7 @@ export default function MyLeaves() {
                     </div>
                     <div className="mt-4 space-y-2 border-t border-zinc-100 pt-3 text-sm text-zinc-700">
                       <p><span className="text-zinc-400">Date range:</span> {request.startDate || request.start_date || '—'} to {request.endDate || request.end_date || '—'}</p>
+                      <p><span className="text-zinc-400">Reason for rejection:</span> {request.note || 'No reason provided'}</p>
                     </div>
                   </motion.div>
                 ))}

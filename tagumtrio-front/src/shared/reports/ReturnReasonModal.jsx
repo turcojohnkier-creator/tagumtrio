@@ -10,7 +10,7 @@ import { useAuth } from '../../context/auth-context'
  * Renders above the bundle/report modals. Mount it only while open so the
  * textarea starts empty each time.
  */
-export default function ReturnReasonModal({ title, description, confirmLabel, loading = false, onConfirm, onCancel }) {
+export default function ReturnReasonModal({ title, description, confirmLabel, label, placeholder, loading = false, onConfirm, onCancel }) {
   const { t } = useAuth()
   const [reason, setReason] = useState('')
   const trimmed = reason.trim()
@@ -48,13 +48,13 @@ export default function ReturnReasonModal({ title, description, confirmLabel, lo
 
             <div className="space-y-1.5">
               <label htmlFor="return-reason" className="text-sm font-semibold text-rose-800">
-                {t('report.return.reason_label', 'Reason for returning')}
+                {label || t('report.return.reason_label', 'Reason for returning')}
               </label>
               <textarea
                 id="return-reason"
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
-                placeholder={t('report.return.placeholder', 'Explain what needs to be checked or fixed…')}
+                placeholder={placeholder || t('report.return.placeholder', 'Explain what needs to be checked or fixed…')}
                 maxLength={1000}
                 autoFocus
                 className="min-h-[110px] w-full rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-rose-400 focus:ring-4 focus:ring-rose-500/10"

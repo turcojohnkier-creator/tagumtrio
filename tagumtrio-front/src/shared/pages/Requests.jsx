@@ -12,6 +12,7 @@ import Badge from '../ui/Badge'
 import EmptyState from '../ui/EmptyState'
 import Avatar from '../ui/Avatar'
 import ProfileLink from '../profile/ProfileLink'
+import ReturnReasonModal from '../reports/ReturnReasonModal'
 
 const STATUS_TABS = ['pending', 'approved', 'rejected']
 
@@ -37,6 +38,8 @@ export default function Requests() {
   }, [])
 
   const [statusTab, setStatusTab] = useState('pending')
+  const [rejectTarget, setRejectTarget] = useState(null)
+  const [rejecting, setRejecting] = useState(false)
 
   const canApprove = user && ['leadman', 'production_incharge', 'hr', 'admin', 'gm'].includes(user.role)
 
@@ -92,18 +95,12 @@ export default function Requests() {
     }
   }
 
-  async function handleReject(req) {
-    const confirmed = await dialog.confirm({
-      kicker: t('ui.confirm_action'),
-      title: t('requests.reject_confirm_title'),
-      message: t('requests.reject_confirm_msg').replace('{name}', requestName(req)),
-      confirmText: t('requests.yes_reject'),
-      cancelText: t('requests.no'),
-    })
-    if (!confirmed) return
-
+  // The reason modal doubles as the confirmation step; a reason is required.
+  async function handleReject(req, reason) {
+    setRejecting(true)
     try {
-      await rejectLeaveRequest(req.id, user?.id, 'Rejected by approver')
+      await rejectLeaveRequest(req.id, user?.id, reason)
+      setRejectTarget(null)
       dialog.success({
         kicker: t('ui.success'),
         title: t('requests.rejected_title'),
@@ -116,6 +113,8 @@ export default function Requests() {
         title: t('requests.reject_failed_title'),
         message: t('requests.reject_failed_msg'),
       })
+    } finally {
+      setRejecting(false)
     }
   }
 
@@ -173,6 +172,11 @@ export default function Requests() {
                       <span><strong className="text-zinc-700">{t('requests.requested')}:</strong> {formatDateTime ? formatDateTime(req.requestedAt || req.requested_at) : (req.requestedAt || req.requested_at)}</span>
                     </div>
                     {req.reason && <p className="text-sm text-zinc-700 mt-2 bg-zinc-50 p-2 rounded border border-zinc-200/50">{req.reason}</p>}
+                    {status === 'rejected' && req.note ? (
+                      <p className="text-sm text-rose-900 mt-2 bg-rose-50 p-2 rounded border border-rose-200/60">
+                        <span className="font-semibold text-rose-700">{t('requests.rejection_reason')}:</span> {req.note}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
 
@@ -180,7 +184,7 @@ export default function Requests() {
                   {isPending && canApprove ? (
                     <>
                       <Button variant="successOutline" size="sm" onClick={() => handleApprove(req)}><CheckCircle className="w-4 h-4" />{t('requests.approve')}</Button>
-                      <Button variant="dangerOutline" size="sm" onClick={() => handleReject(req)}><XCircle className="w-4 h-4" />{t('requests.reject')}</Button>
+                      <Button variant="dangerOutline" size="sm" onClick={() => setRejectTarget(req)}><XCircle className="w-4 h-4" />{t('requests.reject')}</Button>
                     </>
                   ) : (
                     <div className="text-sm font-medium text-zinc-400 px-4">{t('requests.processed')}</div>
@@ -194,6 +198,19 @@ export default function Requests() {
           <EmptyState title={t(`requests.empty_${statusTab}`)} />
         )}
       </motion.div>
+
+      {rejectTarget ? (
+        <ReturnReasonModal
+          title={t('requests.reject_confirm_title')}
+          description={t('requests.reject_confirm_msg').replace('{name}', requestName(rejectTarget))}
+          label={t('requests.reject_reason_label')}
+          placeholder={t('requests.reject_reason_placeholder')}
+          confirmLabel={t('requests.yes_reject')}
+          loading={rejecting}
+          onConfirm={(reason) => handleReject(rejectTarget, reason)}
+          onCancel={() => setRejectTarget(null)}
+        />
+      ) : null}
     </div>
   )
 }

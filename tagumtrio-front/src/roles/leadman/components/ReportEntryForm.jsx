@@ -486,7 +486,7 @@ export default function ReportEntryForm({
       ) : null}
 
       <div>
-        <label className="text-sm text-zinc-700">Product / Size</label>
+        <label className="text-sm text-zinc-700">Product</label>
         <select
           value={values.product || ''}
           onChange={(e) => handleChange('product', e.target.value)}

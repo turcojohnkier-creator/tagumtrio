@@ -99,7 +99,7 @@ const ROLE_CONFIG = {
       const reviewed = reports.filter((r) => r.involvement === 'verified')
       return [
         { label: 'Submitted', value: submitted.length, icon: Send },
-        { label: 'Returned to me', value: submitted.filter((r) => r.status === 'rejected' || r.status === 'returned').length, icon: XCircle },
+        { label: 'Returned reports', value: submitted.filter((r) => r.status === 'rejected' || r.status === 'returned').length, icon: XCircle },
         { label: 'Verified by me', value: reviewed.filter((r) => r.status !== 'rejected').length, icon: CheckCircle2, highlight: true },
         { label: 'Rejected by me', value: reviewed.filter((r) => r.status === 'rejected').length, icon: XCircle },
       ]

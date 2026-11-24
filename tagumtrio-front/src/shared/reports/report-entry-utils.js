@@ -153,7 +153,7 @@ export function summarizeBatches(batches = []) {
 }
 
 // Report summaries are mostly auto-generated ("Consolidated report • 3 rows •
-// 12 crates/pieces • ₱96", or "Department: X | Product / Size: Y | ...").
+// 12 crates/pieces • ₱96", or "Department: X | Product: Y | ...").
 // Verify/reject notes get appended after " • ". Return only the human-written part.
 const AUTO_SUMMARY_SEGMENTS = [
   /^consolidated report$/i,

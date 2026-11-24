@@ -693,7 +693,7 @@ export default function LeadmanIncomingReports() {
 
   const tabs = [
     { key: 'incoming', label: 'To verify', count: incomingReports.length },
-    { key: 'rejected', label: 'Returned to me', count: myRejectedReports.length, dot: hasRejectedUnread },
+    { key: 'rejected', label: 'Returned reports', count: myRejectedReports.length, dot: hasRejectedUnread },
   ]
 
   const itemMotion = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } } }

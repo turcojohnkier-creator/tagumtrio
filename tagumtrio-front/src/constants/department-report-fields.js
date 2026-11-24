@@ -41,7 +41,7 @@ export function getDepartmentReportFieldSpec(department) {
 
   const fields = [
     { key: 'department', label: 'Department', type: 'text' },
-    { key: 'product', label: 'Product / Size', type: 'select', placeholder: 'Select product' },
+    { key: 'product', label: 'Product', type: 'select', placeholder: 'Select product' },
     { key: 'quantity', label: 'Quantity', type: 'number', placeholder: 'e.g. 100' },
     { key: 'date', label: 'Date', type: 'date' },
   ]

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  ArrowRight, Check, CheckCircle2, ChevronLeft, ChevronRight, CircleAlert, Inbox, Pencil, Undo2, X,
+  ArrowRight, Check, CheckCircle2, ChevronLeft, ChevronRight, CircleAlert, Inbox, Pencil, Undo2, Users, X,
 } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 import { useDialog } from '../../../context/dialog-context'
@@ -143,8 +143,75 @@ function PhotoThumbs({ photos, onOpen }) {
   )
 }
 
-// Same look and column order as the system's daily report table, plus the
-// workers named inline and the proof photos visible, and a totals row.
+// A batch can have many workers, so the cell shows only a count; the full
+// list opens in a popup. Module scope so its open state survives polling.
+function WorkersButton({ workers, title }) {
+  const [open, setOpen] = useState(false)
+  const count = workers.length
+
+  useEffect(() => {
+    if (!open) return undefined
+    function onKey(event) {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  if (count === 0) return <span className="text-xs text-zinc-400">None</span>
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        title={`View ${count} employee${count === 1 ? '' : 's'}`}
+        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      >
+        <Users className="h-4 w-4" />
+        <span className="tabular-nums">{count}</span>
+      </button>
+
+      {open ? (
+        <Portal>
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setOpen(false)}>
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Employees in this batch"
+              onClick={(event) => event.stopPropagation()}
+              className="flex max-h-[80vh] w-full max-w-sm flex-col rounded-xl border border-zinc-200 bg-white shadow-lg"
+            >
+              <div className="flex items-start justify-between gap-3 border-b border-zinc-100 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="truncate font-heading text-base font-bold text-zinc-900">{title}</p>
+                  <p className="text-xs text-zinc-500">{count} employee{count === 1 ? '' : 's'}</p>
+                </div>
+                <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="btn-dismiss rounded-full p-1.5 text-zinc-500 hover:bg-zinc-100">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <ul className="divide-y divide-zinc-100 overflow-y-auto px-4 py-1">
+                {workers.map((worker, workerIndex) => (
+                  <li key={`${worker.id ?? worker.name}-${workerIndex}`} className="flex items-center justify-between gap-3 py-2">
+                    <ProfileLink userId={worker.id} name={worker.name} className="flex min-w-0 items-center gap-2">
+                      <UserAvatar userId={worker.id} name={worker.name} size="xs" />
+                      <span className="truncate text-sm font-medium text-zinc-800">{worker.name || 'Unknown'}</span>
+                    </ProfileLink>
+                    {worker.identifier ? <span className="shrink-0 text-xs text-zinc-400">{worker.identifier}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </Portal>
+      ) : null}
+    </>
+  )
+}
+
+// Same look and column order as the system's daily report table, plus a
+// worker count (list in a popup), the proof photos visible, and a totals row.
 function VerificationTable({ view, onOpenPhotos }) {
   const { t } = useAuth()
   const th = 'px-4 py-3 font-medium whitespace-nowrap'
@@ -175,17 +242,10 @@ function VerificationTable({ view, onOpenPhotos }) {
               <td className="px-4 py-3 text-right font-heading text-base font-bold tabular-nums text-zinc-900">{batch.quantity.toLocaleString()}</td>
               <td className="px-4 py-3 whitespace-nowrap">{batch.date ? formatWorkDate(batch.date) : '—'}</td>
               <td className="px-4 py-3">
-                <ul className="space-y-1">
-                  {batch.workers.map((worker, workerIndex) => (
-                    <li key={`${worker.id ?? worker.name}-${workerIndex}`} className="flex items-center gap-2 whitespace-nowrap">
-                      <ProfileLink userId={worker.id} name={worker.name} className="flex items-center gap-2">
-                        <UserAvatar userId={worker.id} name={worker.name} size="xs" />
-                        <span className="font-medium text-zinc-800">{worker.name || 'Unknown'}</span>
-                      </ProfileLink>
-                      {worker.identifier ? <span className="text-xs text-zinc-400">{worker.identifier}</span> : null}
-                    </li>
-                  ))}
-                </ul>
+                <WorkersButton
+                  workers={batch.workers}
+                  title={formatProductWithUnit(batch.product, batch.department) || batch.department || t('table.employees', 'Employees')}
+                />
               </td>
               <td className="px-4 py-3"><PhotoThumbs photos={batch.photos} onOpen={onOpenPhotos} /></td>
               <td className="px-4 py-3 text-right font-semibold text-emerald-700 whitespace-nowrap">{peso(batch.amount)}</td>

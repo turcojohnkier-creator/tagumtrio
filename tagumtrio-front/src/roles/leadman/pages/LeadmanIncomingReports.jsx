@@ -501,6 +501,8 @@ export default function LeadmanIncomingReports() {
   // Reports waiting in the leadman's *other* departments: { department: count }.
   const [otherWaiting, setOtherWaiting] = useState({})
   const [myRejectedReports, setMyRejectedReports] = useState([])
+  // The leadman's returned reports in their *other* departments: { department: count }.
+  const [otherReturned, setOtherReturned] = useState({})
   const [loading, setLoading] = useState(true)
   const [photoViewer, setPhotoViewer] = useState(null)
   const [actionLoadingId, setActionLoadingId] = useState('')
@@ -559,21 +561,36 @@ export default function LeadmanIncomingReports() {
   const loadMyRejected = useCallback(async () => {
     if (!currentDepartment || !user?.id) {
       setMyRejectedReports([])
+      setOtherReturned({})
       return
     }
     try {
       // No department filter: the backend returns all of this leadman's
-      // departments, so returns show up whichever department is selected.
+      // departments. Only the selected department's returns are listed; the
+      // rest are counted so the leadman can switch to them.
       const remote = await fetchDailyReportsApi()
       const mine = (Array.isArray(remote) ? remote : []).filter((report) => (
         // rejected = by the next department's leadman; returned = by production in-charge (after a GM return)
         ['rejected', 'returned'].includes(normalizeText(report.status)) && String(report.submittedBy || '') === String(user.id)
       ))
-      setMyRejectedReports(mine)
+      const selected = normalizeText(currentDepartment)
+      const current = []
+      const elsewhere = {}
+      mine.forEach((report) => {
+        const own = normalizeText(report.department)
+        const assigned = assignedDepartments.find((name) => normalizeText(name) === own)
+        // A department the leadman no longer handles has no view of its own,
+        // so keep those returns visible here rather than losing them.
+        if (own === selected || !assigned) current.push(report)
+        else elsewhere[assigned] = (elsewhere[assigned] || 0) + 1
+      })
+      setMyRejectedReports(current)
+      setOtherReturned(elsewhere)
     } catch {
       setMyRejectedReports([])
+      setOtherReturned({})
     }
-  }, [currentDepartment, user?.id])
+  }, [assignedDepartments, currentDepartment, user?.id])
 
   useEffect(() => {
     setLoading(true)
@@ -593,8 +610,8 @@ export default function LeadmanIncomingReports() {
     [reports]
   )
 
-  // Employees for the report being resubmitted — its own department, which may
-  // differ from the selected one now that returns from every department show.
+  // Employees for the report being resubmitted — its own department, which can
+  // differ from the selected one (e.g. a department the leadman no longer handles).
   const resubmitDepartment = resubmitting?.report?.department || currentDepartment
   const departmentEmployees = useMemo(() => {
     return employees
@@ -688,6 +705,14 @@ export default function LeadmanIncomingReports() {
     if (tab === 'rejected') markNotificationsSeen('daily_report_rejected')
   }
 
+  // Dropdown hint for a department, e.g. " (2 waiting, 1 returned)".
+  function departmentHint(department) {
+    const parts = []
+    if (otherWaiting[department]) parts.push(`${otherWaiting[department]} waiting`)
+    if (otherReturned[department]) parts.push(`${otherReturned[department]} returned`)
+    return parts.length > 0 ? ` (${parts.join(', ')})` : ''
+  }
+
   const formatDT = formatProviderDateTime || fallbackFormatDateTime
   const hasRejectedUnread = Number(notificationCounts?.daily_report_rejected || 0) > 0
 
@@ -705,7 +730,7 @@ export default function LeadmanIncomingReports() {
 
     if (activeTab === 'rejected') {
       if (myRejectedReports.length === 0) {
-        return <EmptyState title="Nothing returned to you" description="If the next department rejects a report you sent, it will show up here so you can fix and resubmit it." />
+        return <EmptyState title="Nothing returned to you" description={`If a ${currentDepartment || 'department'} report you sent is rejected or returned, it will show up here so you can fix and resubmit it.`} />
       }
       return myRejectedReports.map((report) => (
         <motion.div key={report.id} variants={itemMotion}>
@@ -748,7 +773,7 @@ export default function LeadmanIncomingReports() {
             <select value={currentDepartment} onChange={(e) => setSelectedLeadmanDepartment(e.target.value)} className="mt-1 min-w-[200px] rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none">
               {assignedDepartments.map((department) => (
                 <option key={department} value={department}>
-                  {department}{otherWaiting[department] ? ` (${otherWaiting[department]} waiting)` : ''}
+                  {department}{departmentHint(department)}
                 </option>
               ))}
             </select>
@@ -774,8 +799,8 @@ export default function LeadmanIncomingReports() {
         </div>
       </PageHeader>
 
-      {Object.keys(otherWaiting).length > 0 ? (
-        // Reports are waiting in a department that isn't selected right now.
+      {Object.keys(otherWaiting).length > 0 || Object.keys(otherReturned).length > 0 ? (
+        // Reports are waiting (or were returned) in a department that isn't selected right now.
         <div className="space-y-2">
           {Object.entries(otherWaiting).map(([department, count]) => (
             <div key={department} className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between">
@@ -788,6 +813,22 @@ export default function LeadmanIncomingReports() {
                 variant="secondary"
                 size="sm"
                 onClick={() => { setSelectedLeadmanDepartment(department); selectTab('incoming') }}
+              >
+                Switch to {department}
+              </Button>
+            </div>
+          ))}
+          {Object.entries(otherReturned).map(([department, count]) => (
+            <div key={`returned-${department}`} className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between">
+              <span className="flex items-center gap-2">
+                <Undo2 className="h-4 w-4 shrink-0 text-amber-600" />
+                <span><span className="font-semibold">{department}</span> has {count} returned report{count === 1 ? '' : 's'} to fix.</span>
+              </span>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => { setSelectedLeadmanDepartment(department); selectTab('rejected') }}
               >
                 Switch to {department}
               </Button>

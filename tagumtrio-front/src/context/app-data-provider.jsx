@@ -475,7 +475,22 @@ export function AppDataProvider({ children }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ payments, leaveRequests, announcements, schedules, dailyReportDrafts }))
+    const state = { payments, leaveRequests, announcements, schedules, dailyReportDrafts }
+    // Report drafts hold their photos as data URLs, copied onto every worker's
+    // entry, so a big batch easily passes the ~5 MB storage quota. setItem then
+    // throws, and an error here (above every error boundary) blanked the whole
+    // app. Fall back to saving without drafts: they stay in memory until
+    // submitted but won't survive a reload, rather than reloading photo-less.
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    } catch (error) {
+      console.warn('Report drafts are too large to save in browser storage; keeping them in memory only.', error)
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, dailyReportDrafts: {} }))
+      } catch {
+        // storage unavailable — nothing else to do
+      }
+    }
   }, [payments, leaveRequests, dailyReportDrafts])
 
   function addReportEntry(record) {

@@ -762,7 +762,7 @@ export default function LeadmanIncomingReports() {
       >
         <div className="flex flex-wrap items-stretch gap-2">
           <HeaderCounter icon={Inbox} label="To verify" value={incomingReports.length} active={activeTab === 'incoming'} onClick={() => selectTab('incoming')} />
-          <HeaderCounter icon={Undo2} label="Returned to me" value={myRejectedReports.length} active={activeTab === 'rejected'} onClick={() => selectTab('rejected')} />
+          <HeaderCounter icon={Undo2} label="Returned reports" value={myRejectedReports.length} active={activeTab === 'rejected'} onClick={() => selectTab('rejected')} />
           <Link
             to="/app/leadman/history"
             className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/15"

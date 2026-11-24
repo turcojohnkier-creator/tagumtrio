@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import html
 import logging
+import re
 import time
 from collections import OrderedDict
 
@@ -42,6 +44,9 @@ def _cache_set(key: tuple[str, str], translated: str) -> None:
         _cache.popitem(last=False)
 
 GOOGLE_TRANSLATE_URL = "https://translate.googleapis.com/translate_a/single"
+# A second unofficial Google endpoint, which often still answers when the
+# one above is rate-limiting this server's IP.
+GOOGLE_ALT_TRANSLATE_URL = "https://clients5.google.com/translate_a/t"
 MYMEMORY_TRANSLATE_URL = "https://api.mymemory.translated.net/get"
 
 # Google blocks/rate-limits requests to the unofficial translate_a/single
@@ -56,8 +61,68 @@ GOOGLE_REQUEST_HEADERS = {
 }
 
 GOOGLE_ATTEMPTS = 2
-# MyMemory's anonymous tier rejects requests over ~500 bytes.
-MYMEMORY_MAX_LENGTH = 480
+# MyMemory's anonymous tier rejects a query over 500 bytes of UTF-8 (a
+# Chinese character is 3 bytes), so longer text is sent in pieces.
+MYMEMORY_MAX_BYTES = 480
+MYMEMORY_MAX_CHUNKS = 12
+
+_CJK_RE = re.compile(r"[㐀-䶿一-鿿豈-﫿]")
+_LATIN_RE = re.compile(r"[A-Za-z]")
+# Split after sentence ends and newlines, keeping them on the left piece.
+_SENTENCE_BREAK_RE = re.compile(r"(?<=[.!?;\n。！？；])")
+
+
+def _detect_source(text: str) -> str:
+    # MyMemory has no auto-detect ("autodetect" is rejected with "PLEASE
+    # SELECT TWO DISTINCT LANGUAGES"). The app's languages are English and
+    # Chinese; one CJK character carries about as much as a short word.
+    cjk = len(_CJK_RE.findall(text))
+    latin = len(_LATIN_RE.findall(text))
+    return "zh-CN" if cjk and cjk * 3 >= latin else "en"
+
+
+def _same_language(a: str, b: str) -> bool:
+    return a.split("-")[0].lower() == b.split("-")[0].lower()
+
+
+def _utf8_len(value: str) -> int:
+    return len(value.encode("utf-8"))
+
+
+def _hard_split(piece: str) -> list[str]:
+    parts: list[str] = []
+    buffer = ""
+    for char in piece:
+        if buffer and _utf8_len(buffer + char) > MYMEMORY_MAX_BYTES:
+            parts.append(buffer)
+            buffer = char
+        else:
+            buffer += char
+    if buffer:
+        parts.append(buffer)
+    return parts
+
+
+def _split_for_mymemory(text: str) -> list[str]:
+    chunks: list[str] = []
+    current = ""
+    for piece in _SENTENCE_BREAK_RE.split(text):
+        if not piece:
+            continue
+        if _utf8_len(current + piece) <= MYMEMORY_MAX_BYTES:
+            current += piece
+            continue
+        if current:
+            chunks.append(current)
+            current = ""
+        if _utf8_len(piece) <= MYMEMORY_MAX_BYTES:
+            current = piece
+        else:
+            *full, current = _hard_split(piece)
+            chunks.extend(full)
+    if current:
+        chunks.append(current)
+    return chunks
 
 
 async def _translate_via_google(client: httpx.AsyncClient, text: str, target: str) -> str:
@@ -71,19 +136,57 @@ async def _translate_via_google(client: httpx.AsyncClient, text: str, target: st
     return "".join(segment[0] for segment in data[0] if segment[0])
 
 
-async def _translate_via_mymemory(client: httpx.AsyncClient, text: str, target: str) -> str:
-    if len(text) > MYMEMORY_MAX_LENGTH:
-        raise ValueError("Text too long for MyMemory fallback")
+async def _translate_via_google_alt(client: httpx.AsyncClient, text: str, target: str) -> str:
     response = await client.get(
-        MYMEMORY_TRANSLATE_URL,
-        params={"q": text, "langpair": f"autodetect|{target}"},
+        GOOGLE_ALT_TRANSLATE_URL,
+        params={"client": "dict-chrome-ex", "sl": "auto", "tl": target, "q": text},
+        headers=GOOGLE_REQUEST_HEADERS,
     )
     response.raise_for_status()
     data = response.json()
-    translated = data["responseData"]["translatedText"]
-    if not translated or data.get("responseStatus") not in (200, "200"):
-        raise ValueError(f"MyMemory returned no translation: {data!r}")
+    # One item per query: ["translated", "detected-lang"], or a bare string.
+    parts = [item[0] if isinstance(item, list) and item else item for item in data]
+    translated = "".join(part for part in parts if isinstance(part, str))
+    if not translated:
+        raise ValueError(f"Google alt endpoint returned no translation: {data!r}")
     return translated
+
+
+async def _mymemory_chunk(client: httpx.AsyncClient, text: str, source: str, target: str) -> str:
+    response = await client.get(
+        MYMEMORY_TRANSLATE_URL,
+        params={"q": text, "langpair": f"{source}|{target}"},
+    )
+    response.raise_for_status()
+    data = response.json()
+    translated = (data.get("responseData") or {}).get("translatedText")
+    if not translated or data.get("responseStatus") not in (200, "200") or data.get("quotaFinished"):
+        raise ValueError(f"MyMemory returned no translation: {data!r}")
+    return html.unescape(translated)
+
+
+async def _translate_via_mymemory(client: httpx.AsyncClient, text: str, target: str) -> str:
+    source = _detect_source(text)
+    if _same_language(source, target):
+        # Already in the reader's language; MyMemory refuses same-language pairs.
+        return text
+
+    chunks = _split_for_mymemory(text)
+    if len(chunks) > MYMEMORY_MAX_CHUNKS:
+        raise ValueError(f"Text too long for MyMemory fallback ({len(chunks)} chunks)")
+
+    translated_parts: list[str] = []
+    for chunk in chunks:
+        core = chunk.strip()
+        if not core:
+            translated_parts.append(chunk)
+            continue
+        # Keep the chunk's surrounding whitespace (line breaks between
+        # paragraphs), which MyMemory would otherwise drop.
+        leading = chunk[: len(chunk) - len(chunk.lstrip())]
+        trailing = chunk[len(chunk.rstrip()):]
+        translated_parts.append(leading + await _mymemory_chunk(client, core, source, target) + trailing)
+    return "".join(translated_parts)
 
 
 @router.post("")
@@ -109,6 +212,14 @@ async def translate_text(payload: TranslateRequest, current_user=Depends(get_cur
             except Exception as exc:
                 last_exc = exc
                 logger.warning("Google translate attempt %s/%s failed: %r", attempt, GOOGLE_ATTEMPTS, exc)
+
+        try:
+            translated = await _translate_via_google_alt(client, text, payload.target)
+            _cache_set(cache_key, translated)
+            return {"translated": translated}
+        except Exception as exc:
+            last_exc = exc
+            logger.warning("Google alt translate failed: %r", exc)
 
         # Fall back to MyMemory, a free API meant for programmatic use, in
         # case Google is blocking this server's IP outright.

@@ -10,6 +10,7 @@ import {
   Layers,
   Megaphone,
   Undo2,
+  UserPlus,
   Wallet,
 } from 'lucide-react'
 
@@ -28,6 +29,7 @@ const META = {
   announcement_new: { icon: Megaphone, tone: 'info' },
   reassignment_employee: { icon: ArrowLeftRight, tone: 'warning' },
   reassignment_leadman: { icon: ArrowLeftRight, tone: 'warning' },
+  employee_account_created: { icon: UserPlus, tone: 'success' },
 }
 
 export const TONE_CLASSES = {
@@ -55,6 +57,3 @@ export function timeAgo(value, now = Date.now()) {
   if (days < 7) return `${days}d ago`
   return new Date(time).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
-
-// Fired by the "N new updates" toast to open the bell panel.
-export const OPEN_NOTIFICATIONS_EVENT = 'triops-open-notifications'

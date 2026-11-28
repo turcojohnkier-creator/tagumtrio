@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -11,6 +12,8 @@ from app import crud, schemas
 from app.models.user import User
 from app.schemas.user import UserPublic
 from app.services.notification_service import create_notification, notify_leadmen_for_department
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 
@@ -66,9 +69,28 @@ def create_employee_account(
     if crud.get_user_by_identifier(db, payload.identifier):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Identifier already registered.")
     try:
-        return crud.create_user(db, payload)
+        user = crud.create_user(db, payload)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    # Let the leadman (or leadmen) handling this department know a new
+    # employee has joined. The account is already saved, so a notification
+    # failure must not turn the request into an error.
+    if user.role == "employee" and user.department:
+        try:
+            notify_leadmen_for_department(
+                db,
+                user.department,
+                "employee_account_created",
+                "New employee in your department",
+                f"{user.name} was added to {user.department}.",
+                "/app/leadman/workers",
+            )
+        except Exception:
+            db.rollback()
+            logger.exception("Failed to notify leadmen about new employee %s", user.id)
+
+    return user
 
 
 @router.patch("/{employee_id}", response_model=UserPublic)

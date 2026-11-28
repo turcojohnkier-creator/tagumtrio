@@ -407,8 +407,11 @@ export async function fetchNotificationUnreadCountsApi() {
   return apiRequest('/v1/notifications/unread-counts')
 }
 
-export async function fetchNotificationsApi(unreadOnly = false) {
-  const q = unreadOnly ? '?unread=true' : ''
+export async function fetchNotificationsApi(unreadOnly = false, limit = null) {
+  const params = new URLSearchParams()
+  if (unreadOnly) params.set('unread', 'true')
+  if (limit) params.set('limit', String(limit))
+  const q = params.toString() ? `?${params}` : ''
   return apiRequest(`/v1/notifications${q}`)
 }
 

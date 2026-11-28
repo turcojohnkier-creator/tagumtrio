@@ -94,7 +94,7 @@ export default function ViewPayslip() {
                 <th className="px-4 py-3 font-medium">Department</th>
                 <th className="px-4 py-3 font-medium">Product</th>
                 <th className="px-4 py-3 text-right font-medium">Quantity</th>
-                <th className="px-4 py-3 text-right font-medium">Amount</th>
+                <th className="px-4 py-3 text-right font-medium">Rate per head</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">

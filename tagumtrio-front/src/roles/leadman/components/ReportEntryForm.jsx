@@ -56,9 +56,10 @@ function deriveExtraSlotKeys(photoPreview) {
   return Object.keys(photoPreview).filter((key) => !FIXED_PHOTO_KEYS.includes(key))
 }
 
-function EmployeePickerModal({ open, department, employeeOptions, selectedEmployeeIds, onToggleEmployee, allSelected, onToggleAll, onClose }) {
+// Read-only: the employees in a report are decided by attendance (everyone
+// marked present), or for a resubmit, by the original report.
+function IncludedEmployeesModal({ open, department, employees, onClose }) {
   if (!open) return null
-  const hasOptions = employeeOptions.length > 0
 
   return (
     <Portal>
@@ -66,68 +67,36 @@ function EmployeePickerModal({ open, department, employeeOptions, selectedEmploy
         <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl rounded-lg border border-zinc-200 bg-white shadow-sm max-h-[90vh] overflow-auto">
           <div className="flex items-center justify-between gap-4 border-b border-zinc-200 px-5 py-4">
             <div>
-              <h4 className="text-base font-semibold text-zinc-900">Employees Included</h4>
-              <p className="text-sm text-zinc-500">Select the employees that belong in this report.</p>
+              <h4 className="text-base font-semibold text-zinc-900">Employees Included ({employees.length})</h4>
+              <p className="text-sm text-zinc-500">These employees are included in this report.</p>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <button
-                type="button"
-                onClick={onToggleAll}
-                disabled={!hasOptions}
-                className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {allSelected ? 'Clear all' : `Select all (${employeeOptions.length})`}
-              </button>
-              <button type="button" onClick={onClose} className="btn-dismiss rounded-full border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-800 transition-colors hover:bg-zinc-100">
-                Close
-              </button>
-            </div>
+            <button type="button" onClick={onClose} className="btn-dismiss shrink-0 rounded-full border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-800 transition-colors hover:bg-zinc-100">
+              Close
+            </button>
           </div>
 
           <div className="max-h-[70vh] overflow-auto">
             <table className="min-w-full divide-y divide-zinc-200 text-sm">
               <thead className="sticky top-0 bg-emerald-50/70 text-emerald-800">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium">
-                    <label className="inline-flex cursor-pointer items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={allSelected}
-                        disabled={!hasOptions}
-                        onChange={onToggleAll}
-                        aria-label="Select all employees"
-                        className="h-4 w-4 rounded border-zinc-300 bg-white text-emerald-500 focus:ring-emerald-500"
-                      />
-                      Select
-                    </label>
-                  </th>
                   <th className="px-4 py-3 text-left font-medium">Employee No.</th>
                   <th className="px-4 py-3 text-left font-medium">Employee Name</th>
                   <th className="px-4 py-3 text-left font-medium">Department</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200 text-zinc-800">
-                {employeeOptions.length === 0 ? (
+                {employees.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-sm text-zinc-500">
-                      No active workers available for this report.
+                    <td colSpan={3} className="px-4 py-8 text-center text-sm text-zinc-500">
+                      No workers are marked present for this session.
                     </td>
                   </tr>
                 ) : null}
-                {employeeOptions.map((employee) => {
+                {employees.map((employee) => {
                   const employeeId = normalizeEmployeeId(employee)
-                  const isSelected = selectedEmployeeIds.includes(employeeId)
 
                   return (
-                    <tr key={employeeId || employee.employeeId || employee.id || employee.identifier} className={isSelected ? 'bg-emerald-500/5' : ''}>
-                      <td className="px-4 py-3 align-middle">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => onToggleEmployee(employeeId)}
-                          className="h-4 w-4 rounded border-zinc-300 bg-white text-emerald-500 focus:ring-emerald-500"
-                        />
-                      </td>
+                    <tr key={employeeId || employee.employeeId || employee.id || employee.identifier}>
                       <td className="px-4 py-3 align-middle font-medium text-zinc-900">{formatEmployeeId(employeeId)}</td>
                       <td className="px-4 py-3 align-middle">
                         <ProfileLink userId={employee.employeeId ?? employee.id} name={employee.employeeName || employee.name || employee.fullName} className="flex items-center gap-2.5">
@@ -223,7 +192,6 @@ function ReportReviewModal({ open, department, product, quantity, pricePerUnit, 
 export default function ReportEntryForm({
   department,
   employeeOptions = [],
-  initialEmployeeId = '',
   submitLabel = 'Create Report',
   onSubmit,
   initialValues: initialValuesOverride,
@@ -245,11 +213,14 @@ export default function ReportEntryForm({
       .filter((employee) => employee.normalizedEmployeeId && (employee.employeeName || employee.name || employee.fullName))
   }, [employeeOptions])
 
-  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState(() => {
-    if (initialSelectedEmployeeIds?.length) return initialSelectedEmployeeIds
-    const defaultId = normalizeEmployeeId({ employeeId: initialEmployeeId }) || validEmployeeOptions[0]?.normalizedEmployeeId
-    return defaultId ? [defaultId] : []
-  })
+  // No manual picking. On Create Report, `employeeOptions` is already just the
+  // workers marked present, so all of them are included (and the list follows
+  // attendance live). On Edit & Resubmit, the original report's employees stay.
+  const selectedEmployees = useMemo(() => {
+    if (!initialSelectedEmployeeIds?.length) return validEmployeeOptions
+    const lockedIds = new Set(initialSelectedEmployeeIds.map((id) => String(id).trim()))
+    return validEmployeeOptions.filter((employee) => lockedIds.has(employee.normalizedEmployeeId))
+  }, [validEmployeeOptions, initialSelectedEmployeeIds])
   const [showEmployeeTable, setShowEmployeeTable] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submissionError, setSubmissionError] = useState('')
@@ -275,8 +246,6 @@ export default function ReportEntryForm({
   useEffect(() => {
     if (previousDepartmentRef.current === department) return
     previousDepartmentRef.current = department
-    const defaultId = normalizeEmployeeId({ employeeId: initialEmployeeId }) || validEmployeeOptions[0]?.normalizedEmployeeId
-    setSelectedEmployeeIds(defaultId ? [defaultId] : [])
     setShowEmployeeTable(false)
     setSubmissionError('')
     setIsSubmitting(false)
@@ -344,8 +313,6 @@ export default function ReportEntryForm({
     ...extraSlotKeys.map((key, index) => ({ key, label: `Photo ${FIXED_PHOTO_SLOTS.length + 1 + index}`, removable: true })),
   ], [extraSlotKeys])
 
-  const selectedEmployees = validEmployeeOptions.filter((employee) => selectedEmployeeIds.includes(employee.normalizedEmployeeId))
-
   const product = String(values.product || '').trim()
   const quantity = Number(values.quantity || 0)
   const pricePerUnit = getRateFor(spec.department, product)
@@ -355,26 +322,11 @@ export default function ReportEntryForm({
 
   const autoSummary = buildDepartmentReportSummary(department, values)
 
-  function toggleEmployee(employeeId) {
-    setSelectedEmployeeIds((current) => {
-      if (current.includes(employeeId)) return current.filter((id) => id !== employeeId)
-      return [...current, employeeId]
-    })
-  }
-
-  // Everyone in the list (on Create Report, that's the workers marked active).
-  const allEmployeesSelected = validEmployeeOptions.length > 0 && selectedEmployees.length === validEmployeeOptions.length
-  function toggleAllEmployees() {
-    setSelectedEmployeeIds(allEmployeesSelected ? [] : validEmployeeOptions.map((employee) => employee.normalizedEmployeeId))
-  }
-
   function handleChange(key, value) {
     setValues((current) => ({ ...current, [key]: value }))
   }
 
   function resetForm() {
-    const defaultId = normalizeEmployeeId({ employeeId: initialEmployeeId }) || validEmployeeOptions[0]?.normalizedEmployeeId
-    setSelectedEmployeeIds(defaultId ? [defaultId] : [])
     setSubmissionError('')
     setValues(buildInitialValues(spec, department))
     setTargetDepartment(nextDepartmentOptions.length === 1 ? nextDepartmentOptions[0] : '')
@@ -464,18 +416,14 @@ export default function ReportEntryForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-6 flex flex-col items-center gap-3">
-        <p className="text-sm text-zinc-700">View employees deployed to this department to check who is involved in the report.</p>
+        <p className="text-sm text-zinc-700">
+          {initialSelectedEmployeeIds?.length
+            ? 'This report keeps the same employees as the original report.'
+            : 'Employees marked present are included in this report automatically.'}
+        </p>
         <div className="flex items-center gap-3">
           <button type="button" onClick={() => setShowEmployeeTable(true)} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-500/20">
-            View employees in department
-          </button>
-          <button
-            type="button"
-            onClick={toggleAllEmployees}
-            disabled={validEmployeeOptions.length === 0}
-            className="rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {allEmployeesSelected ? 'Clear all' : `Select all (${validEmployeeOptions.length})`}
+            View included employees
           </button>
           <div className="text-sm text-zinc-700">Employee/s: <span className="font-semibold text-emerald-700">{selectedEmployees.length}</span></div>
         </div>
@@ -546,7 +494,7 @@ export default function ReportEntryForm({
             {selectedEmployees.length > 0 ? (
               <> · ₱{perEmployeeAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })} each for {selectedEmployees.length} employee{selectedEmployees.length === 1 ? '' : 's'}</>
             ) : (
-              <> · select employees to see each share</>
+              <> · mark workers present to see each share</>
             )}
           </p>
         ) : (
@@ -634,14 +582,10 @@ export default function ReportEntryForm({
         </Button>
       </div>
 
-      <EmployeePickerModal
+      <IncludedEmployeesModal
         open={showEmployeeTable}
         department={department}
-        employeeOptions={validEmployeeOptions}
-        selectedEmployeeIds={selectedEmployeeIds}
-        onToggleEmployee={toggleEmployee}
-        allSelected={allEmployeesSelected}
-        onToggleAll={toggleAllEmployees}
+        employees={selectedEmployees}
         onClose={() => setShowEmployeeTable(false)}
       />
 

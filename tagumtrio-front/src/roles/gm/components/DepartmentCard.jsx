@@ -2,7 +2,7 @@ import { ChevronRight, Users } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 
 // `attendanceOpen` is false outside work sessions (before 7 AM, lunch, after
-// 6 PM) — nobody can be active then, so Active shows a dash instead of 0.
+// 6 PM) — nobody can be present then, so Present shows a dash instead of 0.
 export default function DepartmentCard({ department, onOpen, attendanceOpen = false }) {
   const { t } = useAuth()
   const name = department.name || department.department || t('gm.modal.unknown')

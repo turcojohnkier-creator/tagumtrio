@@ -57,6 +57,11 @@ export function getEntryDate(entry, fallbackDate = '') {
   return String(value).slice(0, 10)
 }
 
+// Money as shown in every report: ₱ with at most 2 decimals (₱128.57, ₱900).
+export function formatPeso(value) {
+  return `₱${Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+}
+
 // Image URLs for a report's entries, counted once per batch — every worker row
 // in a batch carries a copy of the same photos, so a flat per-row count
 // multiplied them (7 workers × 5 photos showed as 35).
@@ -121,6 +126,9 @@ export function groupBatches(entries = [], fallbackDepartment = '', fallbackDate
         product: entry.product || entry.raw?.product || '',
         quantity: Number.isFinite(pieces) ? pieces : 0,
         date: getEntryDate(entry, fallbackDate),
+        // Every worker in a batch gets the same share, so the first entry's
+        // amount is the rate per head; `amount` sums to the batch total.
+        ratePerHead: Number(entry.amount || 0),
         amount: 0,
         workers: [],
         photos: [],

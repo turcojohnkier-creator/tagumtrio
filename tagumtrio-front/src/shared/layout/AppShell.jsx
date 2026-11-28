@@ -5,7 +5,6 @@ import { useAuth } from '../../context/auth-context'
 import logo from '../../assets/tagumtrio-logo.jpg'
 import Avatar from '../ui/Avatar'
 import NotificationToasts from '../ui/NotificationToasts'
-import NotificationBell from './NotificationBell'
 
 function cn(...inputs) {
   return inputs.filter(Boolean).join(' ')
@@ -16,6 +15,7 @@ export default function AppShell({
   navItems = [],
   portalLabel,
   settingsHref,
+  notificationsHref,
   headerCounts = [],
   children,
 }) {
@@ -50,7 +50,6 @@ export default function AppShell({
             <h1 className="font-heading text-sm font-bold leading-snug tracking-tight text-white">Tagum Trio Lumber Corporation</h1>
             {portalLabel ? <p className="truncate text-[11px] capitalize text-emerald-200/70">{portalLabel}</p> : null}
           </div>
-          <NotificationBell placement="sidebar" />
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
@@ -76,7 +75,11 @@ export default function AppShell({
                   ) : null}
                   {item.icon ? <item.icon className="relative z-10 h-5 w-5 shrink-0" /> : null}
                   <span className="relative z-10 truncate">{item.name}</span>
-                  {item.hasUnread ? (
+                  {item.badgeCount > 0 ? (
+                    <span className="relative z-10 ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-bold leading-none text-white">
+                      {item.badgeCount > 99 ? '99+' : item.badgeCount}
+                    </span>
+                  ) : item.hasUnread ? (
                     <span className="relative z-10 ml-auto h-2 w-2 shrink-0 rounded-full bg-rose-400" />
                   ) : null}
                 </>
@@ -130,8 +133,6 @@ export default function AppShell({
           <div className="flex items-center gap-2">
             {languageToggle()}
 
-            <NotificationBell placement="header" />
-
             <Link
               to={settingsHref}
               className="flex items-center rounded-md px-1 py-1 transition-colors hover:bg-white/10"
@@ -159,7 +160,11 @@ export default function AppShell({
               aria-label={item.name}
             >
               {item.icon ? <item.icon className="h-6 w-6" /> : null}
-              {item.hasUnread ? (
+              {item.badgeCount > 0 ? (
+                <span className="absolute right-0.5 top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-emerald-900">
+                  {item.badgeCount > 9 ? '9+' : item.badgeCount}
+                </span>
+              ) : item.hasUnread ? (
                 <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rose-400 ring-2 ring-emerald-900" />
               ) : null}
             </NavLink>
@@ -171,7 +176,7 @@ export default function AppShell({
         <div className="mx-auto max-w-6xl pb-28 md:pb-12">{children}</div>
       </main>
 
-      <NotificationToasts />
+      <NotificationToasts notificationsHref={notificationsHref} />
     </div>
   )
 }

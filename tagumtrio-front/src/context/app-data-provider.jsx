@@ -5,6 +5,7 @@ import { AppDataContext } from './app-data-context'
 import { DEPARTMENTS } from '../constants/departments'
 import { buildDepartmentReportSummary } from '../constants/department-report-fields'
 import { toManilaDateKey } from '../lib/datetime'
+import { buildReportEntry } from '../shared/reports/build-report-entry'
 
 // Local storage keys and defaults
 const STORAGE_KEY = 'triops-app-data-state'
@@ -494,64 +495,13 @@ export function AppDataProvider({ children }) {
   }, [payments, leaveRequests, dailyReportDrafts])
 
   function addReportEntry(record) {
-    const rawEmployeeId = record.employeeId ?? record.id ?? record.employee_id ?? record.identifier ?? record.raw?.employeeId ?? record.raw?.employee_id ?? ''
-    let employeeId = Number(rawEmployeeId)
-    if (Number.isNaN(employeeId)) employeeId = undefined
-    const employeeName = String(record.employeeName || record.name || record.employee_name || record.fullName || record.raw?.employeeName || record.raw?.employee_name || '').trim()
-    const department = String(record.department || record.dept || record.raw?.department || '').trim()
-    const id = `RPT-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-    const capturedAt = record.scanCapturedAt || record.scannedAt || new Date().toISOString()
-    const reportFields = record.qrFields || {}
-    const batchId = String(record.batchId || record.raw?.batchId || id)
-    const batchCapturedAt = record.batchCapturedAt || record.raw?.batchCapturedAt || capturedAt
-    const batchEmployeeCount = Number(record.batchEmployeeCount || record.raw?.batchEmployeeCount || 1)
-    const notes = record.notes || buildDepartmentReportSummary(department, reportFields) || null
-    const product = String(record.product || '').trim()
-    const quantity = Number(record.quantity || 0)
-    const pricePerUnit = Number(record.pricePerUnit || 0)
-    const amount = Number(record.amount || 0)
-    const targetDepartment = String(record.targetDepartment || '').trim()
-    const photos = record.photos || {}
-    const raw = {
-      ...(record.raw || {}),
-      department,
-      employeeId,
-      employeeName,
-      product,
-      quantity,
-      pricePerUnit,
-      targetDepartment,
-      reportFields,
-      reportSummary: record.qrSummary || notes,
-      capturedAt,
-      batchId,
-      batchCapturedAt,
-      batchEmployeeCount,
-    }
+    const entry = buildReportEntry(record)
+    const { id, department, scannedAt: capturedAt } = entry
 
     try {
       setDailyReportDrafts((cur) => {
         const key = `${department}:${toManilaDateKey(capturedAt)}`
         const existing = cur[key] || { department, reportDate: toManilaDateKey(capturedAt), entries: [], summary: '', totalAmount: 0 }
-        const entry = {
-          id,
-          batchId,
-          batchCapturedAt,
-          batchEmployeeCount,
-          employeeId,
-          employeeName,
-          department,
-          targetDepartment,
-          scannedAt: capturedAt,
-          date: reportFields.date || undefined,
-          product,
-          quantity,
-          pricePerUnit,
-          amount,
-          photos,
-          raw,
-          notes,
-        }
         // Build a NEW draft instead of mutating `existing` (which is the
         // current state object). React may run this updater twice (StrictMode
         // does in dev); mutating made the second run append the worker again,

@@ -7,6 +7,7 @@ import { useDialog } from '../../../context/dialog-context'
 import { useAppData } from '../../../context/app-data-context'
 import { fetchDailyReportsApi } from '../../../lib/api'
 import useLiveRefresh from '../../../shared/hooks/useLiveRefresh'
+import DailyReportTable from '../../../shared/reports/DailyReportTable'
 import { getEntryIdentifier, getEntryLabel, groupBatches, hasMeaningfulEntry, summarizeBatches } from '../../../shared/reports/report-entry-utils'
 import { formatProductWithUnit } from '../../../lib/units'
 import PageHeader from '../../../shared/ui/PageHeader'
@@ -36,13 +37,6 @@ function toDateKey(value) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return String(value).slice(0, 10)
   return toManilaDateKey(date)
-}
-
-function resolveEntryDepartment(entry, fallbackDepartment) {
-  return entry?.department
-    || entry?.raw?.department
-    || fallbackDepartment
-    || '-'
 }
 
 // Every worker row in a batch carries a copy of the batch's photos, so count
@@ -108,42 +102,7 @@ function ReportDetailModal({ report, onClose, onPreviewPhotos, onCompile, compil
         </div>
 
         <div className="max-h-[72vh] overflow-auto px-5 py-4 space-y-4">
-          
-
-          <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-emerald-50/70 text-emerald-800">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Employee</th>
-                  <th className="px-4 py-3 font-medium">Department</th>
-                  <th className="px-4 py-3 font-medium">Product</th>
-                  <th className="px-4 py-3 font-medium">Quantity</th>
-                  <th className="px-4 py-3 font-medium">Date</th>
-                  <th className="px-4 py-3 font-medium">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-200/70 bg-white/50">
-                {report.entries.map((entry) => (
-                  <tr key={entry.id || `${getEntryIdentifier(entry)}-${getEntryLabel(entry)}-${entry.scannedAt || ''}`} className="text-zinc-700 hover:bg-emerald-50/40">
-                    <td className="px-4 py-4">
-                      <ProfileLink userId={entry.employeeId ?? entry.raw?.employeeId} name={getEntryLabel(entry)} className="flex items-center gap-2.5">
-                        <UserAvatar userId={entry.employeeId ?? entry.raw?.employeeId} name={getEntryLabel(entry)} size="sm" />
-                        <div>
-                          <div className="font-medium text-zinc-900">{getEntryLabel(entry) || 'Untitled item'}</div>
-                          <div className="text-xs text-zinc-400">{getEntryIdentifier(entry) || '-'}</div>
-                        </div>
-                      </ProfileLink>
-                    </td>
-                    <td className="px-4 py-4 text-zinc-700">{resolveEntryDepartment(entry, report.department)}</td>
-                    <td className="px-4 py-4 text-zinc-700">{(entry.product || entry.raw?.product || report.product) ? formatProductWithUnit(entry.product || entry.raw?.product || report.product, resolveEntryDepartment(entry, report.department)) : '-'}</td>
-                    <td className="px-4 py-4 text-zinc-700">{entry.quantity || entry.raw?.quantity || report.quantity || '-'}</td>
-                    <td className="px-4 py-4 text-zinc-700">{formatReportDate(entry.scannedAt || report.scannedAt)}</td>
-                    <td className="px-4 py-4 font-semibold text-zinc-900">₱{Number(entry.amount || 0).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DailyReportTable entries={report.entries} fallbackDepartment={report.department} fallbackDate={report.reportDate} />
 
           <div className="grid gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 md:grid-cols-2">
             <div>

@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  ArrowRight, Check, CheckCircle2, ChevronLeft, ChevronRight, CircleAlert, Inbox, Pencil, Undo2, Users, X,
+  ArrowRight, Check, CheckCircle2, CircleAlert, Inbox, Pencil, Undo2, X,
 } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 import { useDialog } from '../../../context/dialog-context'
 import { useAppData } from '../../../context/app-data-context'
 import { fetchDailyReportsApi, updateDailyReportApi } from '../../../lib/api'
-import { formatProductWithUnit } from '../../../lib/units'
-import { extractNote, groupBatches, summarizeBatches } from '../../../shared/reports/report-entry-utils'
+import { extractNote } from '../../../shared/reports/report-entry-utils'
+import DailyReportTable from '../../../shared/reports/DailyReportTable'
 import ReportEntryForm from '../components/ReportEntryForm'
 import ReturnTrail from '../../../shared/reports/ReturnTrail'
 import PageHeader from '../../../shared/ui/PageHeader'
@@ -34,10 +34,6 @@ function formatWorkDate(value) {
   const date = new Date(`${String(value).slice(0, 10)}T00:00:00`)
   if (Number.isNaN(date.getTime())) return String(value)
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-}
-
-function peso(value) {
-  return `₱${Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
 }
 
 function normalizeText(value) {
@@ -75,12 +71,10 @@ function getStatusVariant(status) {
   }
 }
 
-// Batches + totals + the human-written note, derived once per report.
+// The human-written note on a report (verify/reject reasons), without the
+// auto-generated summary parts. The table itself is the shared DailyReportTable.
 function useReportView(report) {
-  return useMemo(() => {
-    const batches = groupBatches(report.entries, report.department, report.reportDate)
-    return { batches, ...summarizeBatches(batches), note: extractNote(report.summary) }
-  }, [report.entries, report.department, report.reportDate, report.summary])
+  return useMemo(() => ({ note: extractNote(report.summary) }), [report.summary])
 }
 
 function buildEntriesFromPayloads(payloads, batchCapturedAt) {
@@ -99,172 +93,6 @@ function buildEntriesFromPayloads(payloads, batchCapturedAt) {
     scannedAt: batchCapturedAt,
     batchId: payload.batchId,
   }))
-}
-
-/* ---------- the report table ---------- */
-
-// Leadmen can attach any number of photos, so the cell has a fixed footprint:
-// a 2×2 grid. Up to 4 photos show as-is; with 5+ the 4th tile becomes "+N"
-// and opens the viewer, where every photo can be browsed.
-const MAX_THUMB_TILES = 4
-
-function PhotoThumbs({ photos, onOpen }) {
-  if (!photos.length) return <span className="text-xs text-zinc-400">None</span>
-  const overflow = photos.length > MAX_THUMB_TILES
-  const shown = overflow ? photos.slice(0, MAX_THUMB_TILES - 1) : photos
-  const tile = 'h-11 w-11 overflow-hidden rounded-md border focus:outline-none focus:ring-2 focus:ring-emerald-500'
-
-  return (
-    <div className="grid w-max grid-cols-2 gap-1.5">
-      {shown.map((photo, index) => (
-        <button
-          key={`${photo.label}-${index}`}
-          type="button"
-          onClick={() => onOpen(photos, index)}
-          title={`${photo.label} — click to enlarge`}
-          className={`group relative border-zinc-200 bg-zinc-100 ${tile}`}
-        >
-          <img src={photo.src} alt={photo.label} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
-          <span className="absolute inset-x-0 bottom-0 truncate bg-black/55 px-0.5 text-center text-[9px] font-medium leading-tight text-white">{photo.label}</span>
-        </button>
-      ))}
-      {overflow ? (
-        <button
-          type="button"
-          onClick={() => onOpen(photos, MAX_THUMB_TILES - 1)}
-          title={`View all ${photos.length} photos`}
-          className={`relative flex items-center justify-center border-zinc-300 bg-zinc-800 text-white ${tile}`}
-        >
-          <img src={photos[MAX_THUMB_TILES - 1].src} alt="" className="absolute inset-0 h-full w-full object-cover opacity-35" />
-          <span className="relative text-xs font-bold">+{photos.length - (MAX_THUMB_TILES - 1)}</span>
-        </button>
-      ) : null}
-    </div>
-  )
-}
-
-// A batch can have many workers, so the cell shows only a count; the full
-// list opens in a popup. Module scope so its open state survives polling.
-function WorkersButton({ workers, title }) {
-  const [open, setOpen] = useState(false)
-  const count = workers.length
-
-  useEffect(() => {
-    if (!open) return undefined
-    function onKey(event) {
-      if (event.key === 'Escape') setOpen(false)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open])
-
-  if (count === 0) return <span className="text-xs text-zinc-400">None</span>
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        title={`View ${count} employee${count === 1 ? '' : 's'}`}
-        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-      >
-        <Users className="h-4 w-4" />
-        <span className="tabular-nums">{count}</span>
-      </button>
-
-      {open ? (
-        <Portal>
-          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setOpen(false)}>
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-label="Employees in this batch"
-              onClick={(event) => event.stopPropagation()}
-              className="flex max-h-[80vh] w-full max-w-sm flex-col rounded-xl border border-zinc-200 bg-white shadow-lg"
-            >
-              <div className="flex items-start justify-between gap-3 border-b border-zinc-100 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="truncate font-heading text-base font-bold text-zinc-900">{title}</p>
-                  <p className="text-xs text-zinc-500">{count} employee{count === 1 ? '' : 's'}</p>
-                </div>
-                <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="btn-dismiss rounded-full p-1.5 text-zinc-500 hover:bg-zinc-100">
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <ul className="divide-y divide-zinc-100 overflow-y-auto px-4 py-1">
-                {workers.map((worker, workerIndex) => (
-                  <li key={`${worker.id ?? worker.name}-${workerIndex}`} className="flex items-center justify-between gap-3 py-2">
-                    <ProfileLink userId={worker.id} name={worker.name} className="flex min-w-0 items-center gap-2">
-                      <UserAvatar userId={worker.id} name={worker.name} size="xs" />
-                      <span className="truncate text-sm font-medium text-zinc-800">{worker.name || 'Unknown'}</span>
-                    </ProfileLink>
-                    {worker.identifier ? <span className="shrink-0 text-xs text-zinc-400">{worker.identifier}</span> : null}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </Portal>
-      ) : null}
-    </>
-  )
-}
-
-// Same look and column order as the system's daily report table, plus a
-// worker count (list in a popup), the proof photos visible, and a totals row.
-function VerificationTable({ view, onOpenPhotos }) {
-  const { t } = useAuth()
-  const th = 'px-4 py-3 font-medium whitespace-nowrap'
-
-  if (view.batches.length === 0) {
-    return <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 text-sm text-zinc-500">{t('table.no_entries', 'No entries in this report.')}</div>
-  }
-
-  return (
-    <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
-      <table className="w-full text-left text-sm">
-        <thead className="bg-emerald-50/70 text-emerald-800">
-          <tr>
-            <th className={th}>{t('table.department', 'Department')}</th>
-            <th className={th}>{t('table.product', 'Product')}</th>
-            <th className={`${th} text-right`}>{t('table.quantity', 'Quantity')}</th>
-            <th className={th}>{t('table.date', 'Date')}</th>
-            <th className={th}>{t('table.employees', 'Employees')}</th>
-            <th className={th}>{t('table.photos', 'Photos')}</th>
-            <th className={`${th} text-right`}>{t('table.amount', 'Amount')}</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-100 bg-white align-top">
-          {view.batches.map((batch, index) => (
-            <tr key={batch.key} className={`text-zinc-700 hover:bg-emerald-50/40 ${index % 2 === 1 ? 'bg-emerald-50/20' : ''}`}>
-              <td className="px-4 py-3 whitespace-nowrap">{batch.department || '—'}</td>
-              <td className="px-4 py-3 font-medium text-zinc-900 whitespace-nowrap">{formatProductWithUnit(batch.product, batch.department) || '—'}</td>
-              <td className="px-4 py-3 text-right font-heading text-base font-bold tabular-nums text-zinc-900">{batch.quantity.toLocaleString()}</td>
-              <td className="px-4 py-3 whitespace-nowrap">{batch.date ? formatWorkDate(batch.date) : '—'}</td>
-              <td className="px-4 py-3">
-                <WorkersButton
-                  workers={batch.workers}
-                  title={formatProductWithUnit(batch.product, batch.department) || batch.department || t('table.employees', 'Employees')}
-                />
-              </td>
-              <td className="px-4 py-3"><PhotoThumbs photos={batch.photos} onOpen={onOpenPhotos} /></td>
-              <td className="px-4 py-3 text-right font-semibold text-emerald-700 whitespace-nowrap">{peso(batch.amount)}</td>
-            </tr>
-          ))}
-        </tbody>
-        <tfoot className="border-t-2 border-zinc-200 bg-zinc-50 text-zinc-900">
-          <tr>
-            <td className="px-4 py-3 font-semibold" colSpan={2}>Total ({view.batchCount} batch{view.batchCount === 1 ? '' : 'es'})</td>
-            <td className="px-4 py-3 text-right font-heading text-base font-bold tabular-nums">{view.totalQuantity.toLocaleString()}</td>
-            <td className="px-4 py-3" />
-            <td className="px-4 py-3 font-semibold">{view.workerCount} worker{view.workerCount === 1 ? '' : 's'}</td>
-            <td className="px-4 py-3 text-zinc-500">{view.photos.length} photo{view.photos.length === 1 ? '' : 's'}</td>
-            <td className="px-4 py-3 text-right font-bold text-emerald-700 whitespace-nowrap">{peso(view.totalAmount)}</td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  )
 }
 
 function ReportHeading({ report, toDepartment, formatDT }) {
@@ -294,11 +122,14 @@ function ReportHeading({ report, toDepartment, formatDT }) {
 // Module scope (not inside the page) so React keeps the same component across
 // the page's 5s polling re-renders — the reject note lives in local state here,
 // so typing never loses focus.
-function IncomingReport({ report, currentDepartment, busy, onVerify, onReject, onOpenPhotos, formatDT }) {
+function IncomingReport({ report, currentDepartment, currentUserId, busy, onVerify, onReject, formatDT }) {
   const [rejecting, setRejecting] = useState(false)
   const [note, setNote] = useState('')
   const view = useReportView(report)
   const isPending = normalizeText(report.status) === 'submitted'
+  // A leadman who runs both departments receives the report they sent
+  // themselves. They're the next leadman too, so it can only be verified.
+  const isOwnReport = currentUserId != null && report.submittedBy != null && String(report.submittedBy) === String(currentUserId)
 
   return (
     <div className={`space-y-4 rounded-xl border bg-white p-4 shadow-sm sm:p-5 ${isPending ? 'border-amber-200' : 'border-zinc-200'}`}>
@@ -306,15 +137,27 @@ function IncomingReport({ report, currentDepartment, busy, onVerify, onReject, o
         <ReportHeading report={report} toDepartment={report.targetDepartment || currentDepartment} formatDT={formatDT} />
         {isPending ? (
           !rejecting ? (
-            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              <Button type="button" variant="secondary" className="btn-dismiss" disabled={busy} onClick={() => setRejecting(true)}>
-                <CircleAlert className="h-4 w-4" />
-                Reject
-              </Button>
-              <Button type="button" disabled={busy} onClick={() => onVerify(report, '')}>
-                <Check className="h-4 w-4" />
-                {busy ? 'Updating…' : 'Verify report'}
-              </Button>
+            <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="btn-dismiss"
+                  disabled={busy || isOwnReport}
+                  title={isOwnReport ? "You sent this report yourself, so you can't reject it." : undefined}
+                  onClick={() => setRejecting(true)}
+                >
+                  <CircleAlert className="h-4 w-4" />
+                  Reject
+                </Button>
+                <Button type="button" disabled={busy} onClick={() => onVerify(report, '')}>
+                  <Check className="h-4 w-4" />
+                  {busy ? 'Updating…' : 'Verify report'}
+                </Button>
+              </div>
+              {isOwnReport ? (
+                <p className="text-xs text-zinc-500">You sent this report, so it can only be verified.</p>
+              ) : null}
             </div>
           ) : null
         ) : (
@@ -328,7 +171,7 @@ function IncomingReport({ report, currentDepartment, busy, onVerify, onReject, o
         </div>
       ) : null}
 
-      <VerificationTable view={view} onOpenPhotos={onOpenPhotos} />
+      <DailyReportTable entries={report.entries} fallbackDepartment={report.department} fallbackDate={report.reportDate} />
 
       {isPending && rejecting ? (
         <div className="space-y-3 rounded-lg border border-rose-200 bg-rose-50/60 p-4">
@@ -358,7 +201,7 @@ function IncomingReport({ report, currentDepartment, busy, onVerify, onReject, o
 
 /* ---------- reports this leadman sent that came back rejected ---------- */
 
-function ReturnedReport({ report, formatDT, onEdit, onOpenPhotos }) {
+function ReturnedReport({ report, formatDT, onEdit }) {
   const view = useReportView(report)
   const returnedByProduction = normalizeText(report.status) === 'returned'
   return (
@@ -381,82 +224,12 @@ function ReturnedReport({ report, formatDT, onEdit, onOpenPhotos }) {
         </div>
       )}
 
-      <VerificationTable view={view} onOpenPhotos={onOpenPhotos} />
+      <DailyReportTable entries={report.entries} fallbackDepartment={report.department} fallbackDate={report.reportDate} />
     </div>
   )
 }
 
 /* ---------- modals ---------- */
-
-function PhotoViewer({ photos, index, onChange, onClose }) {
-  const photo = photos[index]
-  const activeThumbRef = useRef(null)
-
-  // Keep the current photo's thumbnail visible as the leadman steps through a long set.
-  useEffect(() => {
-    activeThumbRef.current?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' })
-  }, [index])
-
-  useEffect(() => {
-    function onKey(event) {
-      if (event.key === 'Escape') onClose()
-      if (event.key === 'ArrowRight') onChange((index + 1) % photos.length)
-      if (event.key === 'ArrowLeft') onChange((index - 1 + photos.length) % photos.length)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [index, photos.length, onChange, onClose])
-
-  if (!photo) return null
-  const many = photos.length > 1
-
-  return (
-    <Portal>
-      <div className="fixed inset-0 z-[60] flex flex-col bg-black/85 p-4" onClick={onClose}>
-        <div className="flex items-center justify-between text-white" onClick={(event) => event.stopPropagation()}>
-          <p className="text-sm font-semibold">{photo.label} <span className="font-normal text-white/60">· {index + 1} of {photos.length}</span></p>
-          <button type="button" onClick={onClose} aria-label="Close photos" className="btn-dismiss btn-dismiss-dark rounded-full bg-white/10 p-2 hover:bg-white/20">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="relative flex min-h-0 flex-1 items-center justify-center py-4">
-          {many ? (
-            <button type="button" aria-label="Previous photo" onClick={(event) => { event.stopPropagation(); onChange((index - 1 + photos.length) % photos.length) }} className="absolute left-0 rounded-full bg-white/10 p-2 text-white hover:bg-white/20">
-              <ChevronLeft className="h-6 w-6" />
-            </button>
-          ) : null}
-          <img src={photo.src} alt={photo.label} onClick={(event) => event.stopPropagation()} className="max-h-full max-w-full rounded-lg object-contain" />
-          {many ? (
-            <button type="button" aria-label="Next photo" onClick={(event) => { event.stopPropagation(); onChange((index + 1) % photos.length) }} className="absolute right-0 rounded-full bg-white/10 p-2 text-white hover:bg-white/20">
-              <ChevronRight className="h-6 w-6" />
-            </button>
-          ) : null}
-        </div>
-        {many ? (
-          // Scrollable strip for any number of photos. `mx-auto w-max` centers
-          // a short strip but, unlike justify-center, never clips the first
-          // thumbnails off-screen when the strip is wider than the viewport.
-          <div className="overflow-x-auto pb-1" onClick={(event) => event.stopPropagation()}>
-            <div className="mx-auto flex w-max gap-2">
-              {photos.map((item, itemIndex) => (
-                <button
-                  key={`${item.label}-${itemIndex}`}
-                  ref={itemIndex === index ? activeThumbRef : null}
-                  type="button"
-                  onClick={() => onChange(itemIndex)}
-                  title={item.label}
-                  className={`h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 ${itemIndex === index ? 'border-emerald-400' : 'border-transparent opacity-60 hover:opacity-100'}`}
-                >
-                  <img src={item.src} alt={item.label} className="h-full w-full object-cover" />
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
-      </div>
-    </Portal>
-  )
-}
 
 function HeaderCounter({ icon: Icon, label, value, onClick, active }) {
   return (
@@ -504,7 +277,6 @@ export default function LeadmanIncomingReports() {
   // The leadman's returned reports in their *other* departments: { department: count }.
   const [otherReturned, setOtherReturned] = useState({})
   const [loading, setLoading] = useState(true)
-  const [photoViewer, setPhotoViewer] = useState(null)
   const [actionLoadingId, setActionLoadingId] = useState('')
   const [resubmitting, setResubmitting] = useState(null)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -694,12 +466,6 @@ export default function LeadmanIncomingReports() {
     loadMyRejected()
   }
 
-  const openPhotos = useCallback((photos, index = 0) => {
-    if (Array.isArray(photos) && photos.length > 0) setPhotoViewer({ photos, index })
-  }, [])
-  const changePhoto = useCallback((index) => setPhotoViewer((current) => (current ? { ...current, index } : current)), [])
-  const closePhotos = useCallback(() => setPhotoViewer(null), [])
-
   function selectTab(tab) {
     setActiveTab(tab)
     if (tab === 'rejected') markNotificationsSeen('daily_report_rejected')
@@ -734,7 +500,7 @@ export default function LeadmanIncomingReports() {
       }
       return myRejectedReports.map((report) => (
         <motion.div key={report.id} variants={itemMotion}>
-          <ReturnedReport report={report} formatDT={formatDT} onEdit={openResubmit} onOpenPhotos={openPhotos} />
+          <ReturnedReport report={report} formatDT={formatDT} onEdit={openResubmit} />
         </motion.div>
       ))
     }
@@ -750,10 +516,10 @@ export default function LeadmanIncomingReports() {
         <IncomingReport
           report={report}
           currentDepartment={currentDepartment}
+          currentUserId={user?.id}
           busy={actionLoadingId === report.id}
           onVerify={(r, note) => patchReport(r, 'leadman_verified', note)}
           onReject={(r, note) => patchReport(r, 'rejected', note)}
-          onOpenPhotos={openPhotos}
           formatDT={formatDT}
         />
       </motion.div>
@@ -860,10 +626,6 @@ export default function LeadmanIncomingReports() {
       >
         {renderList()}
       </motion.div>
-
-      {photoViewer ? (
-        <PhotoViewer photos={photoViewer.photos} index={photoViewer.index} onChange={changePhoto} onClose={closePhotos} />
-      ) : null}
 
       {resubmitting ? (
         <Portal>

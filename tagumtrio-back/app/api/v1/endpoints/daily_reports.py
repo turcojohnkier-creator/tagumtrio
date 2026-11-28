@@ -95,6 +95,10 @@ def patch_daily_report(report_id: str, payload: DailyReportUpdate, db: Session =
         allowed_departments = current_user.departments or ([current_user.department] if current_user.department else [])
         if current_user.role != "leadman" or record.target_department not in allowed_departments:
             raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Only the target department's leadman can verify or reject this report")
+        # A leadman running two neighbouring departments receives their own
+        # report: they can verify it, but rejecting it back to themselves makes no sense.
+        if payload.status == "rejected" and record.submitted_by is not None and record.submitted_by == current_user.id:
+            raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="You can't reject a report you submitted yourself. Verify it instead.")
 
     if payload.status in PRODUCTION_INCHARGE_STATUSES and current_user.role != "production_incharge":
         raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN, detail="Only production in-charge can advance a report to this stage")

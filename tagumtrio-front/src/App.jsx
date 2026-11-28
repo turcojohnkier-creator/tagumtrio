@@ -7,6 +7,7 @@ import LeadmanLayout from './roles/leadman/layout/LeadmanLayout'
 import MainLayout from './shared/layout/MainLayout'
 import EmployeeLayout from './roles/employee/layout/EmployeeLayout'
 import ProfileViewerProvider from './shared/profile/ProfileViewerProvider'
+import ErrorBoundary from './shared/ui/ErrorBoundary'
 
 const Login = lazy(() => import('./pages/Login'))
 const Landing = lazy(() => import('./pages/Landing'))
@@ -14,7 +15,6 @@ const RoleDashboard = lazy(() => import('./pages/RoleDashboard'))
 const LeadmanDashboard = lazy(() => import('./roles/leadman/pages/LeadmanDashboard'))
 const LeadmanIncomingReports = lazy(() => import('./roles/leadman/pages/LeadmanIncomingReports'))
 const LeadmanWorkers = lazy(() => import('./roles/leadman/pages/LeadmanWorkers'))
-const LeadmanDailyReport = lazy(() => import('./roles/leadman/pages/LeadmanDailyReport'))
 const ProductionDashboard = lazy(() => import('./roles/production/pages/ProductionDashboard'))
 const ProductionCompiledReports = lazy(() => import('./roles/production/pages/ProductionCompiledReports'))
 const ProductionConsolidatedReports = lazy(() => import('./roles/production/pages/ProductionConsolidatedReports'))
@@ -34,13 +34,17 @@ const ViewPayslip = lazy(() => import('./roles/employee/pages/ViewPayslip'))
 const Requests = lazy(() => import('./shared/pages/Requests'))
 const Settings = lazy(() => import('./shared/pages/Settings'))
 const ReportHistory = lazy(() => import('./shared/pages/ReportHistory'))
+const Notifications = lazy(() => import('./shared/pages/Notifications'))
 
 function RouteLoadingFallback() {
   return <div className="p-6 text-sm text-slate-500">Loading...</div>
 }
 
 export default function App() {
+  // Outermost boundary: an error in a provider (above the per-layout
+  // boundaries) shows a message and Reload button instead of a blank page.
   return (
+    <ErrorBoundary fullPage title="Something went wrong">
     <AuthProvider>
       <DialogProvider>
         <AppDataProvider>
@@ -58,6 +62,7 @@ export default function App() {
                   <Route path="payslips" element={<MyPayslips />} />
                   <Route path="payslips/:id" element={<ViewPayslip />} />
                   <Route path="history" element={<ReportHistory />} />
+                  <Route path="notifications" element={<Notifications />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="*" element={<Navigate to="/app/portal" replace />} />
                 </Route>
@@ -82,6 +87,7 @@ export default function App() {
                   <Route path="requests" element={<Requests />} />
                   <Route path="history" element={<ReportHistory />} />
                   <Route path="announcements" element={<Announcements />} />
+                  <Route path="notifications" element={<Notifications />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="*" element={<Navigate to="" replace />} />
                 </Route>
@@ -90,9 +96,11 @@ export default function App() {
                   <Route index element={<LeadmanDashboard />} />
                   <Route path="reports" element={<LeadmanIncomingReports />} />
                   <Route path="workers" element={<LeadmanWorkers />} />
-                  <Route path="report" element={<LeadmanDailyReport />} />
+                  {/* Daily Report was merged into Create Report; keep old links working. */}
+                  <Route path="report" element={<Navigate to="/app/leadman" replace />} />
                   <Route path="history" element={<ReportHistory />} />
                   <Route path="announcements" element={<Announcements />} />
+                  <Route path="notifications" element={<Notifications />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="*" element={<Navigate to="/app/leadman" replace />} />
                 </Route>
@@ -113,5 +121,6 @@ export default function App() {
         </AppDataProvider>
       </DialogProvider>
     </AuthProvider>
+    </ErrorBoundary>
   )
 }

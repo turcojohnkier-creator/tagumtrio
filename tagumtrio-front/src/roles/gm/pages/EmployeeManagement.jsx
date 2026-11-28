@@ -17,7 +17,7 @@ export default function EmployeeManagement() {
   const { t } = useAuth()
   const { employees = [] } = useAppData()
   // Status = present for the current work session, as marked by the leadman.
-  // Resets to Inactive at every time-out, same as Departments Overview.
+  // Resets to Absent at every time-out, same as Departments Overview.
   const { status: attendance, presentIds, isOpen: attendanceOpen, error: attendanceError } = useAttendance()
   const [searchText, setSearchText] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('All Departments')

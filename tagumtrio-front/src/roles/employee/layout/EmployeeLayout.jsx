@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { CalendarClock, FileText, History, LayoutDashboard, Megaphone, Settings } from 'lucide-react'
+import { Bell, CalendarClock, FileText, History, LayoutDashboard, Megaphone, Settings } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
 import PageTransition from '../../../shared/ui/PageTransition'
@@ -11,12 +11,13 @@ const navItemDefs = [
   { name: 'Leave', href: '/app/portal/leaves', icon: CalendarClock, notificationType: 'leave_request_status' },
   { name: 'Payslips', href: '/app/portal/payslips', icon: FileText, notificationType: 'payslip_released' },
   { name: 'History', href: '/app/portal/history', icon: History },
+  { name: 'Notifications', href: '/app/portal/notifications', icon: Bell, showUnreadTotal: true },
   { name: 'Settings', href: '/app/portal/settings', icon: Settings },
 ]
 
 export default function EmployeeLayout() {
   const { user } = useAuth()
-  const { notificationCounts = {} } = useAppData()
+  const { notificationCounts = {}, unreadTotal = 0 } = useAppData()
 
   if (!user) {
     return <Navigate to="/login" replace />
@@ -29,10 +30,11 @@ export default function EmployeeLayout() {
   const navItems = navItemDefs.map((item) => ({
     ...item,
     hasUnread: item.notificationType ? Number(notificationCounts[item.notificationType] || 0) > 0 : false,
+    badgeCount: item.showUnreadTotal ? unreadTotal : 0,
   }))
 
   return (
-    <AppShell user={user} navItems={navItems} portalLabel="Employee Portal" settingsHref="/app/portal/settings">
+    <AppShell user={user} navItems={navItems} portalLabel="Employee Portal" settingsHref="/app/portal/settings" notificationsHref="/app/portal/notifications">
       <PageTransition>
         <Outlet />
       </PageTransition>

@@ -31,7 +31,7 @@ export default function GMOverview() {
       title: next ? t('gm.attendance.turn_on_title', 'Turn time in / time out on?') : t('gm.attendance.turn_off_title', 'Turn time in / time out off?'),
       message: next
         ? t('gm.attendance.turn_on_msg', 'Attendance follows the work sessions again (7:00–11:30 AM, 1:00–4:00 PM, 4:00–6:00 PM) for everyone.')
-        : t('gm.attendance.turn_off_msg', 'Leadmen can mark workers active at any hour, and marks only reset at midnight. This applies to everyone until you turn it back on.'),
+        : t('gm.attendance.turn_off_msg', 'Leadmen can mark workers present at any hour, and marks only reset at midnight. This applies to everyone until you turn it back on.'),
       confirmText: next ? t('gm.attendance.on', 'On') : t('gm.attendance.off', 'Off'),
       cancelText: t('gm.consolidated.confirm_cancel', 'Cancel'),
     })

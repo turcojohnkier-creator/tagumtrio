@@ -123,7 +123,7 @@ export default function MyPayslips() {
                     <tr>
                       <th className="px-4 py-3 font-medium">Date</th>
                       <th className="px-4 py-3 font-medium">Department</th>
-                      <th className="px-4 py-3 text-right font-medium">Amount</th>
+                      <th className="px-4 py-3 text-right font-medium">Rate per head</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 bg-white">
@@ -136,7 +136,7 @@ export default function MyPayslips() {
                         <tr key={`${record.id || index}-${index}`} className="hover:bg-emerald-50/40">
                           <td className="px-4 py-3 text-zinc-800">{formatDateTime(record.scannedAt || record.reportDate || record.createdAt)}</td>
                           <td className="px-4 py-3 text-zinc-700">{record.department || record.section || 'N/A'}</td>
-                          <td className="px-4 py-3 text-right font-semibold tabular-nums text-emerald-700">₱{Number(record.amount || 0).toLocaleString()}</td>
+                          <td className="px-4 py-3 text-right font-semibold tabular-nums text-emerald-700">₱{formatPayAmount(record.amount)}</td>
                         </tr>
                       ))
                     )}

@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Clock, Search, Users } from 'lucide-react'
 import { useAuth } from '../../../context/auth-context'
 import { useAppData } from '../../../context/app-data-context'
 import { useDialog } from '../../../context/dialog-context'
 import { setAttendanceApi } from '../../../lib/api'
 import { formatEmployeeId } from '../../../lib/employeeId'
+import useLiveRefresh from '../../../shared/hooks/useLiveRefresh'
 import useAttendance, { formatSessionRange, formatSessionTime, isDemoSession } from '../../../shared/hooks/useAttendance'
 import PageHeader from '../../../shared/ui/PageHeader'
 import Card, { SectionTitle } from '../../../shared/ui/Card'
@@ -39,7 +40,19 @@ function AttendanceSwitch({ checked, disabled, onChange, label }) {
 export default function LeadmanWorkers() {
   const { user } = useAuth()
   const dialog = useDialog()
-  const { employees, selectedLeadmanDepartment, setSelectedLeadmanDepartment } = useAppData()
+  const { employees, selectedLeadmanDepartment, setSelectedLeadmanDepartment, refreshEmployees, markNotificationsSeen } = useAppData()
+
+  // HR creating an employee in one of this leadman's departments sends an
+  // `employee_account_created` notification: reload the roster when it
+  // arrives, and clear the nav red dot once the page is open.
+  useEffect(() => {
+    markNotificationsSeen?.('employee_account_created')
+  }, [])
+  useLiveRefresh(() => refreshEmployees?.(), {
+    types: ['employee_account_created'],
+    clearTypes: ['employee_account_created'],
+    intervalMs: 60000,
+  })
 
   const assignedDepartments = useMemo(() => {
     if (Array.isArray(user?.departments) && user.departments.length > 0) return user.departments
@@ -144,12 +157,12 @@ export default function LeadmanWorkers() {
                 {isDemoSession(status.session) ? (
                   <>
                     <p className="font-semibold text-zinc-900">Demo mode · time in / time out is off</p>
-                    <p className="text-sm text-zinc-600">The GM turned off the work-session times, so you can mark workers at any hour. Everyone resets to inactive at midnight.</p>
+                    <p className="text-sm text-zinc-600">The GM turned off the work-session times, so you can mark workers at any hour. Everyone resets to absent at midnight.</p>
                   </>
                 ) : (
                   <>
                     <p className="font-semibold text-zinc-900">{status.session.label} session · {formatSessionRange(status.session)}</p>
-                    <p className="text-sm text-zinc-600">Switch on each worker who is present. Everyone resets to inactive at {formatSessionTime(status.session.end)}.</p>
+                    <p className="text-sm text-zinc-600">Switch on each worker who is present. Everyone resets to absent at {formatSessionTime(status.session.end)}.</p>
                   </>
                 )}
               </>
@@ -167,7 +180,7 @@ export default function LeadmanWorkers() {
         </div>
         {isOpen ? (
           <div className="shrink-0 rounded-lg bg-white px-4 py-2 text-sm text-zinc-700 ring-1 ring-inset ring-emerald-200">
-            <span className="text-lg font-bold text-emerald-700">{activeCount}</span> of {departmentEmployees.length} active
+            <span className="text-lg font-bold text-emerald-700">{activeCount}</span> of {departmentEmployees.length} present
           </div>
         ) : null}
       </div>
@@ -210,10 +223,10 @@ export default function LeadmanWorkers() {
                             checked={present}
                             disabled={!isOpen || loading || savingIds.has(employee.userId)}
                             onChange={(next) => handleToggle(employee, next)}
-                            label={`Mark ${employee.employeeName} ${present ? 'inactive' : 'active'}`}
+                            label={`Mark ${employee.employeeName} ${present ? 'absent' : 'present'}`}
                           />
-                          {/* Fixed width: "Active" and "Inactive" differ in length, which resized the column on every toggle. */}
-                          <Badge variant={present ? 'success' : 'neutral'} className="w-[5.5rem] justify-center">{present ? 'Active' : 'Inactive'}</Badge>
+                          {/* Fixed width: "Present" and "Absent" differ in length, which resized the column on every toggle. */}
+                          <Badge variant={present ? 'success' : 'neutral'} className="w-[5.5rem] justify-center">{present ? 'Present' : 'Absent'}</Badge>
                         </div>
                       </td>
                     </tr>

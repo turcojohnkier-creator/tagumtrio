@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Bell, X } from 'lucide-react'
 import { useAuth } from '../../context/auth-context'
 import { useAppData } from '../../context/app-data-context'
-import { OPEN_NOTIFICATIONS_EVENT, TONE_CLASSES, getNotificationMeta } from '../layout/notification-meta'
+import { TONE_CLASSES, getNotificationMeta } from '../layout/notification-meta'
 
 const AUTO_HIDE_MS = 6000
 
@@ -60,7 +60,8 @@ function Toast({ toast, onDismiss, onOpen }) {
 
 // Popups for notifications that arrive while the app is open (see the
 // notification poll in the app data provider). Click opens the related page.
-export default function NotificationToasts() {
+// The "N new updates" summary toast opens the Notifications page.
+export default function NotificationToasts({ notificationsHref }) {
   const { toasts = [], dismissToast, markNotificationRead } = useAppData()
   const navigate = useNavigate()
 
@@ -69,8 +70,8 @@ export default function NotificationToasts() {
     if (toast.notification) {
       markNotificationRead?.(toast.notification)
       if (toast.notification.link) navigate(toast.notification.link)
-    } else {
-      window.dispatchEvent(new Event(OPEN_NOTIFICATIONS_EVENT))
+    } else if (notificationsHref) {
+      navigate(notificationsHref)
     }
   }
 
